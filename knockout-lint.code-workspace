@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "lint",
+			"path": "lint"
+		},
+		{
+			"name": "vsc",
+			"path": "vsc"
+		},
+		{
+			"name": "vs19",
+			"path": "vs19"
+		}
+	],
+	"settings": {}
+}

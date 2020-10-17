@@ -1,0 +1,12 @@
+{
+	"files.exclude": {
+		"build": false,
+		// "src/plugin/demo": true
+	},
+	"search.exclude": {
+		"build": true,
+		// "src/plugin/demo": true
+	},
+	"typescript.tsc.autoDetect": "off",
+	"eslint.enable": true,
+}

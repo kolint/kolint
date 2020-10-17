@@ -1,0 +1,19 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"severity": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "string",
+				"enum": [
+					"error",
+					"warning",
+					"off"
+				],
+				"description": "The severity of a problem"
+			},
+			"description": "Record of problem severities"
+		}
+	}
+}

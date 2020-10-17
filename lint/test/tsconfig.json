@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"baseUrl": ".",
+		"rootDir": ".",
+		"paths": {
+			"*": [ "." ]
+		},
+		"plugins": [{
+			"name": "..." ,
+			"ko": {
+				"import bindinghandler": "..."
+			}
+		}]
+	}
+}
