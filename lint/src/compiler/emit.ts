@@ -80,7 +80,8 @@ export function emit(viewPath: string, document: Document): { file: string; sour
       Types: {
          BuiltInBindingHandlers: 'BuiltInBindingHandlers',
          BindingHandlers: 'BindingHandlers',
-         BindingHandlerType: 'BHType'
+         BindingHandlerType: 'BHType',
+         BindingHandlerAdapter: 'BindingHandlerAdapter'
       }
    }
 
@@ -117,8 +118,15 @@ export function emit(viewPath: string, document: Document): { file: string; sour
          )
       ]),
 
+      newline(
+         `interface ${names.Types.BindingHandlerAdapter}<T> {`,
+            `init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;`,
+            `update?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => void;`,
+         `}`
+      ),
+
       newline
-         `type ${names.Types.BindingHandlerType}<T> = T extends ko.BindingHandler<(infer U)> ? U : never`,
+         `type ${names.Types.BindingHandlerType}<T> = T extends ${names.Types.BindingHandlerAdapter}<(infer U)> ? U : never`,
 
       // TODO: move to emit (root.add)
       emitBHImportStatements(document.bindingHandlerReferences, viewPath),
@@ -239,7 +247,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
       const entries = Object.entries(ref.imports)
 
-      return entries.map(([_name, alias]) => `'${alias}': BindingHandler<BHType<typeof bindinghandler_${alias}>>`)
+      return entries.map(([_name, alias]) => `'${alias}': BindingHandler<BHType<bindinghandler_${alias}>>`)
 
    }).filter(is).flat(1)
 
