@@ -13,7 +13,8 @@
 		"@typescript-eslint/parser": "^4.4.0",
 		"eslint": "^7.11.0",
 		"jison": "^0.4.18",
-		"mocha": "^8.1.3"
+		"mocha": "^8.1.3",
+		"ts-node": "^9.0.0"
 	},
 	"dependencies": {
 		"glob": "^7.1.6",
@@ -23,6 +24,6 @@
 	},
 	"scripts": {
 		"compile-parser": "node build/parser/parser-compiler.js",
-		"test": "node build/cli/cli.js test/view.html"
+		"test": "mocha -r ts-node/register spec/spec.ts"
 	}
 }
