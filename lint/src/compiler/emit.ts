@@ -239,7 +239,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
       const entries = Object.entries(ref.imports)
 
-      return entries.map(([_name, alias]) => `'${alias}': BindingHandler<BHType<bindinghandler_${alias}>>`)
+      return entries.map(([_name, alias]) => `'${alias}': BindingHandler<BHType<typeof bindinghandler_${alias}>>`)
 
    }).filter(is).flat(1)
 
