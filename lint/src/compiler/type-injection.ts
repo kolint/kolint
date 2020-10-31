@@ -45,5 +45,7 @@ export default function injectTypes(tsProgram: ts.Program, source: ts.SourceFile
 }
 
 function getTypeProperties(node: ts.Node, checker: ts.TypeChecker): string[] {
-	return checker.getPropertiesOfType(checker.getTypeAtLocation(node)).map(symbol => symbol.getName())
+	return checker.getPropertiesOfType(checker.getTypeAtLocation(node))
+		.filter(symbol => Boolean(symbol.declarations.find(dec => dec.kind === ts.SyntaxKind.PublicKeyword)))
+		.map(symbol => symbol.getName())
 }
