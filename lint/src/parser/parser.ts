@@ -1,6 +1,6 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
-import { ViewModelNode, Node, NodeType, BindingData, DiagNode } from './bindingDOM'
+import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode } from './bindingDOM'
 import { YY } from './document-builder'
 import { Program } from '../program'
 
@@ -61,12 +61,13 @@ export function parse(document: string, program: Program, bindingNames?: string[
 	const nodeParser = new documentParser.Parser<Node[]>()
 
 	const yy: YY = {
-		createViewRefNode: (loc: Location, viewRef: string, name?: string): ViewModelNode => new ViewModelNode(loc, viewRef, name),
-		createStartNode: (loc: Location, key: string): Node => new Node(loc, key, NodeType.Start),
-		createEndNode: (loc: Location, key: string): Node => new Node(loc, key, NodeType.End),
-		createEmptyNode: (loc: Location, key: string): Node => new Node(loc, key, NodeType.Empty),
-		createBindingData: (loc: Location, data: string): BindingData => new BindingData(loc, data),
-		createDiagNode: (loc: Location, keys: string[], enable: boolean): DiagNode => new DiagNode(loc, keys, enable),
+		createViewRefNode: (loc: Location, viewRef: string, name?: string) => new ViewModelNode(loc, viewRef, name),
+		createBindingHandlerRefNode: (loc: Location, moduleIdentifier: string, names: Record<string, string>) => new BindingHandlerImportNode(loc, moduleIdentifier, names),
+		createStartNode: (loc: Location, key: string) => new Node(loc, key, NodeType.Start),
+		createEndNode: (loc: Location, key: string) => new Node(loc, key, NodeType.End),
+		createEmptyNode: (loc: Location, key: string) => new Node(loc, key, NodeType.Empty),
+		createBindingData: (loc: Location, data: string) => new BindingData(loc, data),
+		createDiagNode: (loc: Location, keys: string[], enable: boolean) => new DiagNode(loc, keys, enable),
 		bindingNames: bindingNames ?? ['data-bind']
 	}
 

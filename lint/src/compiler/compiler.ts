@@ -1,7 +1,7 @@
 import injectTypes from './type-injection'
-import { SourceMapConsumer } from 'source-map'
 import * as path from 'path'
 import * as ts from 'typescript/lib/tsserverlibrary'
+import * as fs from 'fs'
 
 export class ScriptFile {
 	public version: number
@@ -107,6 +107,11 @@ export class Compiler {
 		const generated = injectTypes(tsProgram, source, template)
 
 		this.scriptFiles.push(new ScriptFile(generatedFileName, this.viewPath, generated))
+
+		fs.writeFileSync(
+			path.join(__dirname, '../../test/_output.ts.txt'),
+			'// Remove .txt to see errors in editor\n' + generated
+		)
 
 		return generated
 	}

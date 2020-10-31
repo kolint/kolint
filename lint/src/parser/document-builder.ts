@@ -1,4 +1,4 @@
-import { Node, Document, BindingName, Binding, ViewModelNode, BindingExpression, NodeType, DiagNode } from './bindingDOM'
+import { Node, Document, BindingName, Binding, ViewModelNode, BindingExpression, NodeType, DiagNode, BindingHandlerImportNode } from './bindingDOM'
 import { parseBindingExpression } from './compile-bindings'
 import { Location } from './location'
 import { Diagnostic, diagnostics } from '../diagnostic'
@@ -9,6 +9,7 @@ import { Program, ProgramInternal } from '../program'
  */
 export interface YY {
 	createViewRefNode(loc: Location, viewReference: string, name?: string): ViewModelNode
+	createBindingHandlerRefNode(loc: Location, viewReference: string, names: Record<string, string>): BindingHandlerImportNode
 	createStartNode(loc: Location, key: string): Node
 	createEndNode(loc: Location, key: string): Node
 	createEmptyNode(loc: Location, key: string): Node
@@ -25,8 +26,10 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 	const root = new Binding(new BindingName('root', undefined as unknown as Location), new BindingExpression('', undefined as unknown as Location))
 	const bindingStack: Binding[] = [root]
 	const viewmodelStack: ViewModelNode[] = [new ViewModelNode({ first_column: 0, first_line: 0, last_column: 0, last_line: 0, range: [0, 0] }, '')]
+	const bindinghandlersStack: ViewModelNode[] = [new ViewModelNode({ first_column: 0, first_line: 0, last_column: 0, last_line: 0, range: [0, 0] }, '')]
 	const nodeStack: Node[] = []
 	const viewmodels: ViewModelNode[] = []
+	const bindinghandlers: BindingHandlerImportNode[] = []
 
 	for (const node of ast) {
 		if (node instanceof DiagNode) {
@@ -55,6 +58,13 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 			viewmodels.push(node)
 			continue
 		}
+		if (node instanceof BindingHandlerImportNode) {
+			bindinghandlersStack.pop()
+			// TODO: Make sure that view reference is parsed before using it.
+			bindinghandlersStack.push(node)
+			bindinghandlers.push(node)
+			continue
+		}
 		switch (node.type) {
 			case NodeType.Start: {
 				const parentBinding = bindingStack[bindingStack.length - 1]
@@ -62,7 +72,7 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 					// TODO: parse all binding strings. not just index 0
 					const bindingData = node.bindings[0]
 					const bindings = parseBindingExpression(program, bindingData.bindingText, bindingData.location)
-					for (const binding of bindings)
+					for (const binding of bindings) 
 						binding.viewModelReference = viewmodelStack[viewmodelStack.length - 1]
 					parentBinding.childBindings.splice(-1, 0, ...bindings)
 					// TODO: If there are multiple binding properties on one row, only consider the first, but emit a warning if it controls descendants
@@ -73,6 +83,7 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 				}
 
 				viewmodelStack.push(viewmodelStack[viewmodelStack.length - 1])
+				bindinghandlersStack.push(bindinghandlersStack[viewmodelStack.length - 1])
 				nodeStack.push(node)
 
 				break
@@ -80,6 +91,7 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 			case NodeType.End: {
 				bindingStack.pop()
 				viewmodelStack.pop()
+				bindinghandlersStack.pop()
 				const lastNode = nodeStack.pop()
 
 				if (lastNode?.key !== node.key)
@@ -105,5 +117,5 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 			throw new Diagnostic(diagnostics['unbalanced-start-end-tags'], nodeStack.pop()?.loc)
 		}
 	}
-	return new Document(root.childBindings, viewmodels)
+	return new Document(root.childBindings, viewmodels, bindinghandlers)
 }

@@ -30,6 +30,12 @@ export class ViewModelNode extends Node {
 	}
 }
 
+export class BindingHandlerImportNode extends Node {
+	public constructor(loc: Location, public modulePath: string, public imports?: Record<string, string>) {
+		super(loc, '', NodeType.Empty)
+	}
+}
+
 /** Enable/Disable flags for single or multiple diagnostics. (ko-view-lint and typescript error codes) */
 export class DiagNode extends Node {
 	public constructor(loc: Location, public keys: string[], public enable: boolean) {
@@ -50,7 +56,7 @@ export class BindingExpression {
 }
 
 export class Document {
-	public constructor(public bindings: Binding[], public viewmodelReferences: ViewModelNode[]) { }
+	public constructor(public bindings: Binding[], public viewmodelReferences: ViewModelNode[], public bindingHandlerReferences: BindingHandlerImportNode[]) { }
 }
 
 export class Binding {
