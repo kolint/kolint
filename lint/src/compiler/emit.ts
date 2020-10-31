@@ -81,7 +81,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
          BuiltInBindingHandlers: 'BuiltInBindingHandlers',
          BindingHandlers: 'BindingHandlers',
          BindingHandlerType: 'BHType',
-         BindingHandlerEmulator: 'BindingHandlerEmulator'
+         BindingHandlerAdapter: 'BindingHandlerAdapter'
       }
    }
 
@@ -119,14 +119,14 @@ export function emit(viewPath: string, document: Document): { file: string; sour
       ]),
 
       newline(
-         `interface ${names.Types.BindingHandlerEmulator}<T> {`,
+         `interface ${names.Types.BindingHandlerAdapter}<T> {`,
             `init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;`,
             `update?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => void;`,
          `}`
       ),
 
       newline
-         `type ${names.Types.BindingHandlerType}<T> = T extends ${names.Types.BindingHandlerEmulator}<(infer U)> ? U : never`,
+         `type ${names.Types.BindingHandlerType}<T> = T extends ${names.Types.BindingHandlerAdapter}<(infer U)> ? U : never`,
 
       // TODO: move to emit (root.add)
       emitBHImportStatements(document.bindingHandlerReferences, viewPath),
