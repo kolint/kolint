@@ -8,5 +8,10 @@
 		// "src/plugin/demo": true
 	},
 	"typescript.tsc.autoDetect": "off",
-	"eslint.enable": true,
+	"testr.enable": true,
+	"testr.autoTest": 2500,
+	"testr.successExitCodes": [
+		0
+	],
+	"testr.runWith": "terminal",
 }

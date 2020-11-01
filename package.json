@@ -24,6 +24,6 @@
 	},
 	"scripts": {
 		"compile-parser": "node build/parser/parser-compiler.js",
-		"test": "mocha -r ts-node/register spec/spec.ts"
+		"test": "npx mocha -r ts-node/register spec/spec.ts"
 	}
 }
