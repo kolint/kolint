@@ -29,6 +29,7 @@ XMLPITEXT                              .+?(?=\?>)
 <bhimport,vmimport>"import"                     return 'IMPORT'
 <bhimport>"as"                                  return 'AS'
 <vmimport>"default"                             return 'DEFAULT'
+<vmimport>"*"                                   return 'STAR'
 <bhimport,vmimport>"from"                       return 'FROM'
 <bhimport,vmimport>"-->"                        this.popState(); this.popState(); return 'CETag'
 <bhimport,vmimport>{IDENT}                      return 'Ident'
@@ -71,7 +72,7 @@ nodes
     | node
         { $$ = $node ? [$node] : [] }
 	 ;
-    
+
 
 node
     : textNode
@@ -80,25 +81,25 @@ node
     | elementEnd
     | doctype
 	 ;
-    
+
 
 textNode
     : TEXT
         { $$ = null }
 	 ;
-    
+
 
 xmlpi
     : XMLPISTART XMLPITEXT XMLPIEND
         { $$ = null }
 	 ;
-    
+
 
 doctype
     : DOCSTART TEXT DOCEND
         { $$ = null }
 	 ;
-    
+
 
 comment
     : CSTag commentText CETag
@@ -122,7 +123,7 @@ comment
     | CSTag bindingTextEnd commentText CETag
         { $$ = yy.createEndNode(@$, 'comment-binding') }
 	 ;
-    
+
 
 diagIds
 	 : diagIds ',' DIAGKEY
@@ -149,13 +150,13 @@ vmImportRef
 vmImportSpec
 	: Ident // Normal export
 	| DEFAULT // Default export
-	| '*' // "export =" export
+	| STAR // "export =" export
 	;
 
 //#regionend vm_import
 
 // ---------------------------------------------------------------------------------------------
-	 
+
 //#regionstart bh_import
 
 bhImportRef
