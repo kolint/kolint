@@ -108,11 +108,6 @@ export class Compiler {
 
 		this.scriptFiles.push(new ScriptFile(generatedFileName, this.viewPath, generated))
 
-		fs.writeFileSync(
-			path.join(__dirname, '../../test/_output.ts.txt'),
-			'// Remove .txt to see errors in editor\n' + generated
-		)
-
 		return generated
 	}
 
