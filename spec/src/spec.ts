@@ -139,7 +139,7 @@ function test(category: string, name: string, issue: string | undefined, express
 
 const program = lint.createProgram()
 
-// Causes vscodes code coloring to mess up without semi
+// Causes vscode's code coloring to mess up without semi
 // eslint-disable-next-line semi
 type Tests = [string, string, string | undefined][];
 
