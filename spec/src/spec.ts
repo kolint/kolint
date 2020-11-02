@@ -71,7 +71,7 @@ const tests = {
 		],
 		[
 			'export=/star import',
-			'<!-- ko-bindinghandler: import * from \'./viewmodel\' -->'
+			'<!-- ko-bindinghandler: import * as bindinghandler from \'./bindinghandler\' -->'
 		]
 	]
 }
