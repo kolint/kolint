@@ -223,6 +223,8 @@ bhImportSpec
 bhImportBlockIdentifiers
   : bhImportBlockIdentifiers COMMA bhImportIdentifier
     { $$ = $bhImportBlockIdentifiers[$bhImportIdentifier[0]] = $bhImportIdentifier[1] }
+ : bhImportBlockIdentifiers COMMA
+    { $$ = {}; $$[$bhImportIdentifier[0]] = $bhImportIdentifier[1] }
   | bhImportIdentifier
     { $$ = {}; $$[$bhImportIdentifier[0]] = $bhImportIdentifier[1] }
   ;
