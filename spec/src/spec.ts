@@ -71,8 +71,7 @@ const tests = {
 		],
 		[
 			'export=/star import',
-			'<!-- ko-bindinghandler: import * from \'./viewmodel\' -->',
-			'https://github.com/knockout-lint/knockout-lint/issues/15'
+			'<!-- ko-bindinghandler: import * from \'./viewmodel\' -->'
 		]
 	]
 }
