@@ -9,7 +9,7 @@
 	},
 	"typescript.tsc.autoDetect": "off",
 	"testr.enable": true,
-	"testr.autoTest": 2500,
+	"testr.autoTest": 3000,
 	"testr.successExitCodes": [
 		0
 	],

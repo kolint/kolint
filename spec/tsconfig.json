@@ -10,13 +10,11 @@
 		"declaration": true,
 		"declarationDir": "build",
 		"declarationMap": true,
-		// This will exclude any other global types
-		"types": [ "node" ],
+		"types": [ "node", "mocha" ],
 		"moduleResolution": "node"
 	},
 	"exclude": [
-		"test",
-		"build",
-		"spec"
+		"resources",
+		"build"
 	]
 }
