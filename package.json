@@ -24,6 +24,7 @@
 	},
 	"scripts": {
 		"compile-parser": "node build/parser/parser-compiler.js",
-		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js"
+		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js",
+		"build-test":  "node ./spec/resources/build.js --force"
 	}
 }
