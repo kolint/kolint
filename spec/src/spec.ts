@@ -154,4 +154,7 @@ for (const [name, subject, issue] of tests.bindingHandlerImport)
 
 console.log('')
 
+if (hasErrors)
+	process.exit(1)
+
 //#endregion Run tests
