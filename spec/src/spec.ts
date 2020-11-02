@@ -62,8 +62,7 @@ const tests = {
 		],
 		[
 			'Normal import with additional comma',
-			'<!-- ko-bindinghandler: import { bindinghandler, } from \'./bindinghandler\' -->',
-			'https://github.com/knockout-lint/knockout-lint/issues/13'
+			'<!-- ko-bindinghandler: import { bindinghandler, } from \'./bindinghandler\' -->'
 		],
 		[
 			'As import',
