@@ -29,7 +29,7 @@ XMLPITEXT                         .+?(?=\?>)
 <bhimport,vmimport>"import"       return 'IMPORT'
 <bhimport>"as"                    return 'AS'
 <vmimport>"default"               return 'DEFAULT'
-<vmimport>"*"                     return 'STAR'
+<bhimport,vmimport>"*"            return 'STAR'
 <bhimport,vmimport>"from"         return 'FROM'
 <bhimport,vmimport>"-->"          this.popState(); this.popState(); return 'CETag'
 <bhimport,vmimport>{IDENT}        return 'Ident'
@@ -214,7 +214,7 @@ bhImportRef
 bhImportSpec
   : LBRACE bhImportBlockIdentifiers RBRACE
     { $$ = $bhImportBlockIdentifiers }
-  | '*' AS Ident
+  | STAR AS Ident
     { $$ = {'*': $Ident} }
   | Ident
     { $$ = {'default': $Ident} }
