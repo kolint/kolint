@@ -1,24 +1,8 @@
-<!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-
-
-
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
   <a href="https://github.com/knockout-lint/knockout-lint">
-    <img src="assets/logo.png" alt="Logo" width="80" height="80">
+    <img src="assets/logo.png" alt="Logo" width="72">
   </a>
 
   <h3 align="center">Knockout Lint</h3>
@@ -30,26 +14,25 @@
     <br />
     <br />
     <a href="#getting-started">Getting Started</a>
-    ·
+    <b>·</b>
     <a href="#demo">View Demo</a>
-    ·
+    <b>·</b>
     <a href="https://github.com/knockout-lint/knockout-lint/issues">Report Bug</a>
-    ·
+    <b>·</b>
     <a href="https://github.com/knockout-lint/knockout-lint/issues">Request Feature</a>
   </p>
 </p>
 
-
+<br>
 
 <!-- TABLE OF CONTENTS -->
 <!-- omit in toc -->
 ## Table of Contents
 
 - [About The Project](#about-the-project)
-	- [Built With](#built-with)
+  - [Built with](#built-with)
 - [Getting Started](#getting-started)
-	- [Prerequisites](#prerequisites)
-	- [Installation](#installation)
+  - [Installation](#installation)
 - [Usage](#usage)
 - [Roadmap](#roadmap)
 - [License](#license)
@@ -59,15 +42,12 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+This project is a lint for the [Knockout](https://knockoutjs.com/) library. The lint includes the features to lint both the HTML and the Knockout bindings, also to compile and type check the bindings with the [TypeScript Compiler API][ts-compiler-api]. We mainly focus on keeping the lint fast to lint and type check. That is why we use our own parser for HTML to only parse the necessary nodes.
 
-This project is a lint for the [Knockout](https://knockoutjs.com/) library. The lint includes the features to lint both the HTML and the Knockout bindings, also to compile and type check TypeScript in the bindings.
-
-### Built With
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
+### Built with
+  - [meriyah][meriyah] - A 100% compliant, self-hosted javascript parser. Supports ES2020 syntax.
+  - [TypeScript Compiler API][ts-compiler-api] - Superset of JavaScript that compiles to clean JavaScript output.
+  - [jison][jison] - Generates bottom-up parsers in JavaScript. Its API is similar to Bison's.
 
 
 
@@ -77,31 +57,11 @@ This section should list any major frameworks that you built your project using.
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-```sh
-npm install npm@latest -g
-```
-
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-```sh
-git clone https://github.com/your_username_/Project-Name.git
 ```
-3. Install NPM packages
-```sh
-npm install
+npm install --save-dev NPM_PACKAGE_NAME
 ```
-4. Enter your API in `config.js`
-```JS
-const API_KEY = 'ENTER YOUR API';
-```
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
@@ -138,4 +98,7 @@ Distributed under the MIT License. See [LICENSE][license-url] for more informati
 [issues-url]: https://github.com/knockout-lint/knockout-lint/issues
 [license-shield]: https://img.shields.io/github/license/knockout-lint/knockout-lint.svg?style=flat-square
 [license-url]: https://github.com/knockout-lint/knockout-lint/blob/master/LICENSE.txt
+[ts-compiler-api]: https://github.com/Microsoft/TypeScript/wiki/Using-the-Compiler-API
+[meriyah]: https://github.com/meriyah/meriyah
+[jison]: https://github.com/zaach/jison
 [product-screenshot]: images/screenshot.png
