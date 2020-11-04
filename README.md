@@ -42,7 +42,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This project is a lint for the [Knockout](https://knockoutjs.com/) library. The lint includes the features to lint both the HTML and the Knockout bindings, also to compile and type check the bindings with the [TypeScript Compiler API][ts-compiler-api]. We mainly focus on keeping the lint fast to lint and type check. That is why we use our own parser for HTML to only parse the necessary nodes.
+This project is a lint for the [Knockout](https://knockoutjs.com/) library. The lint includes the features to lint both the HTML and the Knockout bindings and compile and type check the bindings with the [TypeScript Compiler API][ts-compiler-api]. We mainly focus on keeping the lint fast to lint and type check. That is why we use our own parser for HTML only to parse the necessary nodes.
 
 ### Built with
   - [meriyah][meriyah] - A 100% compliant, self-hosted javascript parser. Supports ES2020 syntax.
@@ -58,7 +58,7 @@ npm i -D NPM_PACKAGE_NAME
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
+Use this space to show useful examples of how a project can be used. Additional screenshots, code examples, and demos work well in this space. You may also link to more resources.
 
 ### Using the CLI
 
@@ -100,11 +100,11 @@ _For more information about the usage, please refer to the [Documentation](https
 <!-- ROADMAP -->
 ## Roadmap
 
-**Production compiliation**
+**Production compilation**
 
-Knockout Lint has some amazing features not used with it's full potential. Knockout Lint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into JavaScript files, this has the advantages of:
+Knockout Lint has some amazing features not used with its full potential. Knockout Lint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into JavaScript files. This has the advantages of:
 
-1. Security — hackers will have a harder time getting any useful information from the bindings. Also, if using knockout 3.x or below the code will not have to be evaluated.
+1. Security — hackers will have a harder time getting any useful information from the bindings. Also, if using knockout 3.x or below, the code will not have to be evaluated.
 
 2. Performance — knockout will not have to parse the JavaScript and bindings or evaluate them.
 
