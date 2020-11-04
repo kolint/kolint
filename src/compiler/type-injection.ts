@@ -46,6 +46,6 @@ export default function injectTypes(tsProgram: ts.Program, source: ts.SourceFile
 
 function getTypeProperties(node: ts.Node, checker: ts.TypeChecker): string[] {
 	return checker.getPropertiesOfType(checker.getTypeAtLocation(node))
-		.filter(symbol => Boolean(symbol.declarations.find(dec => dec.kind === ts.SyntaxKind.PublicKeyword)))
+		.filter(symbol => !Boolean(symbol.valueDeclaration.modifiers?.find(modifier => modifier.kind === ts.SyntaxKind.ProtectedKeyword || modifier.kind === ts.SyntaxKind.PrivateKeyword)))
 		.map(symbol => symbol.getName())
 }

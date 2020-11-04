@@ -1,4 +1,5 @@
 node_modules
 build
+temp
 lib/document-parser.js
 test/_output.ts.txt

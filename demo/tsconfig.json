@@ -7,11 +7,12 @@
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true,
-		"types": [ "node", "mocha" ],
+		"types": [ "node" ],
 		"moduleResolution": "node"
 	},
 	"exclude": [
 		"resources",
-		"build"
+		"build",
+		"temp"
 	]
 }
