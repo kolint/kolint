@@ -7,9 +7,6 @@
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true,
-		"declaration": true,
-		"declarationDir": "build",
-		"declarationMap": true,
 		"types": [ "node", "mocha" ],
 		"moduleResolution": "node"
 	},
