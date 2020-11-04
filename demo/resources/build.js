@@ -1,0 +1,2 @@
+const path = require('path')
+if (process.argv.find(arg => ['-f','--force'].includes(arg)) || !require('fs').existsSync(path.join(__dirname, '../build'))) void require('child_process').execSync('tsc', { cwd: path.join(__dirname, '..') })

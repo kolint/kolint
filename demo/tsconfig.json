@@ -7,17 +7,12 @@
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true,
-		"declaration": true,
-		"declarationDir": "build",
-		"declarationMap": true,
-		// This will exclude any other global types
 		"types": [ "node" ],
 		"moduleResolution": "node"
 	},
 	"exclude": [
-		"test",
+		"resources",
 		"build",
-		"spec",
-		"demo"
+		"temp"
 	]
 }

@@ -25,6 +25,10 @@
 	"scripts": {
 		"compile-parser": "node build/parser/parser-compiler.js",
 		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js",
-		"build-test":  "node ./spec/resources/build.js --force"
+		"build-test":  "node ./spec/resources/build.js --force",
+
+		"demo": "node ./demo/resources/build.js && node ./demo/build/lint.test.js",
+		"_build-n-demo": "node ./demo/resources/build.js --force && node ./demo/build/lint.test.js",
+		"_build-demo":  "node ./demo/resources/build.js --force"
 	}
 }
