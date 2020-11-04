@@ -58,7 +58,7 @@ npm i -D NPM_PACKAGE_NAME
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples, and demos work well in this space. You may also link to more resources.
+How to setup Knockout Lint to work locally.
 
 ### Using the CLI
 
