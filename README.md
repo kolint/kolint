@@ -1,3 +1,5 @@
+<!-- [![LICENSE - MIT](https://img.shields.io/github/license/knockout-lint/knockout-lint.svg?style=flat-square)](https://github.com/knockout-lint/knockout-lint/blob/master/LICENSE) -->
+
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
@@ -13,13 +15,11 @@
     <a href="https://github.com/knockout-lint/knockout-lint"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="#getting-started">Getting Started</a>
+    <a href="#installation">Getting Started</a>
     <b>·</b>
-    <a href="#demo">View Demo</a>
+    <a href="#roadmap">Roadmap</a>
     <b>·</b>
-    <a href="https://github.com/knockout-lint/knockout-lint/issues">Report Bug</a>
-    <b>·</b>
-    <a href="https://github.com/knockout-lint/knockout-lint/issues">Request Feature</a>
+    <a href="https://github.com/knockout-lint/knockout-lint/issues/new">Report Bug</a>
   </p>
 </p>
 
@@ -31,11 +31,11 @@
 
 - [About The Project](#about-the-project)
   - [Built with](#built-with)
-- [Getting Started](#getting-started)
-  - [Installation](#installation)
+- [Installation](#installation)
 - [Usage](#usage)
+  - [Using the CLI](#using-the-cli)
+  - [Using the API](#using-the-api)
 - [Roadmap](#roadmap)
-- [License](#license)
 
 
 
@@ -49,18 +49,10 @@ This project is a lint for the [Knockout](https://knockoutjs.com/) library. The 
   - [TypeScript Compiler API][ts-compiler-api] - Superset of JavaScript that compiles to clean JavaScript output.
   - [jison][jison] - Generates bottom-up parsers in JavaScript. Its API is similar to Bison's.
 
-
-
-<!-- GETTING STARTED -->
-## Getting Started
-
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-### Installation
+## Installation
 
 ```
-npm install --save-dev NPM_PACKAGE_NAME
+npm i -D NPM_PACKAGE_NAME
 ```
 
 <!-- USAGE EXAMPLES -->
@@ -68,37 +60,62 @@ npm install --save-dev NPM_PACKAGE_NAME
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+### Using the CLI
+
+**Installing npm globally**
+```
+npm i -g NPM_PACKAGE_NAME
+```
+
+**Running the CLI**
+
+Use `-c` or `--config` to specify a path to a config file. Default is `.kolintrc` or `.kolintrc.*`.
+
+```
+NPM_PACKAGE_NAME views/**/*.html
+```
+
+### Using the API
+
+```typescript
+import * as kolint from 'NPM_PACKAGE_NAME';
+
+// Creates a new program, can be used with multiple files.
+const program = kolint.createProgram();
+
+// Parsing a document
+const document = program.parse(/* document text */);
+
+// Compiling the document with built-in TypeScript compiler
+const tsOut = program.typescriptCompiler.compile(/* document path */, document);
+
+// Getting diagnostics from program and built-in TypeScript compiler
+const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());
+```
+
+_For more information about the usage, please refer to the [Documentation](https://github.com/knockout-lint/knockout-lint/wiki)._
 
 
 
 <!-- ROADMAP -->
 ## Roadmap
 
-See the [open issues](https://github.com/knockout-lint/knockout-lint/issues) for a list of proposed features (and known issues).
+**Production compiliation**
 
+Knockout Lint has some amazing features not used with it's full potential. Knockout Lint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into JavaScript files, this has the advantages of:
 
+1. Security — hackers will have a harder time getting any useful information from the bindings. Also, if using knockout 3.x or below the code will not have to be evaluated.
 
-<!-- LICENSE -->
-## License
+2. Performance — knockout will not have to parse the JavaScript and bindings or evaluate them.
 
-Distributed under the MIT License. See [LICENSE][license-url] for more information.
+_See the [open issues](https://github.com/knockout-lint/knockout-lint/issues) for a list of proposed features and known issues_
 
+<!-- omit in toc -->
+###### This project is licensed under the MIT license. Go to [license](https://github.com/knockout-lint/knockout-lint/blob/master/LICENSE).
 
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/knockout-lint/knockout-lint.svg?style=flat-square
-[contributors-url]: https://github.com/knockout-lint/knockout-lint/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/knockout-lint/knockout-lint.svg?style=flat-square
-[forks-url]: https://github.com/knockout-lint/knockout-lint/network/members
-[stars-shield]: https://img.shields.io/github/stars/knockout-lint/knockout-lint.svg?style=flat-square
-[stars-url]: https://github.com/knockout-lint/knockout-lint/stargazers
-[issues-shield]: https://img.shields.io/github/issues/knockout-lint/knockout-lint.svg?style=flat-square
-[issues-url]: https://github.com/knockout-lint/knockout-lint/issues
-[license-shield]: https://img.shields.io/github/license/knockout-lint/knockout-lint.svg?style=flat-square
-[license-url]: https://github.com/knockout-lint/knockout-lint/blob/master/LICENSE.txt
 [ts-compiler-api]: https://github.com/Microsoft/TypeScript/wiki/Using-the-Compiler-API
 [meriyah]: https://github.com/meriyah/meriyah
 [jison]: https://github.com/zaach/jison
 [product-screenshot]: images/screenshot.png
+
+
