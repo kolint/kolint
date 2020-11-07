@@ -23,7 +23,7 @@
 		"typescript": "^4.0.3"
 	},
 	"scripts": {
-		"build": "npm run build-project && npm run compile-parser",
+		"build": "npm run _build-project && npm run compile-parser",
 		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js",
 		"demo": "node ./demo/resources/build.js && node ./demo/build/lint.test.js",
 
