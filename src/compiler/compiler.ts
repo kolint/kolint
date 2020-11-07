@@ -30,12 +30,7 @@ export class Compiler {
 			const args = ts.parseJsonConfigFileContent(configFile.config, ts.sys, './')
 			compilerOptions = args.options
 		} else {
-			compilerOptions = {
-				baseUrl: '.',
-				paths: {
-					'*': ['.', path.resolve(path.parse(viewPath).dir)]
-				}
-			}
+			compilerOptions = {}
 		}
 
 		const compilerHost = ts.createCompilerHost(compilerOptions)
