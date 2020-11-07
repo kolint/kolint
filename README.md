@@ -10,7 +10,7 @@
   <h3 align="center">Knockout Lint</h3>
 
   <p align="center">
-    Lints knockout HTML files with included TypeScript compiler and type checker
+    Lint knockout HTML files with included TypeScript compiler and type checker
     <br />
     <a href="https://github.com/knockout-lint/knockout-lint"><strong>Explore the docs »</strong></a>
     <br />
