@@ -13,13 +13,13 @@ const flat: [typeof _flat, []] = [_flat, []]
 
 /**
  * **1.** Adds newline for each chunk.
- * 
+ *
  * **2.** If *template string*, trims newlines and spaces in the start and end of string.
- * 
+ *
  * **3.** If *array with string and source nodes*, does not add new line for each chunk, just at the end.
- * 
+ *
  * **4.** If *empty*, returns a new line.
- * 
+ *
  * ```
  * 1. newline('line1', 'line2')
  * 2. newline`interface Example { ... }`
@@ -64,9 +64,8 @@ export function emit(viewPath: string, document: Document): { file: string; sour
       return new SourceNode(node.loc.first_line, node.loc.first_column, viewPath, action())
    }
 
-   if (document.viewmodelReferences.length < 1) {
-      throw new Diagnostic('no-viewmodel-reference', undefined, path.relative(process.cwd(), viewPath))
-   }
+   // if (document.viewmodelReferences.length < 1)
+   //    throw new Diagnostic('no-viewmodel-reference', undefined, path.relative(process.cwd(), viewPath))
 
    const root = new SourceNode(null, null, null)
 
@@ -106,7 +105,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
          `} from '${contextDeclarationFilePath}'`
       ),
 
-      newline([
+      newline(document.viewmodelReferences.length > 0 ? [
          // TODO: multiple import statemnets
          // TODO: Unique ViewModel names
          'import ViewModel from ',
@@ -116,7 +115,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
             viewPath,
             `'${document.viewmodelReferences[0].modulePath}'`
          )
-      ]),
+      ] : []),
 
       newline(
          `interface ${names.Types.BindingHandlerAdapter}<T> {`,
@@ -166,7 +165,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
    ] as (string | SourceNode | (() => string))[]).map(item => typeof item === 'function' ? item() : item).reduce(...flat))
 
    // T extends ko.BindingHandler<(infer U)> ? U : never;
-   // 
+   //
    const unit = root.toStringWithSourceMap({ file: 'tmp.ts' })
    const generatedCode = unit.code
    const generatedMap = unit.map.toJSON()
