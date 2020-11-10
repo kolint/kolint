@@ -115,7 +115,7 @@ function test(category: string, name: string, issue: string | undefined, express
 	try {
 		if (expression()) {
 			if (issue)
-				return void error(category, name, 'The test succeeded, but the test issued.')
+				return void error(category, name, 'The test succeeded with an assigned issue')
 
 			success(category, name)
 		}
