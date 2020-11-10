@@ -4,7 +4,7 @@
 /// <reference lib="dom" />
 
 /** Merge properties, avoids property if the same name. `U`s type members will overwrite any conflicting type members in `T`. */
-export type Overlay<T, U> = Omit<U, keyof T> & T
+export type Overlay<T, U> = Omit<U, Exclude<keyof U, keyof T>> & T
 
 /** Returns the last element in a type array [ViewModel1, ViewModel2, ViewModel3] -> ViewModel3 */
 type LastElement<Arr extends [...any]> = Arr extends [...infer U, infer T] ? T : never

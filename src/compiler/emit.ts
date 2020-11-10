@@ -95,7 +95,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
          `/* eslint-disable */`,
 
       newline
-			`import { BindingContextIdentityTransform, RootBindingContext, StandardBindingContextTransforms } from '${contextDeclarationFilePath}'`,
+			`import { BindingContextIdentityTransform, RootBindingContext, StandardBindingContextTransforms, Overlay } from '${contextDeclarationFilePath}'`,
 
       newline([
          // TODO: multiple import statemnets
@@ -110,7 +110,6 @@ export function emit(viewPath: string, document: Document): { file: string; sour
       ]),
 
 		newline(
-			'type Modify<A, B> = Omit<A, keyof B> & B',
 			'function getBindingContextFactory<K extends keyof BindingContextTransforms>(bindingHandlerName: K) {',
 			'	void bindingHandlerName',
 			'	let factory: BindingContextTransforms[K];',
@@ -240,7 +239,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
    }).filter(is).flat(1)
 
-   const bindinghandlersInterface = `interface BindingContextTransforms extends Modify<StandardBindingContextTransforms, {\n${bindinghandlers.join('\n')}\n}> { }`
+   const bindinghandlersInterface = `interface BindingContextTransforms extends Overlay<{\n${bindinghandlers.join('\n')}\n}, StandardBindingContextTransforms> { }`
 
    return imports.concat(bindinghandlersInterface)
 }
