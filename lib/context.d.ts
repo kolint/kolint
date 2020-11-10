@@ -73,10 +73,10 @@ export type MaybeSubscribable<T> = T | Subscribable<T>
 export type BindingHandlerReturnType<T> = (value: MaybeObservable<T>, pc: BindingContext) => void
 
 /** Standard for for normal binding handlers that does not control descendant bindings */
-export type BindingContextIdentityTransform = <V, Context>(value: V, ctx: Context) => Context
+export type BindingContextIdentityTransform<V> = <Context>(value: V, ctx: Context) => Context
 
 // ----------------------------------------------------------------------------
-//                 ADDITIONAL TYPES FOR BUILTIN BINDING HANDLERS               
+//                 ADDITIONAL TYPES FOR BUILTIN BINDING HANDLERS
 // ----------------------------------------------------------------------------
 
 // Additional Types for event, click, submit bindings.
@@ -86,55 +86,55 @@ type WindowEventListenerMap = {
 
 /**
  * **Binding Handlers**
- * 
- * An interface map of all binding handlers globally accessible. 
- * 
+ *
+ * An interface map of all binding handlers globally accessible.
+ *
  * ----
- * 
+ *
  * **Available Types**
- * 
+ *
  * All available types that can be used for defining binding handlers.
- * 
+ *
  * ```typescript
  * // Binding handler with value type 'T'.
  * type BindingHandler<T>
- * 
+ *
  * // Binding handler changes context, with value type 'T', returns binding
  * // context `C`.
  * type ParentBindingHandler<T, C>
- * 
+ *
  * // Binding handler 'T'. Restricts to type binding handler.
  * type CustomBindingHandler<T>
- * 
+ *
  * // Binding context with data 'T', and if 'P' inherits from 'P'.
  * type BindingContext<T, P = unknown>
- * 
+ *
  * // Merge properties, avoids property if the same name. 'U's type members
  * // will overwrite any conflicting type members in 'T'.
  * type Overlay<T, U>
- * 
+ *
  * // Corresponding ko.Observable.
  * type Observable<T>
- * 
+ *
  * // Corresponding ko.ObservableArray.
  * type ObservableArray<T>
- * 
+ *
  * // Corresponding ko.MaybeObservable.
  * type MaybeObservable<T>
- * 
+ *
  * // Corresponding ko.MaybeObservableArray.
  * type MaybeObservableArray<T>
- * 
+ *
  * // Knockout library. Use builtin observables and computeds for better type checking.
  * namespace ko
  * ```
- * 
+ *
  * ----
- * 
+ *
  * **Examples**
- * 
+ *
  * Simple examples of what binding handlers may be defined.
- * 
+ *
  * ```typescript
  * interface Examples {
  * 	count: BindingHandler<number>
@@ -183,31 +183,31 @@ export interface BindingReturnTypes {
 }
 
 export interface StandardBindingContextTransforms {
-	visible: BindingContextIdentityTransform
-	hidden: BindingContextIdentityTransform
-	html: BindingContextIdentityTransform
-	class: BindingContextIdentityTransform
-	css: BindingContextIdentityTransform
-	style: BindingContextIdentityTransform
-	attr: BindingContextIdentityTransform
-	text: BindingContextIdentityTransform
-	event: BindingContextIdentityTransform
-	click: BindingContextIdentityTransform
-	submit: BindingContextIdentityTransform
-	enable: BindingContextIdentityTransform
-	disable: BindingContextIdentityTransform
-	value: BindingContextIdentityTransform
-	textInput: BindingContextIdentityTransform
-	hasFocus: BindingContextIdentityTransform
-	checked: BindingContextIdentityTransform
-	checkedValue: BindingContextIdentityTransform
-	options: BindingContextIdentityTransform
-	selectedOptions: BindingContextIdentityTransform
-	uniqueName: BindingContextIdentityTransform
-	template: BindingContextIdentityTransform
-	component: BindingContextIdentityTransform
-	if: BindingContextIdentityTransform
-	ifnot: BindingContextIdentityTransform
+	visible: BindingContextIdentityTransform<boolean>
+	hidden: BindingContextIdentityTransform<boolean>
+	html: BindingContextIdentityTransform<string>
+	class: BindingContextIdentityTransform<string>
+	css: BindingContextIdentityTransform<string | Record<string, boolean>>
+	style: BindingContextIdentityTransform<Record<string, string>>
+	attr: BindingContextIdentityTransform<Record<string, string>>
+	text: BindingContextIdentityTransform<string>
+	event: BindingContextIdentityTransform<Record<string, () => void>>
+	click: BindingContextIdentityTransform<() => void>
+	submit: BindingContextIdentityTransform<() => void>
+	enable: BindingContextIdentityTransform<boolean>
+	disable: BindingContextIdentityTransform<boolean>
+	value: BindingContextIdentityTransform<any>
+	textInput: BindingContextIdentityTransform<string>
+	hasFocus: BindingContextIdentityTransform<any>
+	checked: BindingContextIdentityTransform<any>
+	checkedValue: BindingContextIdentityTransform<any>
+	options: BindingContextIdentityTransform<any>
+	selectedOptions: BindingContextIdentityTransform<any>
+	uniqueName: BindingContextIdentityTransform<boolean>
+	template: BindingContextIdentityTransform<any>
+	component: BindingContextIdentityTransform<string | { name: any; params: any; }>
+	if: BindingContextIdentityTransform<boolean>
+	ifnot: BindingContextIdentityTransform<boolean>
 
 	foreach: <V, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
 		V extends { data: MaybeObservableArray<infer T>; as: string } ? unknown : // TODO: Try to figure out the value of 'as' when it is statically decided. Make sure to properly dissuade the user to use the 'as'-form when we have no chance of deducing the resulting type during compile-time.

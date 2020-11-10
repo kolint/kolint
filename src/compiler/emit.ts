@@ -13,13 +13,13 @@ const flat: [typeof _flat, []] = [_flat, []]
 
 /**
  * **1.** Adds newline for each chunk.
- * 
+ *
  * **2.** If *template string*, trims newlines and spaces in the start and end of string.
- * 
+ *
  * **3.** If *array with string and source nodes*, does not add new line for each chunk, just at the end.
- * 
+ *
  * **4.** If *empty*, returns a new line.
- * 
+ *
  * ```
  * 1. newline('line1', 'line2')
  * 2. newline`interface Example { ... }`
@@ -95,14 +95,16 @@ export function emit(viewPath: string, document: Document): { file: string; sour
          `/* eslint-disable */`,
 
       newline(
-         'import {',
-         '	BindingContext,',
-         '	BindingHandler,',
-         `	BindingHandlers as ${names.Types.BuiltInBindingHandlers},`,
-         '	CustomBindingHandler,',
-         '	Overlay,',
-         '	ParentBindingHandler,',
-         '	ko',
+			'import {',
+			[
+				'BindingContext', 'BindingContextIdentityTransform', 'BindingContextRequired',
+				'BindingHandlerReturnType', 'BindingReturnTypes', 'ChildBindingContext', 'Computed',
+				'CreateSExpr', 'FirstElement', 'FlattenExpr', 'LastElement', 'MaybeComputed',
+				'MaybeObservable', 'MaybeObservableArray', 'MaybeReadonlyObservable',
+				'MaybeReadonlyObservableArray', 'MaybeSubscribable', 'Observable', 'ObservableArray',
+				'Overlay', 'PureComputed', 'ReadonlyObservable', 'ReadonlyObservableArray', 'RootBindingContext',
+				'StandardBindingContextTransforms', 'Subscribable', 'ViewModelArray', 'WindowEventListenerMap'
+			].join(',\n'),
          `} from '${contextDeclarationFilePath}'`
       ),
 
@@ -118,15 +120,24 @@ export function emit(viewPath: string, document: Document): { file: string; sour
          )
       ]),
 
+		newline(
+			'type Modify<A, B> = Omit<A, keyof B> & B',
+			'function getBindingContextFactory<K extends keyof BindingContextTransforms>(bindingHandlerName: K) {',
+			'	void bindingHandlerName',
+			'	let factory: BindingContextTransforms[K];',
+			'	return factory;',
+			'}',
+		),
+
       newline(
-         `interface ${names.Types.BindingHandlerAdapter}<T> {`,
+         `interface BindingHandlerAdapter<T> {`,
             `init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;`,
             `update?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => void;`,
          `}`
       ),
 
       newline
-         `type ${names.Types.BindingHandlerType}<T> = T extends ${names.Types.BindingHandlerAdapter}<(infer U)> ? U : never`,
+         `type BindingHandlerType<T> = T extends BindingHandlerAdapter<(infer U)> ? U : never`,
 
       // TODO: move to emit (root.add)
       emitBHImportStatements(document.bindingHandlerReferences, viewPath),
@@ -137,24 +148,12 @@ export function emit(viewPath: string, document: Document): { file: string; sour
       // 	`}`
       // ),
 
-      newline
-         `const handlers = void 0 as unknown as ${names.Types.BindingHandlers}`,
-
       newline,
-
-      newline(
-         `function getChildContext<K extends keyof ${names.Types.BindingHandlers}, T extends Parameters<${names.Types.BindingHandlers}[K]>[0], P extends BindingContext<any>>(bh: K, value: T, parentContext: P) {`,
-         '	const cb = handlers[bh] as (value: T, pc: P) => BindingContext<any> | void',
-         '	const context = cb(value, parentContext)',
-         '	if (!context) return void 0 as unknown as BindingContext<unknown>',
-         '	return context',
-         '}',
-      ),
 
       newline,
 
       newline
-         `const root_context: BindingContext<ViewModel> = undefined as any`,
+         `const root_context: RootBindingContext<ViewModel> = undefined as any`,
 
       newline,
 
@@ -166,7 +165,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
    ] as (string | SourceNode | (() => string))[]).map(item => typeof item === 'function' ? item() : item).reduce(...flat))
 
    // T extends ko.BindingHandler<(infer U)> ? U : never;
-   // 
+   //
    const unit = root.toStringWithSourceMap({ file: 'tmp.ts' })
    const generatedCode = unit.code
    const generatedMap = unit.map.toJSON()
@@ -201,10 +200,11 @@ function generateBindingStubs(bindings: Binding[], bindingContextId: string, emi
 
       // TODO: separate node preparations from sourcemap emit.
       const childBindingContextId = `context_${contextCount++}`
+      const getChildBindingContextId = `getChildContext_${contextCount++}`
       const stub = new SourceNode()
-      // const stub = `const ${childBindingContextId} = createChildContext['${childBinding.bindingHandler.name}'](${childBinding.identifierName}(${bindingContextId}), ${bindingContextId})`
       stub.add([
-         'const ', childBindingContextId, ' = getChildContext(', emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`), ',',
+			`const ${getChildBindingContextId} = getBindingContextFactory(${emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`)})\n`,
+			`const ${childBindingContextId} = ${getChildBindingContextId}(`,
          emit(childBinding.expression, () => [childBinding.identifierName, '(', bindingContextId, ')']), ', ', bindingContextId, ')\n'
       ])
 
@@ -247,11 +247,11 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
       const entries = Object.entries(ref.imports)
 
-      return entries.map(([_name, alias]) => `'${alias}': BindingHandler<BHType<bindinghandler_${alias}>>`)
+      return entries.map(([_name, alias]) => `'${alias}': BindingContextIdentityTransform<BindingHandlerType<bindinghandler_${alias}>>`)
 
    }).filter(is).flat(1)
 
-   const bindinghandlersInterface = `interface BindingHandlers extends BuiltInBindingHandlers {\n${bindinghandlers.join('\n')}\n}`
+   const bindinghandlersInterface = `interface BindingContextTransforms extends Modify<StandardBindingContextTransforms, {\n${bindinghandlers.join('\n')}\n}> { }`
 
    return imports.concat(bindinghandlersInterface)
 }
