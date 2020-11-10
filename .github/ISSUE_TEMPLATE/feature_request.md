@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: 'status: needs verification, type: feature request'
+labels: 'status: triage, type: feature request'
 assignees: ''
 
 ---
