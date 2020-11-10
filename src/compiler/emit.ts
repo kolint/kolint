@@ -94,19 +94,8 @@ export function emit(viewPath: string, document: Document): { file: string; sour
       newline
          `/* eslint-disable */`,
 
-      newline(
-			'import {',
-			[
-				'BindingContext', 'BindingContextIdentityTransform', 'BindingContextRequired',
-				'BindingHandlerReturnType', 'BindingReturnTypes', 'ChildBindingContext', 'Computed',
-				'CreateSExpr', 'FirstElement', 'FlattenExpr', 'LastElement', 'MaybeComputed',
-				'MaybeObservable', 'MaybeObservableArray', 'MaybeReadonlyObservable',
-				'MaybeReadonlyObservableArray', 'MaybeSubscribable', 'Observable', 'ObservableArray',
-				'Overlay', 'PureComputed', 'ReadonlyObservable', 'ReadonlyObservableArray', 'RootBindingContext',
-				'StandardBindingContextTransforms', 'Subscribable', 'ViewModelArray', 'WindowEventListenerMap'
-			].join(',\n'),
-         `} from '${contextDeclarationFilePath}'`
-      ),
+      newline
+			`import { BindingContextIdentityTransform, RootBindingContext, StandardBindingContextTransforms } from '${contextDeclarationFilePath}'`,
 
       newline([
          // TODO: multiple import statemnets
