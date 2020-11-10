@@ -2,7 +2,7 @@
 name: Rule proposal
 about: Propose a new rule for KO Lint
 title: ''
-labels: 'type: rule proposal, status: needs verification'
+labels: 'status: triage, type: rule proposal'
 assignees: ''
 
 ---
