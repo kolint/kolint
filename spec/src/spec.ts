@@ -113,8 +113,12 @@ function error(category: string, name: string, error: string) {
 
 function test(category: string, name: string, issue: string | undefined, expression: () => boolean) {
 	try {
-		if (expression())
+		if (expression()) {
+			if (issue)
+				return void error(category, name, 'The test succeeded with an assigned issue')
+
 			success(category, name)
+		}
 		else if (issue)
 			warn(category, name, issue)
 		else
