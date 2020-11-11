@@ -94,15 +94,16 @@ export function createProgram(): Program {
 								column: generatedStart.character
 								//bias: SourceMapConsumer.LEAST_UPPER_BOUND
 							})
-							const end = sourceMap.originalPositionFor({
-								line: generatedEnd.line + 1,
-								column: generatedEnd.character
-								//bias: SourceMapConsumer.LEAST_UPPER_BOUND
-							})
 
 							// Don't log error if the original position not exists
-							if (start.line && start.column && end.line && end.column) {
-								diagnostics.push(new Diagnostic(diag, { first_column: start.column, first_line: start.line, last_column: end.column, last_line: end.line, range: [] }))
+							if (start.line && start.column) {
+								diagnostics.push(new Diagnostic(diag, {
+									first_column: start.column + 1,
+									first_line: start.line,
+									last_column: start.column + 1 + (generatedEnd.character - generatedStart.character),
+									last_line: start.line + (generatedEnd.line - generatedStart.line),
+									range: []
+								}))
 							} else {
 								// TODO: handle internal diagnostics
 							}
