@@ -91,7 +91,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
    */
    root.add(([
 
-		newline
+      newline
          `/* eslint-disable */`,
 
       newline
