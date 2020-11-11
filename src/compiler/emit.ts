@@ -112,7 +112,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
 		newline(
 			'function getBindingContextFactory<K extends keyof BindingContextTransforms>(bindingHandlerName: K) {',
 			'	void bindingHandlerName',
-			'	let factory: BindingContextTransforms[K];',
+			'	const factory: BindingContextTransforms[K] = 0 as any;',
 			'	return factory;',
 			'}',
 		),
@@ -191,9 +191,8 @@ function generateBindingStubs(bindings: Binding[], bindingContextId: string, emi
       const getChildBindingContextId = `getChildContext_${contextCount++}`
       const stub = new SourceNode()
       stub.add([
-			`const ${getChildBindingContextId} = getBindingContextFactory(${emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`)})\n`,
-			`const ${childBindingContextId} = ${getChildBindingContextId}(`,
-         emit(childBinding.expression, () => [childBinding.identifierName, '(', bindingContextId, ')']), ', ', bindingContextId, ')\n'
+			`const ${getChildBindingContextId} = getBindingContextFactory(`, emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`), `)\n`,
+			`const ${childBindingContextId} = ${getChildBindingContextId}(`, emit(childBinding.expression, () => [childBinding.identifierName, '(', bindingContextId, ')']), ', ', bindingContextId, ')\n'
       ])
 
       bindingContextStubs.add(stub)
