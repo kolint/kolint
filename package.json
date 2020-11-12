@@ -27,6 +27,7 @@
 		"compile-parser": "node build/parser/parser-compiler.js",
 		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js",
 		"demo": "node ./demo/resources/build.js && node ./demo/build/lint.test.js",
+		"lint": "eslint src/**/*.ts spec/src/**/*.ts",
 
 		"_build-test":  "node ./spec/resources/build.js --force",
 		"_build-n-test":  "node ./spec/resources/build.js --force && node ./spec/build/spec.js",
