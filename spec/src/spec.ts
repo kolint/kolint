@@ -79,7 +79,7 @@ let correctPositionEmitCache: lint.Diagnostic[] = []
 // Do not change this unsless you know what you are doing!
 const emitTestString = '<!-- ko-viewmodel: import default from \'nothing2\' -->\n<img data-bind="test: undefined">\n<img data-bind="text: notdefined">'
 
-const compilerTests: ([string, (program: lint.Program) => Promise<string | true>, string] | [string, (program: lint.Program) => Promise<string | true>])[] = [
+const compilerTests: ([string, (program: lint.Program) => Promise<string | true> | string | true, string] | [string, (program: lint.Program) => Promise<string | true> | string | true])[] = [
 	[
 		'Correct start and end positions (import)',
 
@@ -98,7 +98,7 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 	[
 		'Correct start and end positions (binding handler)',
 
-		async () => {
+		() => {
 			const diags = correctPositionEmitCache
 
 			return (diags.length === 3 &&
@@ -110,7 +110,7 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 	[
 		'Correct start and end positions (expression)',
 
-		async () => {
+		() => {
 			const diags = correctPositionEmitCache
 
 			return (diags.length === 3 &&
@@ -186,7 +186,7 @@ function _test(category: string, name: string, issue: string | undefined, result
 		error(category, name, result)
 }
 
-function _fail(category: string, name: string, issue: string | undefined, err: any) {
+function _fail(category: string, name: string, issue: string | undefined, err: unknown) {
 	if (err instanceof Error) {
 		if (issue)
 			return warn(category, name, issue, err.stack ?? err.message)
@@ -195,8 +195,8 @@ function _fail(category: string, name: string, issue: string | undefined, err: a
 	} else if (err instanceof lint.Diagnostic) {
 		error(category, name, err.message)
 	} else {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-		const toStringErr = typeof err === 'object' && typeof err.toString === 'function' ? err.toString() : undefined
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		const toStringErr = typeof err === 'object' && typeof err?.toString === 'function' ? err.toString() : undefined
 		const forcedStringErr = typeof toStringErr === 'string' ? toStringErr : String(err)
 
 		if (issue)
@@ -220,9 +220,10 @@ for (const [name, subject, issue] of parseTests.bindingHandlerImport) {
 	test('Binding Handler Import', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
-; (async () => {
+void (async () => {
 	for (const [name, compilerTest, issue] of compilerTests) {
-		await testAsync('TypeScript Compiler', name, issue, async () => await compilerTest(lint.createProgram()))
+		const result = compilerTest(lint.createProgram())
+		await testAsync('TypeScript Compiler', name, issue, async () => result instanceof Promise ? await result : result)
 	}
 
 	console.log('')
