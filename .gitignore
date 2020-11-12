@@ -3,3 +3,4 @@ build
 temp
 lib/document-parser.js
 test/_output.ts.txt
+*.tsbuildinfo
