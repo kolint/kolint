@@ -47,6 +47,40 @@ export interface ChildBindingContext<ViewModel, ParentContext> {
 
 export type BindingContext<ViewModel = unknown, ParentContext = unknown> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentContext>
 
+export interface BindingHandler<T> {
+	init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;
+	update?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => void;
+}
+
+export interface ControlFlowBindingHandler<T> extends BindingHandler<T> {
+	transformContext(data?: unknown, parentContext?: BindingContext): object
+}
+
+/** The parent binding context to child binding context transformation (the transformation function) */
+export type BindingContextTransformation<T, ChildContext extends <Parent>(parent: Parent) => object> =
+	<ParentContext>(value: MaybeReadonlyObservable<T>, parentContext: ParentContext) =>
+		ChildContext extends <Parent>(parent: Parent) => infer R ? R : never
+
+/**
+ * Child binding context from control flow binding handler context transformation (transformContext).
+ * Requires the new data type and parent binding context
+ */
+export type ChildBindingContextTransform<T extends (...args: any[]) => any, Data, ParentContext> =
+	T extends (data?: Data, parentContext?: ParentContext) => infer R ? R : never
+
+/** The parent binding context to child binding context transformation (the transformation function) */
+export type ChildBindingContextTransformation<Handler extends ControlFlowBindingHandler<any>> =
+	<Parent>(parent: Parent) => ChildBindingContextTransform<Handler['transformContext'], BindingHandlerType<Handler>, Parent>
+
+/** The binding context transform of any bindinghandler */
+export type BindingContextTransform<Handler extends BindingHandler<any>> =
+	Handler extends ControlFlowBindingHandler<any> ?
+		BindingContextTransformation<BindingHandlerType<Handler>, ChildBindingContextTransformation<Handler>> :
+	BindingContextIdentityTransform<BindingHandlerType<Handler>>
+
+/** The type of any binding handler */
+export type BindingHandlerType<Handler extends BindingHandler<unknown>> = Handler extends BindingHandler<(infer U)> ? U : never;
+
 export interface ReadonlyObservable<T> { (): T }
 export interface Observable<T> extends ReadonlyObservable<T> { (value: T): void }
 type ReadonlyObservableArray<T> = ReadonlyObservable<T[]>

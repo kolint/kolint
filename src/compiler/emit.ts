@@ -95,7 +95,7 @@ export function emit(viewPath: string, document: Document): { file: string; sour
 			`/* eslint-disable */`,
 
 		newline
-			`import { BindingContextIdentityTransform, RootBindingContext, StandardBindingContextTransforms, Overlay, MaybeReadonlyObservable } from '${contextDeclarationFilePath}'`,
+			`import { RootBindingContext, StandardBindingContextTransforms, Overlay, BindingContextTransform } from '${contextDeclarationFilePath}'`,
 
 		newline([
 			// TODO: multiple import statemnets
@@ -115,25 +115,6 @@ export function emit(viewPath: string, document: Document): { file: string; sour
 			'	const factory: BindingContextTransforms[K] = 0 as any;',
 			'	return factory;',
 			'}',
-		),
-
-		newline(
-			`interface BindingHandler<T> {`,
-			`	init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;`,
-			`	update?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => void;`,
-			`}`,
-			``,
-			`interface ControlFlowBindingHandler<T> extends BindingHandler<T> {`,
-			`	transformContext(...argument: any[]): object`,
-			`}`,
-			``,
-			`type ContextTransform<T, Context extends <Parent>(parent: Parent) => object> = <ParentContext>(value: MaybeReadonlyObservable<T>, parentContext: ParentContext) => Context extends <Parent>(parent: Parent) => infer R ? R : never`,
-			``,
-			`type ChildContextTransform<T extends (...args: any[]) => any, I, P> = T extends (input?: I, parentContext?: P) => infer R ? R : never`,
-			``,
-			`type BindingContextTransform<Handler extends BindingHandler<any>> = Handler extends ControlFlowBindingHandler<any> ? ContextTransform<BindingHandlerType<Handler>, <Parent>(parent: Parent) => ChildContextTransform<Handler['transformContext'], BindingHandlerType<Handler>, Parent>> : BindingContextIdentityTransform<BindingHandlerType<Handler>>`,
-			``,
-			`type BindingHandlerType<T> = T extends BindingHandler<(infer U)> ? U : never;`,
 		),
 
 		// TODO: move to emit (root.add)
