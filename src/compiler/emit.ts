@@ -75,11 +75,9 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 
 	root.add(([
 
-		newline
-			`/* eslint-disable */`,
+		newline`/* eslint-disable */`,
 
-		newline
-			`import { RootBindingContext, StandardBindingContextTransforms, Overlay, BindingContextTransform } from '${contextDeclarationFilePath}'`,
+		newline`import { RootBindingContext, StandardBindingContextTransforms, Overlay, BindingContextTransform } from '${contextDeclarationFilePath}'`,
 
 		newline([
 			// TODO: multiple import statemnets
@@ -114,8 +112,7 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 
 		newline,
 
-		newline
-			`const root_context: RootBindingContext<ViewModel> = undefined as any`,
+		newline`const root_context: RootBindingContext<ViewModel> = undefined as any`,
 
 		newline,
 
@@ -143,7 +140,7 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 //#region util
 
 let contextCount = 0
-function generateBindingStubs(bindings: Binding[], bindingContextId: string, emit: (node: Node | BindingName | BindingExpression, action: () => Chunk) => SourceNode): { bindingContexts: SourceNode; bindings: SourceNode } {
+function generateBindingStubs(bindings: Binding[], bindingContextId: string, emit: (node: Node | BindingName | BindingExpression, action: () => Chunk) => SourceNode): { bindingContexts: SourceNode, bindings: SourceNode } {
 	const bindingContextStubs = new SourceNode()
 	const bindingStubs = new SourceNode()
 
