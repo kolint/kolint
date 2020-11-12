@@ -2,14 +2,15 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "lint",
-			"detail": "lint default",
-			"type": "typescript",
-			"tsconfig": "tsconfig.json",
-			"option": "watch",
+			"type": "npm",
+			"script": "watch",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 			"problemMatcher": "$tsc-watch",
-			"isBackground": true,
-			"group": "build"
+			"label": "watch",
+			"isBackground": true
 		}
 	]
 }
