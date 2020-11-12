@@ -107,7 +107,7 @@ export type MaybeSubscribable<T> = T | Subscribable<T>
 export type BindingHandlerReturnType<T> = (value: MaybeObservable<T>, pc: BindingContext) => void
 
 /** Standard for for normal binding handlers that does not control descendant bindings */
-export type BindingContextIdentityTransform<V> = <Context>(value: V, ctx: Context) => Context
+export type BindingContextIdentityTransform<V> = <Context>(value: MaybeReadonlyObservable<V>, ctx: Context) => Context
 
 // ----------------------------------------------------------------------------
 //                 ADDITIONAL TYPES FOR BUILTIN BINDING HANDLERS
@@ -123,9 +123,9 @@ export interface StandardBindingContextTransforms {
 	hidden: BindingContextIdentityTransform<boolean>
 	html: BindingContextIdentityTransform<string>
 	class: BindingContextIdentityTransform<string>
-	css: BindingContextIdentityTransform<string | Record<string, boolean>>
-	style: BindingContextIdentityTransform<Record<string, string>>
-	attr: BindingContextIdentityTransform<Record<string, string>>
+	css: BindingContextIdentityTransform<string | Record<string, MaybeReadonlyObservable<boolean>>>
+	style: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string | number>>>
+	attr: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>>
 	text: BindingContextIdentityTransform<string>
 	event: BindingContextIdentityTransform<Record<string, () => void>>
 	click: BindingContextIdentityTransform<() => void>
@@ -138,11 +138,12 @@ export interface StandardBindingContextTransforms {
 	checked: BindingContextIdentityTransform<any>
 	checkedValue: BindingContextIdentityTransform<any>
 	options: BindingContextIdentityTransform<any>
+	optionsText: BindingContextIdentityTransform<string>
 	selectedOptions: BindingContextIdentityTransform<any>
 	uniqueName: BindingContextIdentityTransform<boolean>
 	template: BindingContextIdentityTransform<any>
 	component: BindingContextIdentityTransform<string | { name: any, params: any }>
-	if: BindingContextIdentityTransform<boolean>
+	if: BindingContextIdentityTransform<unknown>
 	ifnot: BindingContextIdentityTransform<boolean>
 
 	foreach: <V, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
