@@ -52,7 +52,7 @@ This project is a lint for the [Knockout](https://knockoutjs.com/) library. The 
 ## Installation
 
 ```
-npm i -D NPM_PACKAGE_NAME
+npm i -D knockout-lint
 ```
 
 <!-- USAGE EXAMPLES -->
@@ -64,21 +64,21 @@ How to setup Knockout Lint to work locally.
 
 **Installing npm globally**
 ```
-npm i -g NPM_PACKAGE_NAME
+npm i -g knockout-lint
 ```
 
 **Running the CLI**
 
-Use `-c` or `--config` to specify a path to a config file. Default is `.kolintrc` or `.kolintrc.*`.
+~Use `-c` or `--config` to specify a path to a config file. Default is `.kolintrc` or `.kolintrc.*`.~
 
 ```
-NPM_PACKAGE_NAME views/**/*.html
+knockout-lint views/**/*.html
 ```
 
 ### Using the API
 
 ```typescript
-import * as kolint from 'NPM_PACKAGE_NAME';
+import * as kolint from 'knockout-lint';
 
 // Creates a new program, can be used with multiple files.
 const program = kolint.createProgram();
