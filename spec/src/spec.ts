@@ -195,6 +195,7 @@ function _fail(category: string, name: string, issue: string | undefined, err: a
 	} else if (err instanceof lint.Diagnostic) {
 		error(category, name, err.message)
 	} else {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const toStringErr = typeof err === 'object' && typeof err.toString === 'function' ? err.toString() : undefined
 		const forcedStringErr = typeof toStringErr === 'string' ? toStringErr : String(err)
 
