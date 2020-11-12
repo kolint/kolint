@@ -8,7 +8,6 @@
 		"@types/glob": "^7.1.3",
 		"@types/mocha": "^8.0.3",
 		"@types/node": "^14.11.8",
-		"@types/vscode": "^1.50.0",
 		"@typescript-eslint/eslint-plugin": "^4.4.0",
 		"@typescript-eslint/parser": "^4.4.0",
 		"eslint": "^7.11.0",
@@ -28,9 +27,9 @@
 		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js",
 		"demo": "node ./demo/resources/build.js && node ./demo/build/lint.test.js",
 
-		"_build-test":  "node ./spec/resources/build.js --force",
-		"_build-n-test":  "node ./spec/resources/build.js --force && node ./spec/build/spec.js",
-		"_build-demo":  "node ./demo/resources/build.js --force",
+		"_build-test": "node ./spec/resources/build.js --force",
+		"_build-n-test": "node ./spec/resources/build.js --force && node ./spec/build/spec.js",
+		"_build-demo": "node ./demo/resources/build.js --force",
 		"_build-n-demo": "node ./demo/resources/build.js --force && node ./demo/build/lint.test.js"
 	}
 }
