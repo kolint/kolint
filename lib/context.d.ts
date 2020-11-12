@@ -45,7 +45,15 @@ export interface ChildBindingContext<ViewModel, ParentContext> {
 	$rawData: MaybeObservable<ViewModel>
 }
 
-export type BindingContext = RootBindingContext<unknown> | ChildBindingContext<unknown, unknown>
+export interface UnsafeBindingContext<ViewModel> {
+	$parents: unknown[]
+	$parent?: unknown
+	$root: unknown
+	$data: ViewModel
+	$rawData: MaybeObservable<ViewModel>
+}
+
+export type BindingContext<ViewModel = unknown, ParentContext = unknown> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentContext>
 
 export interface ReadonlyObservable<T> { (): T }
 export interface Observable<T> extends ReadonlyObservable<T> { (value: T): void }
@@ -111,7 +119,7 @@ export interface StandardBindingContextTransforms {
 	if: BindingContextIdentityTransform<boolean>
 	ifnot: BindingContextIdentityTransform<boolean>
 
-	foreach: <V, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
+	foreach: <V extends object, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
 		V extends { data: MaybeObservableArray<infer T>; as: string } ? unknown : // TODO: Try to figure out the value of 'as' when it is statically decided. Make sure to properly dissuade the user to use the 'as'-form when we have no chance of deducing the resulting type during compile-time.
 		Overlay<ChildBindingContext<V, Context>, Context>
 	using: StandardBindingContextTransforms['with']
