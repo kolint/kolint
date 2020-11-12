@@ -45,14 +45,6 @@ export interface ChildBindingContext<ViewModel, ParentContext> {
 	$rawData: MaybeObservable<ViewModel>
 }
 
-export interface UnsafeBindingContext<ViewModel> {
-	$parents: unknown[]
-	$parent?: unknown
-	$root: unknown
-	$data: ViewModel
-	$rawData: MaybeObservable<ViewModel>
-}
-
 export type BindingContext<ViewModel = unknown, ParentContext = unknown> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentContext>
 
 export interface ReadonlyObservable<T> { (): T }
