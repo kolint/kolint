@@ -4,7 +4,7 @@ import { Diagnostic } from '../diagnostic'
 import { getPosFromIndex as getPositionFromOffsetInFile } from '../utils'
 import { Location } from './location'
 import { Binding, BindingName, BindingExpression } from './bindingDOM'
-import { Program, ProgramInternal } from '../program'
+import { ProgramInternal } from '../program'
 
 export class ImportStatement {
 	public isDefault = false

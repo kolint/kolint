@@ -24,6 +24,7 @@
 		"watch": "npx tsc -b . spec demo -w",
 		"test": "node ./spec/build/spec.js",
 		"demo": "node ./demo/build/lint.test.js",
+		"lint": "eslint src/**/*.ts spec/src/**/*.ts",
 		"compile-parser": "node build/parser/parser-compiler.js"
 	}
 }

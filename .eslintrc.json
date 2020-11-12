@@ -49,8 +49,24 @@
 				"allowConciseArrowFunctionExpressionsStartingWithVoid": true
 			}
 		],
+		"@typescript-eslint/member-delimiter-style": [
+			"error",
+			{
+				"multiline": {
+					"delimiter": "none",
+					"requireLast": false
+				},
+				"singleline": {
+					"delimiter": "comma",
+					"requireLast": false
+				}
+			}
+		],
+		"semi": [
+			"error",
+			"never"
+		],
 		"linebreak-style": "off",
-		"semi": [ "error", "never" ],
 		"no-unused-vars": "off",
 		"no-control-regex": "off",
 		"no-cond-assign": "off",
@@ -67,11 +83,22 @@
 		"require-await": "off",
 		"@typescript-eslint/require-await": "warn",
 		"camelcase": "off",
-		"@typescript-eslint/camelcase": "off",
-		"@typescript-eslint/member-delimiter-style": [ "error", "never" ]
+		"@typescript-eslint/camelcase": "off"
 	},
+	"overrides": [
+		{
+			"files": "spec/src/**/*.ts",
+			"parserOptions": {
+				"ecmaVersion": 2015,
+				"sourceType": "module",
+				"project": "./spec/tsconfig.json"
+			}
+		}
+	],
 	"ignorePatterns": [
-		"out",
+		"lib",
+		"build",
+		"demo",
 		"node_modules"
 	]
 }
