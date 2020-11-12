@@ -100,6 +100,14 @@ _For more information about the usage, please refer to the [Documentation](https
 <!-- ROADMAP -->
 ## Roadmap
 
+**Knockout TypeScript Decorators Support**
+
+Our team will try to focus on getting support for TypeScript decorators as soon as possible. Check out the [Knockout](https://github.com/gnaeus/knockout-decorators) Decorators project.
+
+**Knockout Support Extensions**
+
+Linting and type checking views are quite remarkable, but not if it is not convenient. Therefore one of our goals is to make in-editor support for knockout in both Visual Studio Code and Visual Studio 2019. The extensions will include lint and type checking diagnostics visible in the text editor, autocompletion, IntelliSense, automatic importation of view models and binding handlers.
+
 **Production compilation**
 
 Knockout Lint has some amazing features not used with its full potential. Knockout Lint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into JavaScript files. This has the advantages of:
