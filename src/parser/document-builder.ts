@@ -2,7 +2,7 @@ import { Node, Document, BindingName, Binding, ViewModelNode, BindingExpression,
 import { parseBindingExpression } from './compile-bindings'
 import { Location } from './location'
 import { Diagnostic, diagnostics } from '../diagnostic'
-import { Program, ProgramInternal } from '../program'
+import { ProgramInternal } from '../program'
 
 /**
  * The shared interface between the jison lexer/parser and the viewParser.
@@ -20,7 +20,7 @@ export interface YY {
 
 // Build binding tree
 export function createDocument(ast: Node[], program: ProgramInternal): Document {
-	const _ = program._internal
+	const internal = program._internal
 
 	// TODO: Remove root binding
 	const root = new Binding(new BindingName('root', undefined as unknown as Location), new BindingExpression('', undefined as unknown as Location))
@@ -33,19 +33,19 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 
 	for (const node of ast) {
 		if (node instanceof DiagNode) {
-			if (_) {
+			if (internal) {
 				if (node.enable) {
 					if (node.keys.length)
-						_.disabledDiagnostics = _.disabledDiagnostics.filter(diag => !node.keys.includes(diag))
+						internal.disabledDiagnostics = internal.disabledDiagnostics.filter(diag => !node.keys.includes(diag))
 					else {
-						_.disableAllDiagnostics = false
-						_.disabledDiagnostics = []
+						internal.disableAllDiagnostics = false
+						internal.disabledDiagnostics = []
 					}
 				} else {
 					if (node.keys.length)
-						_.disabledDiagnostics = _.disabledDiagnostics.concat(node.keys)
+						internal.disabledDiagnostics = internal.disabledDiagnostics.concat(node.keys)
 					else
-						_.disableAllDiagnostics = true
+						internal.disableAllDiagnostics = true
 				}
 			}
 			// TODO: Only disable diagnostics inside of current element block.
@@ -72,7 +72,7 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 					// TODO: parse all binding strings. not just index 0
 					const bindingData = node.bindings[0]
 					const bindings = parseBindingExpression(program, bindingData.bindingText, bindingData.location)
-					for (const binding of bindings) 
+					for (const binding of bindings)
 						binding.viewModelReference = viewmodelStack[viewmodelStack.length - 1]
 					parentBinding.childBindings.splice(-1, 0, ...bindings)
 					// TODO: If there are multiple binding properties on one row, only consider the first, but emit a warning if it controls descendants

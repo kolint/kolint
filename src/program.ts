@@ -1,6 +1,6 @@
 import { createDocument, Document, Node, parse } from './parser'
 import { Diagnostic } from './diagnostic'
-import { Compiler, emit } from './compiler';
+import { Compiler, emit } from './compiler'
 import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
 
@@ -28,9 +28,9 @@ export interface TypeScriptCompiler {
 }
 
 export interface TypeScriptCompilerEmit {
-	rawSource: string;
-	sourceMap: string;
-	source: ts.SourceFile;
+	rawSource: string
+	sourceMap: string
+	source: ts.SourceFile
 	program: ts.Program
 	service: ts.LanguageService
 	getDiagnostics(): Diagnostic[]
@@ -59,19 +59,19 @@ export function createProgram(): Program {
 			return diagnostics
 		}
 
-		parseNodes(document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Node[] {
+		public parseNodes(document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Node[] {
 			return parse(document, this, bindingNames, forceToXML)
 		}
 
-		createDocument(nodes: Node[]): Document {
+		public createDocument(nodes: Node[]): Document {
 			return createDocument(nodes, this as unknown as ProgramInternal)
 		}
 
-		parse(document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Document {
+		public parse(document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Document {
 			return createDocument(parse(document, this, bindingNames, forceToXML), this as unknown as ProgramInternal)
 		}
 
-		typescriptCompiler = {
+		public typescriptCompiler = {
 			async compile(viewFilePath: string, document: Document): Promise<TypeScriptCompilerEmit> {
 				const compiler = new Compiler(viewFilePath)
 				const template = emit(viewFilePath, document)

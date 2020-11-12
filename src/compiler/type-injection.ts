@@ -6,7 +6,7 @@ import * as ts from 'typescript'
  * @returns Type decorated version of the input
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function injectTypes(tsProgram: ts.Program, source: ts.SourceFile, template: string) {
+export default function injectTypes(tsProgram: ts.Program, source: ts.SourceFile, template: string): string {
 	const checker = tsProgram.getTypeChecker()
 
 	const modifications: { line: number, content: string }[] = []
@@ -46,6 +46,6 @@ export default function injectTypes(tsProgram: ts.Program, source: ts.SourceFile
 
 function getTypeProperties(node: ts.Node, checker: ts.TypeChecker): string[] {
 	return checker.getPropertiesOfType(checker.getTypeAtLocation(node))
-		.filter(symbol => !Boolean(symbol.valueDeclaration.modifiers?.find(modifier => modifier.kind === ts.SyntaxKind.ProtectedKeyword || modifier.kind === ts.SyntaxKind.PrivateKeyword)))
+		.filter(symbol => !symbol.valueDeclaration.modifiers?.find(modifier => modifier.kind === ts.SyntaxKind.ProtectedKeyword || modifier.kind === ts.SyntaxKind.PrivateKeyword))
 		.map(symbol => symbol.getName())
 }

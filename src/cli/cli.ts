@@ -13,14 +13,14 @@ async function main() {
 	const filepath = path.join(process.cwd(), filename)
 	const relativeFilepath = path.relative(process.cwd(), filepath)
 	const textDoc = fs.readFileSync(filepath).toString()
-	
+
 	try {
 		const program = lint.createProgram()
-	
+
 		const document = program.parse(textDoc)
-		
+
 		const typescriptEmit = await program.typescriptCompiler.compile(filepath, document)
-		
+
 		const diagnostics = new Array<lint.Diagnostic>().concat(
 			typescriptEmit.getDiagnostics(),
 			program.getDiagnostics()
@@ -35,4 +35,4 @@ async function main() {
 	}
 }
 
-main()
+void main()
