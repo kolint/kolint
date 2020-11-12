@@ -133,6 +133,7 @@ function test(category: string, name: string, issue: string | undefined, express
 			if (issue)
 				return warn(category, name, issue)
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			const _err = typeof err === 'object' && typeof err.toString === 'function' ? err.toString() : undefined
 			error(category, name, typeof _err === 'string' ? _err : String(err))
 		}

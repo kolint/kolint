@@ -1,4 +1,4 @@
-import { Document, Binding, ViewModelNode, Node, BindingName, BindingExpression, Diagnostic } from '../parser'
+import { Document, Binding, Node, BindingName, BindingExpression, Diagnostic } from '../parser'
 import { SourceNode } from 'source-map'
 import * as path from 'path'
 import { BindingHandlerImportNode } from '../parser/bindingDOM'
@@ -32,7 +32,7 @@ function newline(chunks: (string | SourceNode)[]): (string | SourceNode)[]
 function newline(strings: string[]): string
 function newline(...strings: string[]): string
 function newline(): '\n'
-function newline(...chunks: any[]): any {
+function newline(...chunks: unknown[]): unknown {
 	if (chunks.length === 0)
 		return '\n'
 	else if (chunks.length === 1) {
@@ -45,7 +45,7 @@ function newline(...chunks: any[]): any {
 		} else {
 			return chunk.join('\n') + '\n'
 		}
-	} else if (typeof chunks[0] === 'object' && 'raw' in chunks[0]) {
+	} else if (chunks[0] && typeof chunks[0] === 'object' && 'raw' in chunks[0]) {
 		const strings = chunks[0] as TemplateStringsArray
 		const values = chunks.slice(1) as string[]
 
@@ -59,7 +59,7 @@ function newline(...chunks: any[]): any {
 
 //#region emit
 
-export function emit(viewPath: string, document: Document): { file: string; sourceMap: string } {
+export function emit(viewPath: string, document: Document): { file: string, sourceMap: string } {
 	const emit = (node: Node | BindingName | BindingExpression, action: () => Chunk): SourceNode => {
 		return new SourceNode(node.loc.first_line, node.loc.first_column, viewPath, action())
 	}
@@ -73,22 +73,6 @@ export function emit(viewPath: string, document: Document): { file: string; sour
 	const contextDeclarationFilePath = path.join(__dirname, '../../lib/context').replace(/\\/g, '/')
 	const { bindingContexts, bindings: bindingStubs } = generateBindingStubs(document.bindings, 'root_context', emit)
 
-	const names = {
-		/**
-		 * Types and interface names
-		 */
-		Types: {
-			BuiltInBindingHandlers: 'BuiltInBindingHandlers',
-			BindingHandlers: 'BindingHandlers',
-			BindingHandlerType: 'BHType',
-			BindingHandlerAdapter: 'BindingHandlerAdapter'
-		}
-	}
-
-	/*
-		If a name is used more than once in the emitted code, the name should be added to names.
-		All static interfaces and types should be implemented in lib/context.d.ts.
-	*/
 	root.add(([
 
 		newline
@@ -181,7 +165,7 @@ function generateBindingStubs(bindings: Binding[], bindingContextId: string, emi
 		const getChildBindingContextId = `getChildContext_${contextCount++}`
 		const stub = new SourceNode()
 		stub.add([
-			`const ${getChildBindingContextId} = getBindingContextFactory(`, emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`), `)\n`,
+			`const ${getChildBindingContextId} = getBindingContextFactory(`, emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`), ')\n',
 			`const ${childBindingContextId} = ${getChildBindingContextId}(`, emit(childBinding.expression, () => [childBinding.identifierName, '(', bindingContextId, ')']), ', ', bindingContextId, ')\n'
 		])
 
@@ -198,7 +182,7 @@ function is<T>(value: T | undefined | null): value is T {
 }
 
 function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: string): (string | SourceNode)[] {
-	const imports = refs.map((ref, index) => {
+	const imports = refs.map(ref => {
 		if (!ref.imports) return
 
 		const entries = Object.entries(ref.imports)
@@ -219,12 +203,12 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
 	}).filter(is).flat(1)
 
-	const bindinghandlers = refs.map((ref, index) => {
+	const bindinghandlers = refs.map(ref => {
 		if (!ref.imports) return
 
 		const entries = Object.entries(ref.imports)
 
-		return entries.map(([_name, alias]) => `'${alias}': BindingContextTransform<bindinghandler_${alias}>`)
+		return entries.map(entry => entry[1]).map((alias) => `'${alias}': BindingContextTransform<bindinghandler_${alias}>`)
 
 	}).filter(is).flat(1)
 

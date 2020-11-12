@@ -90,7 +90,7 @@ export interface Computed<T> {
    (): T
    (value: T): this
 }
-export interface PureComputed<T> extends Computed<T> { }
+export type PureComputed<T> = Computed<T>
 
 export interface Subscribable<T> {
 	subscribe: (...args: any[]) => any
@@ -141,12 +141,12 @@ export interface StandardBindingContextTransforms {
 	selectedOptions: BindingContextIdentityTransform<any>
 	uniqueName: BindingContextIdentityTransform<boolean>
 	template: BindingContextIdentityTransform<any>
-	component: BindingContextIdentityTransform<string | { name: any; params: any; }>
+	component: BindingContextIdentityTransform<string | { name: any, params: any }>
 	if: BindingContextIdentityTransform<boolean>
 	ifnot: BindingContextIdentityTransform<boolean>
 
-	foreach: <V extends object, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
-		V extends { data: MaybeObservableArray<infer T>; as: string } ? unknown : // TODO: Try to figure out the value of 'as' when it is statically decided. Make sure to properly dissuade the user to use the 'as'-form when we have no chance of deducing the resulting type during compile-time.
+	foreach: <V, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
+		V extends { data: MaybeObservableArray<infer T>, as: string } ? unknown : // TODO: Try to figure out the value of 'as' when it is statically decided. Make sure to properly dissuade the user to use the 'as'-form when we have no chance of deducing the resulting type during compile-time.
 		Overlay<ChildBindingContext<V, Context>, Context>
 	using: StandardBindingContextTransforms['with']
 	with: <V extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<V>, parentContext: Context) => Overlay<ChildBindingContext<V, Context>, Context>

@@ -1,7 +1,6 @@
 import injectTypes from './type-injection'
 import * as path from 'path'
 import * as ts from 'typescript/lib/tsserverlibrary'
-import * as fs from 'fs'
 
 export class ScriptFile {
 	public version: number
@@ -11,7 +10,7 @@ export class ScriptFile {
 		this.filePath = path.join(path.parse(viewPath).dir, fileName)
 	}
 
-	static getPath(fileName: string, viewPath: string) {
+	public static getPath(fileName: string, viewPath: string): string {
 		return path.join(path.parse(viewPath).dir, fileName)
 	}
 }
@@ -61,7 +60,7 @@ export class Compiler {
 				return ts.sys.readFile(filepath, encoding)
 			},
 			resolveModuleNames(moduleNames: string[], containingFile: string, reusedNames: string[] | undefined, redirectedReference: ts.ResolvedProjectReference | undefined, options: ts.CompilerOptions): (ts.ResolvedModuleFull | undefined)[] {
-				const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), x => x, options);
+				const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), x => x, options)
 
 				const mods = moduleNames.map(moduleName => {
 					{
@@ -110,7 +109,7 @@ export class Compiler {
 		return this.service
 	}
 
-	public getSource(fileName: string) {
+	public getSource(fileName: string): { program: ts.Program, source: ts.SourceFile, path: string } {
 		const program = this.service.getProgram()
 
 		if (!program)
