@@ -23,14 +23,10 @@
 		"typescript": "^4.1.1-rc"
 	},
 	"scripts": {
-		"build": "npx tsc && npm run compile-parser",
-		"compile-parser": "node build/parser/parser-compiler.js",
-		"test": "node ./spec/resources/build.js && node ./spec/build/spec.js",
-		"demo": "node ./demo/resources/build.js && node ./demo/build/lint.test.js",
-
-		"_build-test":  "node ./spec/resources/build.js --force",
-		"_build-n-test":  "node ./spec/resources/build.js --force && node ./spec/build/spec.js",
-		"_build-demo":  "node ./demo/resources/build.js --force",
-		"_build-n-demo": "node ./demo/resources/build.js --force && node ./demo/build/lint.test.js"
+		"build": "npx tsc -b . spec demo && npm run compile-parser",
+		"watch": "npx tsc -b . spec demo -w",
+		"test": "node ./spec/build/spec.js",
+		"demo": "node ./demo/build/lint.test.js",
+		"compile-parser": "node build/parser/parser-compiler.js"
 	}
 }
