@@ -19,7 +19,7 @@
     <b>·</b>
     <a href="#roadmap">Roadmap</a>
     <b>·</b>
-    <a href="https://github.com/knockout-lint/knockout-lint/issues/new">Report Bug</a>
+    <a href="https://github.com/knockout-lint/knockout-lint/issues/new/choose">Report Bug</a>
   </p>
 </p>
 
