@@ -77,7 +77,7 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 
 		newline`/* eslint-disable */`,
 
-		newline`import { BindingContextIdentityTransform, RootBindingContext, StandardBindingContextTransforms, Overlay } from '${contextDeclarationFilePath}'`,
+		newline`import { RootBindingContext, StandardBindingContextTransforms, Overlay, BindingContextTransform } from '${contextDeclarationFilePath}'`,
 
 		newline([
 			// TODO: multiple import statemnets
@@ -98,15 +98,6 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 			'	return factory;',
 			'}',
 		),
-
-		newline(
-			'interface BindingHandlerAdapter<T> {',
-			'init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;',
-			'update?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => void;',
-			'}'
-		),
-
-		newline`type BindingHandlerType<T> = T extends BindingHandlerAdapter<(infer U)> ? U : never`,
 
 		// TODO: move to emit (root.add)
 		emitBHImportStatements(document.bindingHandlerReferences, viewPath),
@@ -214,7 +205,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
 		const entries = Object.entries(ref.imports)
 
-		return entries.map(entry => entry[1]).map((alias) => `'${alias}': BindingContextIdentityTransform<BindingHandlerType<bindinghandler_${alias}>>`)
+		return entries.map(entry => entry[1]).map((alias) => `'${alias}': BindingContextTransform<bindinghandler_${alias}>`)
 
 	}).filter(is).flat(1)
 
