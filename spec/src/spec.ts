@@ -1,4 +1,3 @@
-import { inspect } from 'util'
 import * as lint from '../../build'
 
 const parseTests = {
