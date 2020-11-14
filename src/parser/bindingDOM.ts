@@ -25,13 +25,13 @@ export class Node {
 
 /** Lint Node identifying a viewmodel module to use during type checking */
 export class ViewModelNode extends Node {
-	public constructor(loc: Location, public modulePath: string, public name?: string) {
+	public constructor(loc: Location, public modulePath: string, public isTypeof: boolean, public name?: string) {
 		super(loc, '', NodeType.Empty)
 	}
 }
 
 export class BindingHandlerImportNode extends Node {
-	public constructor(loc: Location, public modulePath: string, public imports?: Record<string, string>) {
+	public constructor(loc: Location, public modulePath: string, public imports?: Record<string, { isTypeof: boolean, value: string }>) {
 		super(loc, '', NodeType.Empty)
 	}
 }

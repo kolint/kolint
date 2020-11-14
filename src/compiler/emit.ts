@@ -79,17 +79,27 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 
 		newline`import { RootBindingContext, StandardBindingContextTransforms, Overlay, BindingContextTransform } from '${contextDeclarationFilePath}'`,
 
-		newline([
-			// TODO: multiple import statemnets
-			// TODO: Unique ViewModel names
-			'import ViewModel from ',
+		// TODO: multiple import statemnets
+		// TODO: Unique ViewModel names
+		newline(document.viewmodelReferences[0].isTypeof ? [
+			'import _ViewModel from ',
 			new SourceNode(
 				document.viewmodelReferences[0].loc.first_line,
 				document.viewmodelReferences[0].loc.first_column,
 				viewPath,
 				`'${document.viewmodelReferences[0].modulePath}'`
-			)
-		]),
+			),
+			'\ntype ViewModel = typeof _ViewModel'
+		] :
+			[
+				'import ViewModel from ',
+				new SourceNode(
+					document.viewmodelReferences[0].loc.first_line,
+					document.viewmodelReferences[0].loc.first_column,
+					viewPath,
+					`'${document.viewmodelReferences[0].modulePath}'`
+				)
+			]),
 
 		newline(
 			'function getBindingContextFactory<K extends keyof BindingContextTransforms>(bindingHandlerName: K) {',
@@ -184,19 +194,33 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
 		const entries = Object.entries(ref.imports)
 
-		if (entries.length === 1 && ['*', 'default'].includes(entries[0][0]))
+		if (entries.length === 1 && ['*', 'default'].includes(entries[0][0])) {
 
-			switch (entries[0][0]) {
-				case '*':
-					return [`import * as bindinghandler_${entries[0][1]} from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n']
+			const nodes = [
+				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].value} from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n'
+			]
 
-				case 'default':
-					return [`import bindinghandler_${entries[0][1]} from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n']
-			}
+			if (entries[0][1].isTypeof)
+				nodes.push(`type bindinghandler_${entries[0][1].value} = typeof _bindinghandler_${entries[0][1].value};\n`)
 
-		else
+			return nodes
+		} else {
 
-			return [`import { ${entries.map(([name, alias]) => `${name} as bindinghandler_${alias}`).join(', ')} } from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n']
+			const nodes = [
+				`import { ${entries.map(([name, alias]) => {
+					if (alias.isTypeof)
+						if (name === alias.value) return name
+						else return `${name} as bindinghandler_${alias.value}`
+					else return `${name} as _bindinghandler_${alias.value}`
+				}).join(', ')} } from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n'
+			]
+
+			if (entries[0][1].isTypeof)
+				nodes.push(`type bindinghandler_${entries[0][1].value} = typeof _bindinghandler_${entries[0][1].value};\n`)
+
+			return nodes
+
+		}
 
 	}).filter(is).flat(1)
 
@@ -205,7 +229,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
 		const entries = Object.entries(ref.imports)
 
-		return entries.map(entry => entry[1]).map((alias) => `'${alias}': BindingContextTransform<bindinghandler_${alias}>`)
+		return entries.map(entry => entry[1]).map(alias => `'${alias.value}': BindingContextTransform<bindinghandler_${alias.value}>`)
 
 	}).filter(is).flat(1)
 
