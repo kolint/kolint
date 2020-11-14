@@ -17,9 +17,11 @@
     <br />
     <a href="#installation">Getting Started</a>
     <b>·</b>
-    <a href="#roadmap">Roadmap</a>
-    <b>·</b>
     <a href="https://github.com/knockout-lint/knockout-lint/issues/new/choose">Report Bug</a>
+    <b>·</b>
+    <a href="https://github.com/knockout-lint/knockout-lint/blob/master/CONTRIBUTING.md">Contributing</a>
+    <b>·</b>
+    <a href="#roadmap">Roadmap</a>
   </p>
 </p>
 
