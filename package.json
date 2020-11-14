@@ -29,5 +29,19 @@
 		"demo": "node ./demo/build/lint.test.js",
 		"lint": "eslint src/**/*.ts spec/src/**/*.ts",
 		"compile-parser": "node build/parser/parser-compiler.js"
-	}
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com/"
+	},
+	"repository": {
+	  "type": "git",
+	  "url": "git+https://github.com/knockout-lint/knockout-lint.git"
+	},
+	"keywords": [ "ko", "knockout", "lint", "linter" ],
+	"author": "Elias Skogevall",
+	"license": "MIT",
+	"bugs": {
+	  "url": "https://github.com/knockout-lint/knockout-lint/issues"
+	},
+	"homepage": "https://github.com/knockout-lint/knockout-lint#readme"
 }
