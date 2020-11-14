@@ -10,7 +10,7 @@ function color(code: number): string {
 }
 
 function log(filepath: string, diagnostics: lint.Diagnostic[]) {
-	const longestMessageLength = diagnostics.sort((a, b) => a.message.length - b.message.length)?.[0]?.message.length
+	const longestMessageLength = diagnostics.reduce((a, b) => a.message.length > b.message.length ? a : b)?.message.length
 
 	for (const diag of diagnostics) {
 		if (diag.severity === lint.Severity.Off) continue
@@ -19,7 +19,7 @@ function log(filepath: string, diagnostics: lint.Diagnostic[]) {
 		const location = diag.location ? `${diag.location.first_line}:${diag.location.first_column}` : ''
 		// const link = `${path.relative(process.cwd(), filepath).replace(/^(?:\.(?:\/|\\)|)/, './').replace(/\\/g, '/')}${location}`
 
-		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`  ${location}  ${color(31)}${severity.padEnd(9, ' ')}${color(0)}${diag.message.padEnd(longestMessageLength, ' ')}  ${color(90)}${diag.code}${color(0)}`)
+		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`  ${location.padEnd(9, ' ')}${color(31)}${severity.padEnd(9, ' ')}${color(0)}${diag.message.padEnd(longestMessageLength, ' ')}  ${color(90)}${diag.code}${color(0)}`)
 	}
 }
 
@@ -51,7 +51,7 @@ async function main() {
 			const diagnostics = new Array<lint.Diagnostic>().concat(
 				typescriptEmit.getDiagnostics(),
 				program.getDiagnostics()
-			)
+			).sort((a, b) => (a.location?.first_line ?? -1) - (b.location?.first_line ?? -1))
 
 			if (diagnostics.length > 0)
 				console.log(`\n${color(90)}${filepath.replace(/\\/g, '/')}${color(0)}`)
