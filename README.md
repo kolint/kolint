@@ -12,7 +12,7 @@
   <p align="center">
     Lint knockout HTML files with included TypeScript compiler and type checker
     <br />
-    <a href="https://github.com/knockout-lint/knockout-lint/wiki"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/knockout-lint/knockout-lint/wiki"><strong>Explore the wiki »</strong></a>
     <br />
     <br />
     <a href="#installation">Getting Started</a>

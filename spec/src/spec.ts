@@ -48,7 +48,19 @@ const parseTests = {
 		[
 			'export=/star import',
 			'<!-- ko-viewmodel: import * from \'./viewmodel\' -->'
-		]
+		],
+		[
+			'Typeof default import',
+			'<!-- ko-viewmodel: import typeof default from \'./viewmodel\' -->'
+		],
+		[
+			'Typeof normal import',
+			'<!-- ko-viewmodel: import typeof viewmodel from \'./viewmodel\' -->'
+		],
+		[
+			'Typeof export=/star import',
+			'<!-- ko-viewmodel: import typeof * from \'./viewmodel\' -->'
+		],
 	],
 
 	bindingHandlerImport: [
@@ -71,6 +83,26 @@ const parseTests = {
 		[
 			'export=/star import',
 			'<!-- ko-bindinghandler: import * as bindinghandler from \'./bindinghandler\' -->'
+		],
+		[
+			'Typeof default import',
+			'<!-- ko-bindinghandler: import typeof bindinghandler from \'./bindinghandler\' -->'
+		],
+		[
+			'Typeof normal import',
+			'<!-- ko-bindinghandler: import { typeof bindinghandler } from \'./bindinghandler\' -->'
+		],
+		[
+			'Typeof normal import with additional comma',
+			'<!-- ko-bindinghandler: import { typeof bindinghandler, } from \'./bindinghandler\' -->'
+		],
+		[
+			'Typeof as import',
+			'<!-- ko-bindinghandler: import { typeof bindinghandler1 as bindinghandler } from \'./bindinghandler\' -->'
+		],
+		[
+			'Typeof export=/star import',
+			'<!-- ko-bindinghandler: import typeof * as bindinghandler from \'./bindinghandler\' -->'
 		]
 	]
 }
