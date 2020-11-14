@@ -1,0 +1,2 @@
+# Contributing
+Thank you for taking your time to contribute to this project. First off, before making a pull request be sure to have a [linked issue](https://github.com/knockout-lint/knockout-lint/issues/new/choose), here we can discuss about your idea or the bug and wether it's should be implemented, and to run `npm test` before submitting the pull request. That was it, we'll take care of versioning and formatting etc. 
