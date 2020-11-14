@@ -27,6 +27,7 @@ XMLPITEXT                         .+?(?=\?>)
 <bhimport,vmimport>"}"            return 'RBRACE'
 <bhimport,vmimport>","            return 'COMMA'
 <bhimport,vmimport>"import"       return 'IMPORT'
+<bhimport,vmimport>"typeof"       return 'TYPEOF'
 <bhimport>"as"                    return 'AS'
 <vmimport>"default"               return 'DEFAULT'
 <bhimport,vmimport>"*"            return 'STAR'
@@ -181,10 +182,12 @@ attribValue
 //#regionstart vm_import
 
 vmImportRef
-  : IMPORT vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, $vmImportSpec) }
+  : IMPORT TYPEOF vmImportSpec FROM TEXT
+    { $$ = yy.createViewRefNode(@$, $TEXT, true, $vmImportSpec) }
+  | IMPORT vmImportSpec FROM TEXT
+    { $$ = yy.createViewRefNode(@$, $TEXT, false, $vmImportSpec) }
   | TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT) }
+    { $$ = yy.createViewRefNode(@$, $TEXT, false) }
   // TODO:
   // Check for `get from` import statements which can be used as a little trick for typescript
   // files not exporting the ViewModel. e.g. "ko-viewmodel: get VM from 'path/to/file'"
@@ -215,25 +218,33 @@ bhImportSpec
   : LBRACE bhImportBlockIdentifiers RBRACE
     { $$ = $bhImportBlockIdentifiers }
   | STAR AS Ident
-    { $$ = {'*': $Ident} }
+    { $$ = { '*': { value: $Ident, isTypeof: false } } }
   | Ident
-    { $$ = {'default': $Ident} }
+    { $$ = { 'default': { value: $Ident, isTypeof: false } } }
+  | TYPEOF STAR AS Ident
+    { $$ = { '*': { value: $Ident, isTypeof: true } } }
+  | TYPEOF Ident
+    { $$ = { 'default': { value: $Ident, isTypeof: true } } }
   ;
 
 bhImportBlockIdentifiers
   : bhImportBlockIdentifiers COMMA bhImportIdentifier
-    { $$ = $bhImportBlockIdentifiers[$bhImportIdentifier[0]] = $bhImportIdentifier[1] }
+    { $$ = $bhImportBlockIdentifiers[$bhImportIdentifier[0]] = { value: $bhImportIdentifier[1], isTypeof: $bhImportIdentifier[2] } }
   | bhImportBlockIdentifiers COMMA
     { $$ = $bhImportBlockIdentifiers }
   | bhImportIdentifier
-    { $$ = {}; $$[$bhImportIdentifier[0]] = $bhImportIdentifier[1] }
+    { $$ = {}; $$[$bhImportIdentifier[0]] = { value: $bhImportIdentifier[1], isTypeof: $bhImportIdentifier[2] } }
   ;
 
 bhImportIdentifier
-  : 	Ident AS Ident
-    { $$ = [$0, $2] }
+  : Ident AS Ident
+    { $$ = [$0, $2, false] }
   |	Ident
-    { $$ = [$Ident, $Ident] }
+    { $$ = [$Ident, $Ident, false] }
+  | TYPEOF Ident AS Ident
+    { $$ = [$0, $2, true] }
+  | TYPEOF Ident
+    { $$ = [$Ident, $Ident, true] }
   ;
 
 //#regionend bh_import

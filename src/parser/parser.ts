@@ -61,8 +61,8 @@ export function parse(document: string, program: Program, bindingNames?: string[
 	const nodeParser = new documentParser.Parser<Node[]>()
 
 	const yy: YY = {
-		createViewRefNode: (loc: Location, viewRef: string, name?: string) => new ViewModelNode(loc, viewRef, name),
-		createBindingHandlerRefNode: (loc: Location, moduleIdentifier: string, names: Record<string, string>) => new BindingHandlerImportNode(loc, moduleIdentifier, names),
+		createViewRefNode: (loc: Location, viewRef: string, isTypeof: boolean, name?: string) => new ViewModelNode(loc, viewRef, isTypeof, name),
+		createBindingHandlerRefNode: (loc: Location, moduleIdentifier: string, names: Record<string, { isTypeof: boolean, value: string }>) => new BindingHandlerImportNode(loc, moduleIdentifier, names),
 		createStartNode: (loc: Location, key: string) => new Node(loc, key, NodeType.Start),
 		createEndNode: (loc: Location, key: string) => new Node(loc, key, NodeType.End),
 		createEmptyNode: (loc: Location, key: string) => new Node(loc, key, NodeType.Empty),
