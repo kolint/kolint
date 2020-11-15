@@ -32,6 +32,17 @@ const parseTests = {
 		]
 	],
 
+	bindings: [
+		[
+			'key: value',
+			'<div data-bind="key: value"></div>\n<img data-bind="key: value">'
+		],
+		[
+			'key_value',
+			'<div data-bind="key_value"></div>\n<img data-bind="key_value">'
+		]
+	],
+
 	viewModelImport: [
 		[
 			'Shorthand syntax for default',
@@ -242,6 +253,10 @@ const program = lint.createProgram()
 
 for (const [name, subject, issue] of parseTests.tag) {
 	test('Tag', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+}
+
+for (const [name, subject, issue] of parseTests.bindings) {
+	test('Bindings', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
 for (const [name, subject, issue] of parseTests.viewModelImport) {
