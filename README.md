@@ -47,7 +47,7 @@
 This project is a lint for the [Knockout](https://knockoutjs.com/) library. The lint includes the features to lint both the HTML and the Knockout bindings and compile and type check the bindings with the [TypeScript Compiler API][ts-compiler-api]. We mainly focus on keeping the lint fast to lint and type check. That is why we use our own parser for HTML only to parse the necessary nodes.
 
 ### Built with
-  - [acorn][acorn] - A small, fast, JavaScript-based JavaScript parser <!--[meriyah][meriyah] - A 100% compliant, self-hosted javascript parser. Supports ES2020 syntax.-->
+  - [meriyah][meriyah] - A 100% compliant, self-hosted javascript parser. Supports ES2020 syntax.
   - [TypeScript Compiler API][ts-compiler-api] - Superset of JavaScript that compiles to clean JavaScript output.
   - [jison][jison] - Generates bottom-up parsers in JavaScript. Its API is similar to Bison's.
 
@@ -125,7 +125,6 @@ _See the [open issues](https://github.com/knockout-lint/knockout-lint/issues) fo
 
 [ts-compiler-api]: https://github.com/Microsoft/TypeScript/wiki/Using-the-Compiler-API
 [meriyah]: https://github.com/meriyah/meriyah
-[acorn]: https://github.com/acornjs/acorn
 [jison]: https://github.com/zaach/jison
 [product-screenshot]: images/screenshot.png
 
