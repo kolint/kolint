@@ -1,10 +1,10 @@
 /** This file is deprecated. It is here just for reference while implementing all rules for the new parser infrastructure. */
 import * as meriyah from 'meriyah'
-import { Diagnostic } from '../diagnostic'
 import { getPosFromIndex as getPositionFromOffsetInFile } from '../utils'
 import { Location } from './location'
 import { Binding, BindingName, BindingExpression } from './bindingDOM'
 import { ProgramInternal } from '../program'
+import { Diagnostic } from '../diagnostic'
 
 export class ImportStatement {
 	public isDefault = false
@@ -49,7 +49,26 @@ interface PropertyNode extends meriyah.ESTree.Property {
 	}
 }
 
-function parseDataBind(data: string): Property[] | undefined {
+
+interface ParseError extends SyntaxError {
+	index: number
+	line: number
+	column: number
+	description: string
+}
+
+function isParserError(err: unknown): err is ParseError {
+	const _err = err as Record<string, unknown>
+
+	return _err !== null && _err !== undefined &&
+		typeof _err === 'object' &&
+		typeof _err.index === 'number' &&
+		typeof _err.line === 'number' &&
+		typeof _err.column === 'number' &&
+		typeof _err.description === 'string'
+}
+
+function parseDataBind(program: ProgramInternal, data: string, loc: Location): Property[] | undefined {
 	let tree: meriyah.ESTree.Program
 
 	try {
@@ -60,6 +79,15 @@ function parseDataBind(data: string): Property[] | undefined {
 			lexical: true
 		})
 	} catch (err) {
+		if (isParserError(err))
+			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', {
+				first_line: err.line,
+				first_column: err.column,
+				last_column: loc.last_column,
+				last_line: loc.last_line,
+				range: [err.line, loc.range[1]]
+			}, err.message))
+
 		return
 	}
 
@@ -105,12 +133,11 @@ function getRelativeLocation(data: string, loc: Location, startOffset: number, e
 	}
 }
 
-export function parseBindingExpression(_: ProgramInternal, data: string, loc: Location): Binding[] {
-	const properties = parseDataBind(data)
+export function parseBindingExpression(program: ProgramInternal, data: string, loc: Location): Binding[] {
+	const properties = parseDataBind(program, data, loc)
 	const bindings: Binding[] = []
 
 	if (!properties) {
-		void _._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc))
 		return []
 	}
 
