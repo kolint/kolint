@@ -105,6 +105,8 @@ doctype
 comment
   : CSTag commentText CETag
     { $$=null }
+  | CSTag CETag
+    { $$=null }
   | CSTag VIEW_REF vmImportRef CETag
     { $$ = $vmImportRef }
   | CSTag BIND_REF bhImportRef CETag
