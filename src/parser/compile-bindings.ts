@@ -121,7 +121,7 @@ export function parseBindingExpression(_: ProgramInternal, data: string, loc: Lo
 		// Adjust for the two extra characters added during parsing.
 		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
 		if (!(propertyRange.start && propertyRange.end))
-			throw new Error('Start and end must be defined.')
+			continue
 
 		const identifier = property.node.key
 
