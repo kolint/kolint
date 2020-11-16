@@ -35,12 +35,12 @@ export class Diagnostic {
 	public severity: Severity
 	public filepath: string | undefined
 
-	public constructor(diagnostic: DiagnosticDescription | ts.Diagnostic | string, public location?: Location, ...args: string[]) {
+	public constructor(diagnostic: DiagnosticDescription | ts.Diagnostic | keyof typeof diagnostics, public location?: Location, ...args: string[]) {
 		if (typeof diagnostic === 'string') {
 			let diag: DiagnosticDescription
 
 			if (diagnostic in diagnostics)
-				diag = diagnostics[diagnostic as keyof typeof diagnostics]
+				diag = diagnostics[diagnostic]
 			else
 				throw new Error(`${diagnostic} is not a valid diagnostics`)
 
@@ -85,15 +85,23 @@ export interface DiagnosticDescription {
 	message: string
 }
 
+interface DiagnosticSpecification {
+	code: string
+	message: string
+	arguments?: readonly string[]
+}
+
 /* eslint-disable-next-line */
-export const diagnostics = {
+export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecification>) => a)({
 	'multiple-context-bindings': {
 		code: prefix(1),
-		message: 'Only one of [$0], can control descendant bindings. Separate into distinct elements.'
+		message: 'Only one of [$0], can control descendant bindings. Separate into distinct elements.',
+		arguments: [ '$0' ] as const
 	},
 	'no-viewmodel-reference': {
 		code: prefix(2),
-		message: 'Missing ViewModel reference in file $0'
+		message: 'Missing ViewModel reference in file $0',
+		arguments: [ '$0' ] as const
 	},
 	'multiple-comment-bindings': {
 		code: prefix(3),
@@ -101,7 +109,8 @@ export const diagnostics = {
 	},
 	'javascript-syntax-error': {
 		code: prefix(4),
-		message: 'JavaScript syntax error.'
+		message: 'Syntax error: $0.',
+		arguments: [ '$0' ] as const
 	},
 	'could-not-find-viewmodel': {
 		code: prefix(5),
@@ -131,4 +140,4 @@ export const diagnostics = {
 		code: prefix(11),
 		message: 'Can not find dependency knockout.'
 	}
-}
+})

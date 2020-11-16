@@ -1,10 +1,10 @@
 /** This file is deprecated. It is here just for reference while implementing all rules for the new parser infrastructure. */
-import * as acorn from 'acorn'
-import { Diagnostic } from '../diagnostic'
+import * as meriyah from 'meriyah'
 import { getPosFromIndex as getPositionFromOffsetInFile } from '../utils'
 import { Location } from './location'
 import { Binding, BindingName, BindingExpression } from './bindingDOM'
 import { ProgramInternal } from '../program'
+import { Diagnostic } from '../diagnostic'
 
 export class ImportStatement {
 	public isDefault = false
@@ -34,41 +34,82 @@ export function isParentBinding(binding: Binding): boolean {
 }
 
 interface Property {
-	node: TreeNode
+	node: PropertyNode
 	expression: string
 }
 
-interface TreeNode extends acorn.Node {
-	[key: string]: any // eslint-disable-line @typescript-eslint/no-explicit-any
+interface PropertyNode extends meriyah.ESTree.Property {
+	value: meriyah.ESTree.Property['value'] & {
+		start: number
+		end: number
+	}
+	key: meriyah.ESTree.Identifier & {
+		start: number
+		end: number
+	}
 }
 
-function parseDataBind(data: string): Property[] | undefined {
-	// TODO: type acorn node
-	let tree: TreeNode // eslint-disable-line @typescript-eslint/no-explicit-any
+
+interface ParseError extends SyntaxError {
+	index: number
+	line: number
+	column: number
+	description: string
+}
+
+function isParserError(err: unknown): err is ParseError {
+	const _err = err as Record<string, unknown>
+
+	return _err !== null && _err !== undefined &&
+		typeof _err === 'object' &&
+		typeof _err.index === 'number' &&
+		typeof _err.line === 'number' &&
+		typeof _err.column === 'number' &&
+		typeof _err.description === 'string'
+}
+
+function parseDataBind(program: ProgramInternal, data: string, loc: Location): Property[] | undefined {
+	let tree: meriyah.ESTree.Program
 
 	try {
-		tree = acorn.parse(`({${data}})`)
+		tree = meriyah.parse(`({${data}})`, {
+			ranges: true,
+			loc: true,
+			raw: true,
+			lexical: true
+		})
 	} catch (err) {
+		if (isParserError(err))
+			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', {
+				first_line: err.line,
+				first_column: err.column,
+				last_column: loc.last_column,
+				last_line: loc.last_line,
+				range: [err.line, loc.range[1]]
+			}, err.message))
+
 		return
 	}
 
-	/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	if (!tree.body || !tree.body[0] || !tree.body[0].expression?.properties) return
+	if (tree.body.length !== 1)
+		return
 
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	const treeProperties = tree.body[0].expression.properties
+	const expressionStatement = tree.body[0]
+	if (expressionStatement.type !== 'ExpressionStatement') return
 
-	const properties: Property[] = []
+	const objectExpression = expressionStatement.expression
+	if (objectExpression.type !== 'ObjectExpression') return
 
-	for (const property of treeProperties) {
-		properties.push({
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			expression: data.substring(property.value.start - 2, property.value.end - 2),
-			node: property
-		})
+	function isProperty(property: meriyah.ESTree.ObjectLiteralElementLike): property is PropertyNode {
+		return property.type === 'Property' && property.value.start !== undefined && property.value.end !== undefined && property.key.start !== undefined && property.key.end !== undefined && property.key.type === 'Identifier'
 	}
-	/* eslint-enable @typescript-eslint/no-unsafe-assignment */
+
+	const properties = objectExpression.properties
+		.filter(isProperty)
+		.map<Property>(node => ({
+			expression: data.substring((node.value.start ?? 0) - 2, (node.value.end ?? 0) - 2),
+			node: node
+		}))
 
 	return properties
 }
@@ -93,30 +134,24 @@ function getRelativeLocation(data: string, loc: Location, startOffset: number, e
 }
 
 export function parseBindingExpression(program: ProgramInternal, data: string, loc: Location): Binding[] {
-	const properties = parseDataBind(data)
+	const properties = parseDataBind(program, data, loc)
 	const bindings: Binding[] = []
 
-	if (!properties) {
-		program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc))
+	if (!properties)
 		return []
-	}
 
 	for (const property of properties) {
 		// TODO: bind variables to context (rewrite property names to include $data or $context)
 		// (property: string) => property in $data ? `$data.${property}` : property in $context ? `$context.${property}` : --emitError--
 
 		// Adjust for the two extra characters added during parsing.
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
 		if (!(propertyRange.start && propertyRange.end))
-			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression.'))
+			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression'))
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const identifier = property.node.key
 
-		//		const propertyValue = data.substring(property.node.start-2, property.node.end)
 		const binding = new Binding(
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			new BindingName(property.node.key.name, getRelativeLocation(data, loc, identifier.start - 2, identifier.end - 2)),
 			new BindingExpression(property.expression, getRelativeLocation(data, loc, propertyRange.start, propertyRange.end)))
 		bindings.push(binding)
