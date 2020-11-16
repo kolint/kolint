@@ -75,10 +75,10 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 
 	const viewmodelImportModulePath = new SourceNode(
 		// modulePath is a string and can therefore not be multiline
-		document.viewmodelReferences[0].loc.first_line,
-		document.viewmodelReferences[0].loc.last_column - (document.viewmodelReferences[0].modulePath.length + 1),
+		document.viewmodelReferences[0].modulePath.location.first_line,
+		document.viewmodelReferences[0].modulePath.location.first_column - 1,
 		viewPath,
-		`'${document.viewmodelReferences[0].modulePath}'`
+		`'${document.viewmodelReferences[0].modulePath.value}'`
 	)
 
 	root.add(([
@@ -193,7 +193,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 		if (entries.length === 1 && ['*', 'default'].includes(entries[0][0])) {
 
 			const nodes = [
-				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].value} from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n'
+				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].value} from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
 			]
 
 			if (entries[0][1].isTypeof)
@@ -208,7 +208,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 						if (name === alias.value) return name
 						else return `${name} as bindinghandler_${alias.value}`
 					else return `${name} as _bindinghandler_${alias.value}`
-				}).join(', ')} } from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n'
+				}).join(', ')} } from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
 			]
 
 			if (entries[0][1].isTypeof)
