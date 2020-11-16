@@ -83,9 +83,10 @@ function parseDataBind(program: ProgramInternal, data: string, loc: Location): P
 			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', {
 				first_line: err.line,
 				first_column: err.column,
+				// Error end position is not implemeted yet (meriyah/meriyah#156)
 				last_column: loc.last_column,
 				last_line: loc.last_line,
-				range: [err.line, loc.range[1]]
+				range: [err.index, loc.range[1]]
 			}, err.message))
 
 		return
