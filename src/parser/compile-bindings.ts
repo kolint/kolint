@@ -109,7 +109,7 @@ export function parseBindingExpression(_: ProgramInternal, data: string, loc: Lo
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
 		if (!(propertyRange.start && propertyRange.end))
-			continue
+			throw new Error('Start and end must be defined.')
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const identifier = property.node.key
