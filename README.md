@@ -1,25 +1,25 @@
-<!-- [![LICENSE - MIT](https://img.shields.io/github/license/knockout-lint/knockout-lint.svg?style=flat-square)](https://github.com/knockout-lint/knockout-lint/blob/master/LICENSE) -->
+<!-- [![LICENSE - MIT](https://img.shields.io/github/license/kolint/kolint.svg?style=flat-square)](https://github.com/kolint/kolint/blob/master/LICENSE) -->
 
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/knockout-lint/knockout-lint">
+  <a href="https://github.com/kolint/kolint">
     <img src="assets/logo.png" alt="Logo" width="72">
   </a>
 
-  <h3 align="center">Knockout Lint</h3>
+  <h3 align="center">KOLint</h3>
 
   <p align="center">
     Lint knockout HTML files with included TypeScript compiler and type checker
     <br />
-    <a href="https://github.com/knockout-lint/knockout-lint/wiki"><strong>Explore the wiki »</strong></a>
+    <a href="https://github.com/kolint/kolint/wiki"><strong>Explore the wiki »</strong></a>
     <br />
     <br />
     <a href="#installation">Getting Started</a>
     <b>·</b>
-    <a href="https://github.com/knockout-lint/knockout-lint/issues/new/choose">Report Bug</a>
+    <a href="https://github.com/kolint/kolint/issues/new/choose">Report Bug</a>
     <b>·</b>
-    <a href="https://github.com/knockout-lint/knockout-lint/blob/master/CONTRIBUTING.md">Contributing</a>
+    <a href="https://github.com/kolint/kolint/blob/master/CONTRIBUTING.md">Contributing</a>
     <b>·</b>
     <a href="#roadmap">Roadmap</a>
   </p>
@@ -60,7 +60,7 @@ npm i -D knockout-lint
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-How to setup Knockout Lint to work locally.
+How to setup KOLint to work locally.
 
 ### Using the CLI
 
@@ -95,7 +95,7 @@ const tsOut = program.typescriptCompiler.compile(/* document path */, document);
 const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());
 ```
 
-_For more information about the usage, please refer to the [Documentation](https://github.com/knockout-lint/knockout-lint/wiki)._
+_For more information about the usage, please refer to the [Documentation](https://github.com/kolint/kolint/wiki)._
 
 
 
@@ -112,16 +112,16 @@ Linting and type checking views are quite remarkable, but not if it is not conve
 
 **Production compilation**
 
-Knockout Lint has some amazing features not used with its full potential. Knockout Lint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into JavaScript files. This has the advantages of:
+KOLint has some amazing features not used with its full potential. KOLint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into JavaScript files. This has the advantages of:
 
 1. Security — hackers will have a harder time getting any useful information from the bindings. Also, if using knockout 3.x or below, the code will not have to be evaluated.
 
 2. Performance — knockout will not have to parse the JavaScript and bindings or evaluate them.
 
-_See the [open issues](https://github.com/knockout-lint/knockout-lint/issues) for a list of proposed features and known issues_
+_See the [open issues](https://github.com/kolint/kolint/issues) for a list of proposed features and known issues_
 
 <!-- omit in toc -->
-###### This project is licensed under the MIT license. Go to [license](https://github.com/knockout-lint/knockout-lint/blob/master/LICENSE).
+###### This project is licensed under the MIT license. Go to [license](https://github.com/kolint/kolint/blob/master/LICENSE).
 
 [ts-compiler-api]: https://github.com/Microsoft/TypeScript/wiki/Using-the-Compiler-API
 [meriyah]: https://github.com/meriyah/meriyah
