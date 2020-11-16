@@ -92,12 +92,12 @@ function getRelativeLocation(data: string, loc: Location, startOffset: number, e
 	}
 }
 
-export function parseBindingExpression(_: ProgramInternal, data: string, loc: Location): Binding[] {
+export function parseBindingExpression(program: ProgramInternal, data: string, loc: Location): Binding[] {
 	const properties = parseDataBind(data)
 	const bindings: Binding[] = []
 
 	if (!properties) {
-		void _._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc))
+		program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc))
 		return []
 	}
 
@@ -109,7 +109,7 @@ export function parseBindingExpression(_: ProgramInternal, data: string, loc: Lo
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
 		if (!(propertyRange.start && propertyRange.end))
-			continue
+			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression.'))
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const identifier = property.node.key
