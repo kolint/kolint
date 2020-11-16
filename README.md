@@ -60,7 +60,7 @@ npm i -D knockout-lint
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-How to setup KOLint to work locally.
+**Note!** If you want to learn about the syntax used in views. Please refer to [the wiki](https://github.com/kolint/kolint/wiki).
 
 ### Using the CLI
 
