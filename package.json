@@ -35,13 +35,13 @@
 	},
 	"repository": {
 	  "type": "git",
-	  "url": "git+https://github.com/knockout-lint/knockout-lint.git"
+	  "url": "git+https://github.com/kolint/kolint.git"
 	},
 	"keywords": [ "ko", "knockout", "lint", "linter" ],
 	"author": "Elias Skogevall",
 	"license": "MIT",
 	"bugs": {
-	  "url": "https://github.com/knockout-lint/knockout-lint/issues"
+	  "url": "https://github.com/kolint/kolint/issues"
 	},
-	"homepage": "https://github.com/knockout-lint/knockout-lint#readme"
+	"homepage": "https://github.com/kolint/kolint#readme"
 }
