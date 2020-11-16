@@ -73,6 +73,14 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 	const contextDeclarationFilePath = path.join(__dirname, '../../lib/context').replace(/\\/g, '/')
 	const { bindingContexts, bindings: bindingStubs } = generateBindingStubs(document.bindings, 'root_context', emit)
 
+	const viewmodelImportModulePath = new SourceNode(
+		// modulePath is a string and can therefore not be multiline
+		document.viewmodelReferences[0].loc.first_line,
+		document.viewmodelReferences[0].loc.last_column - (document.viewmodelReferences[0].modulePath.length + 1),
+		viewPath,
+		`'${document.viewmodelReferences[0].modulePath}'`
+	)
+
 	root.add(([
 
 		newline`/* eslint-disable */`,
@@ -82,23 +90,11 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 		// TODO: multiple import statemnets
 		// TODO: Unique ViewModel names
 		newline(document.viewmodelReferences[0].isTypeof ? [
-			'import _ViewModel from ',
-			new SourceNode(
-				document.viewmodelReferences[0].loc.first_line,
-				document.viewmodelReferences[0].loc.first_column,
-				viewPath,
-				`'${document.viewmodelReferences[0].modulePath}'`
-			),
-			'\ntype ViewModel = typeof _ViewModel'
+			'import _ViewModel from ', viewmodelImportModulePath, '\n',
+			'type ViewModel = typeof _ViewModel\n'
 		] :
 			[
-				'import ViewModel from ',
-				new SourceNode(
-					document.viewmodelReferences[0].loc.first_line,
-					document.viewmodelReferences[0].loc.first_column,
-					viewPath,
-					`'${document.viewmodelReferences[0].modulePath}'`
-				)
+				'import ViewModel from ', viewmodelImportModulePath, '\n'
 			]),
 
 		newline(
