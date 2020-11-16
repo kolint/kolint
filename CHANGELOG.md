@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Switched from Acorn to Meriyah
 
+### Fixed
+- Fixed exception when no expession in binding #83
+
 ## [0.0.2] - 2020-11-13
 ### Added
 - package.json description
