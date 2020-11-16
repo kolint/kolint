@@ -8,7 +8,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/kolint/kolint">
-    <img src="assets/logo.png" alt="Logo" width="72">
+    <img src="https://github.com/kolint/kolint/assets/logo.png" alt="Logo" width="72">
   </a>
 
   <h3 align="center">KOLint</h3>
