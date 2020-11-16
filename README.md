@@ -1,4 +1,8 @@
-<!-- [![LICENSE - MIT](https://img.shields.io/github/license/kolint/kolint.svg?style=flat-square)](https://github.com/kolint/kolint/blob/master/LICENSE) -->
+[![npm - knockout-lint](https://img.shields.io/badge/npm-knockout--lint-red?style=flat-square)](https://www.npmjs.com/package/knockout-lint)
+[![GitHub - kolint](https://img.shields.io/badge/GitHub-kolint-blue?style=flat-square)](https://github.com/kolint/kolint)
+[![LICENSE - MIT](https://img.shields.io/github/license/kolint/kolint.svg?style=flat-square)](https://github.com/kolint/kolint/blob/master/LICENSE)
+[![npm - downloads](https://img.shields.io/npm/dw/knockout-lint?style=flat-square)](https://www.npmjs.com/package/knockout-lint)
+[![npm - version](https://img.shields.io/npm/v/knockout-lint?style=flat-square)](https://github.com/kolint/kolint/releases)
 
 <!-- PROJECT LOGO -->
 <br />
