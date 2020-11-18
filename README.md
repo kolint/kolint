@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/55445591f0a1422484fba50da71aef79)](https://app.codacy.com/gh/kolint/kolint?utm_source=github.com&utm_medium=referral&utm_content=kolint/kolint&utm_campaign=Badge_Grade_Settings)
 [![npm - knockout-lint](https://img.shields.io/badge/npm-knockout--lint-red?style=flat-square)](https://www.npmjs.com/package/knockout-lint)
 [![GitHub - kolint](https://img.shields.io/badge/GitHub-kolint-blue?style=flat-square)](https://github.com/kolint/kolint)
 [![LICENSE - MIT](https://img.shields.io/github/license/kolint/kolint.svg?style=flat-square)](https://github.com/kolint/kolint/blob/master/LICENSE)
@@ -64,7 +65,7 @@ npm i -D knockout-lint
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-**Note!** If you want to learn about the syntax used in views. Please refer to [the wiki](https://github.com/kolint/kolint/wiki).
+**Note!** If you want to learn about the syntax used in views. Please refer to [the wiki](https://github.com/kolint/kolint/wiki) on GitHub.
 
 ### Using the CLI
 
