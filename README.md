@@ -100,6 +100,9 @@ const tsOut = program.typescriptCompiler.compile(/* document path */, document);
 const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());
 ```
 
+### View Syntax
+Please refer to [the wiki](https://github.com/kolint/kolint/wiki) on GitHub.
+
 _For more information about the usage, please refer to the [Documentation](https://github.com/kolint/kolint/wiki)._
 
 
