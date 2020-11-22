@@ -186,33 +186,43 @@ function is<T>(value: T | undefined | null): value is T {
 
 function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: string): (string | SourceNode)[] {
 	const imports = refs.map(ref => {
+		function getModulePathNode() {
+			return new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\''])
+		}
+
 		if (!ref.imports) return
 
-		const entries = Object.entries(ref.imports.value)
+		const imports = ref.imports.value
 
-		if (entries.length === 1 && ['*', 'default'].includes(entries[0][0])) {
+		if (imports.length === 1 && ['*', 'default'].includes(imports[0].alias.value)) {
+
+			// Import is a grammar keyword use import0
+			const import0 = imports[0]
 
 			const nodes = [
-				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].name.value} from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
+				`import ${import0.alias.value === '*' ? '* as' : ''}${import0.isTypeof ? '_' : ''}bindinghandler_${import0.name.value} from `, getModulePathNode(), ';\n'
 			]
 
-			if (entries[0][1].isTypeof)
-				nodes.push(`type bindinghandler_${entries[0][1].name.value} = typeof _bindinghandler_${entries[0][1].name.value};\n`)
+			if (import0.isTypeof)
+				nodes.push(`type bindinghandler_${import0.name.value} = typeof _bindinghandler_${import0.alias.value};\n`)
 
 			return nodes
 		} else {
 
+			const importExpressions = imports.map(cimport => {
+				if (cimport.isTypeof)
+					if (cimport.name.value === cimport.alias.value) return cimport.name.value
+					else return `${cimport.name.value} as bindinghandler_${cimport.alias.value}`
+				else return `${cimport.name.value} as _bindinghandler_${cimport.alias.value}`
+			})
+
 			const nodes = [
-				`import { ${entries.map(([name, alias]) => {
-					if (alias.isTypeof)
-						if (name === alias.name.value) return name
-						else return `${name} as bindinghandler_${alias.name.value}`
-					else return `${name} as _bindinghandler_${alias.name.value}`
-				}).join(', ')} } from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
+				`import { ${importExpressions.join(', ')} } from `, getModulePathNode(), ';\n'
 			]
 
-			if (entries[0][1].isTypeof)
-				nodes.push(`type bindinghandler_${entries[0][1].name.value} = typeof _bindinghandler_${entries[0][1].name.value};\n`)
+			for (const cimport of imports)
+				if (cimport.isTypeof)
+					nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.name.value};\n`)
 
 			return nodes
 

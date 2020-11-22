@@ -225,9 +225,9 @@ bhImportSpec
   | Ident
     { $$ = { name: yy.ident($0, @0), alias: 'default', isTypeof: false } }
   | TYPEOF STAR AS Ident
-    { $$ = { name: yy.ident($2, @2), alias: '*', isTypeof: true } }
+    { $$ = { name: yy.ident($3, @3), alias: '*', isTypeof: true } }
   | TYPEOF Ident
-    { $$ = { name: yy.ident($0, @0), alias: 'default', isTypeof: true } }
+    { $$ = { name: yy.ident($1, @1), alias: 'default', isTypeof: true } }
   ;
 
 bhImportBlockIdentifiers
