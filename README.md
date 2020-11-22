@@ -8,7 +8,7 @@
   <h3 align="center">KOLint</h3>
 
   <p align="center">
-    Lint knockout HTML files with included TypeScript compiler and type checker
+    <strong>TypeScript</strong> type check Knockout HTML files using view models
     <br />
     <a href="https://github.com/kolint/kolint/wiki"><strong>Explore the wiki »</strong></a>
     <br />
