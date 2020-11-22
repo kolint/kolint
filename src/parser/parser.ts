@@ -77,7 +77,7 @@ export class YY {
 		return new DiagNode(loc, keys, enable)
 	}
 
-	public bindingNames = this._bindingNames ?? ['data-bind']
+	public bindingNames = this._bindingNames.concat(['data-bind'])
 
 	public constructor(private _bindingNames: string[]) { }
 }
