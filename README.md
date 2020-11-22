@@ -1,10 +1,3 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/55445591f0a1422484fba50da71aef79)](https://app.codacy.com/gh/kolint/kolint?utm_source=github.com&utm_medium=referral&utm_content=kolint/kolint&utm_campaign=Badge_Grade_Settings)
-[![npm - knockout-lint](https://img.shields.io/badge/npm-knockout--lint-red?style=flat-square)](https://www.npmjs.com/package/knockout-lint)
-[![GitHub - kolint](https://img.shields.io/badge/GitHub-kolint-blue?style=flat-square)](https://github.com/kolint/kolint)
-[![LICENSE - MIT](https://img.shields.io/github/license/kolint/kolint.svg?style=flat-square)](https://github.com/kolint/kolint/blob/master/LICENSE)
-[![npm - downloads](https://img.shields.io/npm/dw/knockout-lint?style=flat-square)](https://www.npmjs.com/package/knockout-lint)
-[![npm - version](https://img.shields.io/npm/v/knockout-lint?style=flat-square)](https://github.com/kolint/kolint/releases)
-
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
@@ -28,6 +21,15 @@
     <b>·</b>
     <a href="#roadmap">Roadmap</a>
   </p>
+</p>
+
+<p align="center">
+<a href="https://github.com/kolint/kolint/releases"><img src="https://img.shields.io/npm/v/knockout-lint?style=flat-square" alt="npm - version"></a>
+<a href="https://app.codacy.com/gh/kolint/kolint?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kolint/kolint&amp;utm_campaign=Badge_Grade_Settings"><img src="https://api.codacy.com/project/badge/Grade/55445591f0a1422484fba50da71aef79" alt="Codacy Badge"></a>
+<a href="https://www.npmjs.com/package/knockout-lint"><img src="https://img.shields.io/badge/npm-knockout--lint-red?style=flat-square" alt="npm - knockout-lint"></a>
+<a href="https://github.com/kolint/kolint"><img src="https://img.shields.io/badge/GitHub-kolint-blue?style=flat-square" alt="GitHub - kolint"></a>
+<a href="https://github.com/kolint/kolint/blob/master/LICENSE"><img src="https://img.shields.io/github/license/kolint/kolint.svg?style=flat-square" alt="LICENSE - MIT"></a>
+<a href="https://www.npmjs.com/package/knockout-lint"><img src="https://img.shields.io/npm/dw/knockout-lint?style=flat-square" alt="npm - downloads"></a>
 </p>
 
 <br>
