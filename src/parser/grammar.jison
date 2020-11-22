@@ -185,11 +185,11 @@ attribValue
 
 vmImportRef
   : IMPORT TYPEOF vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, true, $vmImportSpec) }
+    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), true, $vmImportSpec) }
   | IMPORT vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, false, $vmImportSpec) }
+    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false, $vmImportSpec) }
   | TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, false) }
+    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false) }
   // TODO:
   // Check for `get from` import statements which can be used as a little trick for typescript
   // files not exporting the ViewModel. e.g. "ko-viewmodel: get VM from 'path/to/file'"
@@ -209,7 +209,7 @@ vmImportSpec
 
 bhImportRef
   : IMPORT bhImportSpec FROM TEXT
-    { $$ = yy.createBindingHandlerRefNode(@$, $TEXT, $bhImportSpec) }
+    { $$ = yy.createBindingHandlerRefNode(@$, yy.ident($TEXT, @TEXT), yy.ident($bhImportSpec, @bhImportSpec)) }
 
     // TODO:
     // Check for `get from` import statements which can be used as a little trick for typescript
@@ -218,35 +218,36 @@ bhImportRef
 
 bhImportSpec
   : LBRACE bhImportBlockIdentifiers RBRACE
+  // Don't export as ident because we are unable to do it below. Do it in referneces instead.
     { $$ = $bhImportBlockIdentifiers }
   | STAR AS Ident
-    { $$ = { '*': { value: $Ident, isTypeof: false } } }
+    { $$ = { name: yy.ident($2, @2), alias: '*', isTypeof: false } }
   | Ident
-    { $$ = { 'default': { value: $Ident, isTypeof: false } } }
+    { $$ = { name: yy.ident($0, @0), alias: 'default', isTypeof: false } }
   | TYPEOF STAR AS Ident
-    { $$ = { '*': { value: $Ident, isTypeof: true } } }
+    { $$ = { name: yy.ident($2, @2), alias: '*', isTypeof: true } }
   | TYPEOF Ident
-    { $$ = { 'default': { value: $Ident, isTypeof: true } } }
+    { $$ = { name: yy.ident($0, @0), alias: 'default', isTypeof: true } }
   ;
 
 bhImportBlockIdentifiers
   : bhImportBlockIdentifiers COMMA bhImportIdentifier
-    { $$ = $bhImportBlockIdentifiers[$bhImportIdentifier[0]] = { value: $bhImportIdentifier[1], isTypeof: $bhImportIdentifier[2] } }
+    { $$ = $bhImportBlockIdentifiers.concat(yy.ident($2, @2)) }
   | bhImportBlockIdentifiers COMMA
-    { $$ = $bhImportBlockIdentifiers }
+    { $$ = $0 }
   | bhImportIdentifier
-    { $$ = {}; $$[$bhImportIdentifier[0]] = { value: $bhImportIdentifier[1], isTypeof: $bhImportIdentifier[2] } }
+    { $$ = [yy.ident($0, @0)] }
   ;
 
 bhImportIdentifier
   : Ident AS Ident
-    { $$ = [$0, $2, false] }
+    { $$ = { name: yy.ident($0, @0), alias: yy.ident($2, @2), isTypeof: false } }
   |	Ident
-    { $$ = [$Ident, $Ident, false] }
+    { $$ = { name: yy.ident($0, @0), alias: yy.ident($0, @0), isTypeof: false } }
   | TYPEOF Ident AS Ident
-    { $$ = [$0, $2, true] }
+    { $$ = { name: yy.ident($0, @0), alias: yy.ident($2, @2), isTypeof: true } }
   | TYPEOF Ident
-    { $$ = [$Ident, $Ident, true] }
+    { $$ = { name: yy.ident($0, @0), alias: yy.ident($0, @0), isTypeof: true } }
   ;
 
 //#regionend bh_import

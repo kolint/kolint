@@ -73,6 +73,14 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 	const contextDeclarationFilePath = path.join(__dirname, '../../lib/context').replace(/\\/g, '/')
 	const { bindingContexts, bindings: bindingStubs } = generateBindingStubs(document.bindings, 'root_context', emit)
 
+	const viewmodelImportModulePath = new SourceNode(
+		// modulePath is a string and can therefore not be multiline
+		document.viewmodelReferences[0].modulePath.location.first_line,
+		document.viewmodelReferences[0].modulePath.location.first_column - 1,
+		viewPath,
+		`'${document.viewmodelReferences[0].modulePath.value}'`
+	)
+
 	root.add(([
 
 		newline`/* eslint-disable */`,
@@ -82,23 +90,11 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 		// TODO: multiple import statemnets
 		// TODO: Unique ViewModel names
 		newline(document.viewmodelReferences[0].isTypeof ? [
-			'import _ViewModel from ',
-			new SourceNode(
-				document.viewmodelReferences[0].loc.first_line,
-				document.viewmodelReferences[0].loc.first_column,
-				viewPath,
-				`'${document.viewmodelReferences[0].modulePath}'`
-			),
-			'\ntype ViewModel = typeof _ViewModel'
+			'import _ViewModel from ', viewmodelImportModulePath, '\n',
+			'type ViewModel = typeof _ViewModel\n'
 		] :
 			[
-				'import ViewModel from ',
-				new SourceNode(
-					document.viewmodelReferences[0].loc.first_line,
-					document.viewmodelReferences[0].loc.first_column,
-					viewPath,
-					`'${document.viewmodelReferences[0].modulePath}'`
-				)
+				'import ViewModel from ', viewmodelImportModulePath, '\n'
 			]),
 
 		newline(
@@ -192,16 +188,16 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 	const imports = refs.map(ref => {
 		if (!ref.imports) return
 
-		const entries = Object.entries(ref.imports)
+		const entries = Object.entries(ref.imports.value)
 
 		if (entries.length === 1 && ['*', 'default'].includes(entries[0][0])) {
 
 			const nodes = [
-				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].value} from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n'
+				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].name.value} from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
 			]
 
 			if (entries[0][1].isTypeof)
-				nodes.push(`type bindinghandler_${entries[0][1].value} = typeof _bindinghandler_${entries[0][1].value};\n`)
+				nodes.push(`type bindinghandler_${entries[0][1].name.value} = typeof _bindinghandler_${entries[0][1].name.value};\n`)
 
 			return nodes
 		} else {
@@ -209,14 +205,14 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 			const nodes = [
 				`import { ${entries.map(([name, alias]) => {
 					if (alias.isTypeof)
-						if (name === alias.value) return name
-						else return `${name} as bindinghandler_${alias.value}`
-					else return `${name} as _bindinghandler_${alias.value}`
-				}).join(', ')} } from `, new SourceNode(ref.loc.first_line, ref.loc.first_column, sourcePath, ['\'', ref.modulePath, '\'']), ';\n'
+						if (name === alias.name.value) return name
+						else return `${name} as bindinghandler_${alias.name.value}`
+					else return `${name} as _bindinghandler_${alias.name.value}`
+				}).join(', ')} } from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
 			]
 
 			if (entries[0][1].isTypeof)
-				nodes.push(`type bindinghandler_${entries[0][1].value} = typeof _bindinghandler_${entries[0][1].value};\n`)
+				nodes.push(`type bindinghandler_${entries[0][1].name.value} = typeof _bindinghandler_${entries[0][1].name.value};\n`)
 
 			return nodes
 
@@ -227,9 +223,9 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 	const bindinghandlers = refs.map(ref => {
 		if (!ref.imports) return
 
-		const entries = Object.entries(ref.imports)
+		const entries = Object.entries(ref.imports.value)
 
-		return entries.map(entry => entry[1]).map(alias => `'${alias.value}': BindingContextTransform<bindinghandler_${alias.value}>`)
+		return entries.map(entry => entry[1]).map(alias => `'${alias.name.value}': BindingContextTransform<bindinghandler_${alias.name.value}>`)
 
 	}).filter(is).flat(1)
 

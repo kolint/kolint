@@ -1,7 +1,6 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
-import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode } from './bindingDOM'
-import { YY } from './document-builder'
+import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode, IdentifierNode, BindingHandlerImport } from './bindingDOM'
 import { Program } from '../program'
 
 const selfClosingNodeNames = [
@@ -47,6 +46,47 @@ function transformSelfClosingNodes(ast: Node[]): void {
 }
 
 /**
+ * The shared values between the jison lexer/parser and the viewParser.
+ */
+export class YY {
+	public createViewRefNode = (location: Location, modulePath: IdentifierNode<string>, isTypeof: boolean, name?: IdentifierNode<string>): ViewModelNode => {
+		return new ViewModelNode(location, modulePath, isTypeof, name)
+	}
+
+	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, names: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
+		return new BindingHandlerImportNode(location, modulePath, names)
+	}
+
+	public createStartNode = (loc: Location, key: string): Node => {
+		return new Node(loc, key, NodeType.Start)
+	}
+
+	public createEndNode = (loc: Location, key: string): Node => {
+		return new Node(loc, key, NodeType.End)
+	}
+
+	public createEmptyNode = (loc: Location, key: string): Node => {
+		return new Node(loc, key, NodeType.Empty)
+	}
+
+	public createBindingData = (loc: Location, data: string): BindingData => {
+		return new BindingData(loc, data)
+	}
+
+	public createDiagNode = (loc: Location, keys: string[], enable: boolean): DiagNode => {
+		return new DiagNode(loc, keys, enable)
+	}
+
+	public ident = <T>(value: T, loc: Location): IdentifierNode<T> => {
+		return new IdentifierNode(value, loc)
+	}
+
+	public bindingNames = this._bindingNames.concat(['data-bind'])
+
+	public constructor(private _bindingNames: string[]) { }
+}
+
+/**
  * Parse raw HTML or XML knockout view.
  *
  * XML documents are automatically identified if the document has a XML declaration, otherwise the document is identifed as HTML.
@@ -60,18 +100,7 @@ export function parse(document: string, program: Program, bindingNames?: string[
 
 	const nodeParser = new documentParser.Parser<Node[]>()
 
-	const yy: YY = {
-		createViewRefNode: (loc: Location, viewRef: string, isTypeof: boolean, name?: string) => new ViewModelNode(loc, viewRef, isTypeof, name),
-		createBindingHandlerRefNode: (loc: Location, moduleIdentifier: string, names: Record<string, { isTypeof: boolean, value: string }>) => new BindingHandlerImportNode(loc, moduleIdentifier, names),
-		createStartNode: (loc: Location, key: string) => new Node(loc, key, NodeType.Start),
-		createEndNode: (loc: Location, key: string) => new Node(loc, key, NodeType.End),
-		createEmptyNode: (loc: Location, key: string) => new Node(loc, key, NodeType.Empty),
-		createBindingData: (loc: Location, data: string) => new BindingData(loc, data),
-		createDiagNode: (loc: Location, keys: string[], enable: boolean) => new DiagNode(loc, keys, enable),
-		bindingNames: bindingNames ?? ['data-bind']
-	}
-
-	nodeParser.yy = yy
+	nodeParser.yy = new YY(bindingNames ?? [])
 
 	nodeParser.lexer.options.ranges = true
 
