@@ -233,9 +233,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 	const bindinghandlers = refs.map(ref => {
 		if (!ref.imports) return
 
-		const entries = Object.entries(ref.imports.value)
-
-		return entries.map(entry => entry[1]).map(alias => `'${alias.name.value}': BindingContextTransform<bindinghandler_${alias.name.value}>`)
+		return ref.imports.value.map(alias => `'${alias.name.value}': BindingContextTransform<bindinghandler_${alias.name.value}>`)
 
 	}).filter(is).flat(1)
 
