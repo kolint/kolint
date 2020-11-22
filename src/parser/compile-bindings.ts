@@ -138,9 +138,8 @@ export function parseBindingExpression(program: ProgramInternal, data: string, l
 	const properties = parseDataBind(program, data, loc)
 	const bindings: Binding[] = []
 
-	if (!properties) {
+	if (!properties)
 		return []
-	}
 
 	for (const property of properties) {
 		// TODO: bind variables to context (rewrite property names to include $data or $context)
@@ -149,7 +148,7 @@ export function parseBindingExpression(program: ProgramInternal, data: string, l
 		// Adjust for the two extra characters added during parsing.
 		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
 		if (!(propertyRange.start && propertyRange.end))
-			throw new Error('Start and end must be defined.')
+			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression'))
 
 		const identifier = property.node.key
 

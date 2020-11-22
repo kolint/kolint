@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fixed exception on empty comment #84
+- Fixed exception when no expession in binding #83
 - Fixed incorrect viewmodel import mapping #58
 
 ## [0.0.2] - 2020-11-13
