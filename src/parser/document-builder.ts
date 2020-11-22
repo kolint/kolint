@@ -11,8 +11,10 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 	// TODO: Remove root binding
 	const root = new Binding(new BindingName('root', undefined as unknown as Location), new BindingExpression('', undefined as unknown as Location))
 	const bindingStack: Binding[] = [root]
-	const viewmodelStack: ViewModelNode[] = [new ViewModelNode({ first_column: 0, first_line: 0, last_column: 0, last_line: 0, range: [0, 0] }, undefined as any, false)]
-	const bindinghandlersStack: BindingHandlerImportNode[] = [new BindingHandlerImportNode({ first_column: 0, first_line: 0, last_column: 0, last_line: 0, range: [0, 0] }, undefined as any)]
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const viewmodelStack: ViewModelNode[] = [new ViewModelNode(undefined as any, undefined as any, undefined as any)]
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const bindinghandlersStack: BindingHandlerImportNode[] = [new BindingHandlerImportNode(undefined as any, undefined as any, undefined as any)]
 	const nodeStack: Node[] = []
 	const viewmodels: ViewModelNode[] = []
 	const bindinghandlers: BindingHandlerImportNode[] = []

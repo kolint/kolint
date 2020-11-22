@@ -135,8 +135,7 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 			diags[0].location?.first_column === 40 && diags[0].location?.last_column === 50 &&
 			diags[0].location?.first_line === 1 && diags[0].location?.last_line === 1) ||
 			'Invalid start and end positions'
-		},
-		'https://github.com/kolint/kolint/issues/58'
+		}
 	],
 	[
 		'Correct start and end positions (binding handler)',

@@ -1,4 +1,4 @@
-import { YY } from '../src/parser/document-builder'
+import { YY } from '../src/parser/parser'
 
 export interface GrammarConfig {
 	lex: { rules: (string | string[])[][] }
