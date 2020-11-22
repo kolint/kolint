@@ -185,11 +185,11 @@ attribValue
 
 vmImportRef
   : IMPORT TYPEOF vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, true, $vmImportSpec) }
+    { $$ = yy.createViewRefNode(@$, $TEXT, @TEXT, true, $vmImportSpec) }
   | IMPORT vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, false, $vmImportSpec) }
+    { $$ = yy.createViewRefNode(@$, $TEXT, @TEXT, false, $vmImportSpec) }
   | TEXT
-    { $$ = yy.createViewRefNode(@$, $TEXT, false) }
+    { $$ = yy.createViewRefNode(@$, $TEXT, @TEXT, false) }
   // TODO:
   // Check for `get from` import statements which can be used as a little trick for typescript
   // files not exporting the ViewModel. e.g. "ko-viewmodel: get VM from 'path/to/file'"
@@ -209,7 +209,7 @@ vmImportSpec
 
 bhImportRef
   : IMPORT bhImportSpec FROM TEXT
-    { $$ = yy.createBindingHandlerRefNode(@$, $TEXT, $bhImportSpec) }
+    { $$ = yy.createBindingHandlerRefNode(@$, $TEXT, @TEXT, $bhImportSpec) }
 
     // TODO:
     // Check for `get from` import statements which can be used as a little trick for typescript
