@@ -34,4 +34,10 @@ jobs:
       uses: codacy/codacy-coverage-reporter-action@master
       with:
         project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        coverage-reports: codacy_analysis.xml      
+        coverage-reports: codacy_analysis.xml
+    
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2.0.6
+      with:
+        # Artifact name
+        name: output # optional
