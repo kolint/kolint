@@ -1,0 +1,30 @@
+name: Codacy
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  Scan:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm ci
+    - name: Codacy Analysis
+      uses: codacy/codacy-analysis-cli-action@master
+      with:
+        project-token: a927c013ae4b4447876fdc899da49f59
+        max-allowed-issues: 500
+
