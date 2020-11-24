@@ -26,5 +26,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
     - name: Codacy Analysis CLI
-      uses: codacy/codacy-analysis-cli-action@master
+      uses: codacy/codacy-analysis-cli-action@maste
+      with:
+        api-token: a927c013ae4b4447876fdc899da49f59
 
