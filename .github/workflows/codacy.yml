@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Clean Install
+    - name: Checkout
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
