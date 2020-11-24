@@ -10,7 +10,7 @@ on:
     branches: [ master ]
 
 jobs:
-  scan:
+  Scan:
 
     runs-on: ubuntu-latest
 
@@ -20,13 +20,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build ${{ matrix.node-version }}
+    - name: Clean Install
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - name: Codacy Analysis CLI
-      uses: codacy/codacy-analysis-cli-action@maste
+    - name: Codacy Analysis
+      uses: codacy/codacy-analysis-cli-action@master
       with:
         api-token: a927c013ae4b4447876fdc899da49f59
 
