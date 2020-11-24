@@ -30,7 +30,6 @@ jobs:
         max-allowed-issues: 500
         output: codacy_analysis.yml
 
-    - uses: actions/checkout@master
     - name: Codacy Analysis Report
       uses: codacy/codacy-coverage-reporter-action@master
       with:
