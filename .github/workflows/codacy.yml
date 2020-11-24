@@ -22,9 +22,17 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - name: Codacy Analysis
+      
+    - name: Codacy Analysis Generation
       uses: codacy/codacy-analysis-cli-action@master
       with:
-        project-token: a927c013ae4b4447876fdc899da49f59
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
         max-allowed-issues: 500
+        output: codacy_analysis.yml
 
+    - uses: actions/checkout@master
+    - name: Codacy Analysis Report
+      uses: codacy/codacy-coverage-reporter-action@master
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: codacy_analysis.xml      
