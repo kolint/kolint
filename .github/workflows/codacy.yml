@@ -28,5 +28,5 @@ jobs:
     - name: Codacy Analysis
       uses: codacy/codacy-analysis-cli-action@master
       with:
-        api-token: a927c013ae4b4447876fdc899da49f59
+        project-token: a927c013ae4b4447876fdc899da49f59
 
