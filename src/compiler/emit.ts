@@ -186,33 +186,44 @@ function is<T>(value: T | undefined | null): value is T {
 
 function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: string): (string | SourceNode)[] {
 	const imports = refs.map(ref => {
+		function getModulePathNode() {
+			return new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\''])
+		}
+
 		if (!ref.imports) return
 
-		const entries = Object.entries(ref.imports)
+		const imports = ref.imports.value
 
-		if (entries.length === 1 && ['*', 'default'].includes(entries[0][0])) {
+		if (imports.length === 1 && ['*', 'default'].includes(imports[0].alias.value)) {
+			// Single import
+
+			const cimport = imports[0]
 
 			const nodes = [
-				`import ${entries[0][0] === '*' ? '* as' : ''}${entries[0][1].isTypeof ? '_' : ''}bindinghandler_${entries[0][1].value} from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
+				`import ${cimport.alias.value === '*' ? '* as' : ''}${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.name.value} from `, getModulePathNode(), ';\n'
 			]
 
-			if (entries[0][1].isTypeof)
-				nodes.push(`type bindinghandler_${entries[0][1].value} = typeof _bindinghandler_${entries[0][1].value};\n`)
+			if (cimport.isTypeof)
+				nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.alias.value};\n`)
 
 			return nodes
 		} else {
+			// Mutliple imports
+
+			const importExpressions = imports.map(cimport => {
+				if (cimport.isTypeof)
+					if (cimport.name.value === cimport.alias.value) return cimport.name.value
+					else return `${cimport.name.value} as bindinghandler_${cimport.alias.value}`
+				else return `${cimport.name.value} as _bindinghandler_${cimport.alias.value}`
+			})
 
 			const nodes = [
-				`import { ${entries.map(([name, alias]) => {
-					if (alias.isTypeof)
-						if (name === alias.value) return name
-						else return `${name} as bindinghandler_${alias.value}`
-					else return `${name} as _bindinghandler_${alias.value}`
-				}).join(', ')} } from `, new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\'']), ';\n'
+				`import { ${importExpressions.join(', ')} } from `, getModulePathNode(), ';\n'
 			]
 
-			if (entries[0][1].isTypeof)
-				nodes.push(`type bindinghandler_${entries[0][1].value} = typeof _bindinghandler_${entries[0][1].value};\n`)
+			for (const cimport of imports)
+				if (cimport.isTypeof)
+					nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.name.value};\n`)
 
 			return nodes
 
@@ -223,10 +234,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 	const bindinghandlers = refs.map(ref => {
 		if (!ref.imports) return
 
-		const entries = Object.entries(ref.imports)
-
-		return entries.map(entry => entry[1]).map(alias => `'${alias.value}': BindingContextTransform<bindinghandler_${alias.value}>`)
-
+		return ref.imports.value.map(alias => `'${alias.name.value}': BindingContextTransform<bindinghandler_${alias.name.value}>`)
 	}).filter(is).flat(1)
 
 	const bindinghandlersInterface = `interface BindingContextTransforms extends Overlay<{\n${bindinghandlers.join('\n')}\n}, StandardBindingContextTransforms> { }`

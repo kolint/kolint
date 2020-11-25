@@ -1,6 +1,6 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
-import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode, IdentifierNode } from './bindingDOM'
+import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode, IdentifierNode, BindingHandlerImport } from './bindingDOM'
 import { Program } from '../program'
 
 const selfClosingNodeNames = [
@@ -49,12 +49,12 @@ function transformSelfClosingNodes(ast: Node[]): void {
  * The shared values between the jison lexer/parser and the viewParser.
  */
 export class YY {
-	public createViewRefNode = (location: Location, modulePath: string, modulePathLoc: Location, isTypeof: boolean, name?: string): ViewModelNode => {
-		return new ViewModelNode(location, new IdentifierNode(modulePath, modulePathLoc), isTypeof, name)
+	public createViewRefNode = (location: Location, modulePath: IdentifierNode<string>, isTypeof: boolean, name?: IdentifierNode<string>): ViewModelNode => {
+		return new ViewModelNode(location, modulePath, isTypeof, name)
 	}
 
-	public createBindingHandlerRefNode = (loc: Location, modulePath: string, modulePathLoc: Location, names: Record<string, { isTypeof: boolean, value: string }>): BindingHandlerImportNode => {
-		return new BindingHandlerImportNode(loc, new IdentifierNode(modulePath, modulePathLoc), names)
+	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, names: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
+		return new BindingHandlerImportNode(location, modulePath, names)
 	}
 
 	public createStartNode = (loc: Location, key: string): Node => {
@@ -75,6 +75,10 @@ export class YY {
 
 	public createDiagNode = (loc: Location, keys: string[], enable: boolean): DiagNode => {
 		return new DiagNode(loc, keys, enable)
+	}
+
+	public ident = <T>(value: T, loc: Location): IdentifierNode<T> => {
+		return new IdentifierNode(value, loc)
 	}
 
 	public bindingNames = this._bindingNames.concat(['data-bind'])
