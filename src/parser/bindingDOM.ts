@@ -25,13 +25,19 @@ export class Node {
 
 /** Lint Node identifying a viewmodel module to use during type checking */
 export class ViewModelNode extends Node {
-	public constructor(location: Location, public modulePath: IdentifierNode<string>, public isTypeof: boolean, public name?: string) {
+	public constructor(location: Location, public modulePath: IdentifierNode<string>, public isTypeof: boolean, public name?: IdentifierNode<string>) {
 		super(location, '', NodeType.Empty)
 	}
 }
 
+export interface BindingHandlerImport {
+	isTypeof: boolean
+	name: IdentifierNode<string>
+	alias: IdentifierNode<string>
+}
+
 export class BindingHandlerImportNode extends Node {
-	public constructor(loc: Location, public modulePath: IdentifierNode<string>, public imports?: Record<string, { isTypeof: boolean, value: string }>) {
+	public constructor(loc: Location, public modulePath: IdentifierNode<string>, public imports?: IdentifierNode<BindingHandlerImport[]>) {
 		super(loc, '', NodeType.Empty)
 	}
 }
