@@ -12,23 +12,12 @@ type LastElement<Arr extends [...any]> = Arr extends [...infer U, infer T] ? T :
 /** Returns the first element in a type array [ViewModel1, ViewModel2, ViewModel3] -> ViewModel1 */
 type FirstElement<Arr extends [...any]> = Arr[0]
 
-/** Flatten an S-expression. Example [A, [B, [C, []]]] -> [A, B, C] */
-type FlattenExpr<T> =
-	T extends [infer U, infer V] ? [U, ...FlattenExpr<V>] :
-	T extends [infer U] ? T :
+export type ContextChain<BC extends BindingContext<any, any>> =
+	BC extends ChildBindingContext<infer V, BindingContext<any>> ? [V, ...BC['$parents']] :
+	BC extends RootBindingContext<infer V> ? [V] :
 	[]
 
-/** Used to signal type argument error */
-type BindingContextRequired = 'Argument must be a Binding Context'
-
-/** Create an S-Expression from a BindinContext-hierarchy.
- * Example: ChildBindingContext<A, ChildBindingContext<B, RootBindingContext<C>>> -> [A, [B, [C, []]]] */
-type CreateSExpr<BC> =
-	BC extends ChildBindingContext<infer V, infer U> ? [V, CreateSExpr<U>] :
-	BC extends RootBindingContext<infer V> ? [V] :
-	BindingContextRequired;
-
-type ViewModelArray<BC> = FlattenExpr<CreateSExpr<BC>>
+export type BindingContext<ViewModel extends any, ParentBinding extends BindingContext<any, any> | null = null> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentBinding> | BindingOverlay<ViewModel, ParentBinding>
 
 export interface RootBindingContext<ViewModel> {
 	$parents: []
@@ -37,15 +26,15 @@ export interface RootBindingContext<ViewModel> {
 	$rawData: MaybeObservable<ViewModel>
 }
 
-export interface ChildBindingContext<ViewModel, ParentContext> {
-	$parents: ViewModelArray<ParentContext>
-	$parent: FirstElement<ViewModelArray<ParentContext>>
-	$root: LastElement<[ViewModel, ...ViewModelArray<ParentContext>]>
+export interface ChildBindingContext<ViewModel, ParentContext extends BindingContext<any, {}>> {
+	$parents: ContextChain<ParentContext>
+	$parent: FirstElement<ContextChain<ParentContext>>
+	$root: LastElement<[ViewModel, ...ContextChain<ParentContext>]>
 	$data: ViewModel
 	$rawData: MaybeObservable<ViewModel>
 }
 
-export type BindingContext<ViewModel = unknown, ParentContext = unknown> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentContext>
+type BindingOverlay<Obj extends Record<string, any>, OriginalBindingContext extends BindingContext<any>> = Overlay<Obj, OriginalBindingContext>
 
 export interface BindingHandler<T> {
 	init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;
@@ -53,7 +42,7 @@ export interface BindingHandler<T> {
 }
 
 export interface ControlFlowBindingHandler<T> extends BindingHandler<T> {
-	transformContext(data?: unknown, parentContext?: BindingContext): object
+	transformContext(data?: unknown, parentContext?: BindingContext<any, {}>): object
 }
 
 /** The parent binding context to child binding context transformation (the transformation function) */
@@ -111,8 +100,8 @@ type BindingContextIdentityTransform<V> = <Context>(value: MaybeReadonlyObservab
 // ----------------------------------------------------------------------------
 
 // Additional Types for event, click, submit bindings.
-type WindowEventListenerMap = {
-	[key in keyof WindowEventMap]: (event: WindowEventMap[key]) => any
+type WindowEventCallbacks = {
+	[key in keyof WindowEventMap]?: (data: any, event: WindowEventMap[key]) => any
 }
 
 export interface StandardBindingContextTransforms {
@@ -122,14 +111,18 @@ export interface StandardBindingContextTransforms {
 	class: BindingContextIdentityTransform<string>
 	css: BindingContextIdentityTransform<string | Record<string, MaybeReadonlyObservable<boolean>>>
 	style: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>>
-	attr: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>>
+	attr: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>> // TODO: Create types for the standard attributes
 	text: BindingContextIdentityTransform<string>
-	event: BindingContextIdentityTransform<Record<string, () => void>>
-	click: BindingContextIdentityTransform<() => void>
-	submit: BindingContextIdentityTransform<() => void>
+	event: BindingContextIdentityTransform<WindowEventCallbacks>
+	click: BindingContextIdentityTransform<(data: any, event: MouseEvent) => void>
+	submit: BindingContextIdentityTransform<(form: HTMLFormElement) => void>
 	enable: BindingContextIdentityTransform<boolean>
 	disable: BindingContextIdentityTransform<boolean>
 	value: BindingContextIdentityTransform<any>
+	// Use this definition if the function can be guaranteed to return const string. Revisit
+	// valueUpdate: BindingContextIdentityTransform<'input' | 'keyup' | 'keypress' | 'afterkeydown'>
+	valueUpdate: BindingContextIdentityTransform<string>
+	valueAllowUnset: BindingContextIdentityTransform<boolean>
 	textInput: BindingContextIdentityTransform<string>
 	hasFocus: BindingContextIdentityTransform<any>
 	checked: BindingContextIdentityTransform<any>
@@ -143,10 +136,24 @@ export interface StandardBindingContextTransforms {
 	if: BindingContextIdentityTransform<unknown>
 	ifnot: BindingContextIdentityTransform<boolean>
 
-	foreach: <V, Context extends BindingContext>(value: MaybeReadonlyObservableArray<V>, parentContext: Context) =>
-		V extends { data: MaybeObservableArray<infer T>, as: string } ? unknown : // TODO: Try to figure out the value of 'as' when it is statically decided. Make sure to properly dissuade the user to use the 'as'-form when we have no chance of deducing the resulting type during compile-time.
-		Overlay<ChildBindingContext<V, Context>, Context>
+	// TODO: Use this code instead when const string types are supported by typescript!
+	// The generic type As should NEVER be used. It exists to keep the const string type. (https://github.com/microsoft/TypeScript/issues/30680)
+	// foreach: <Value extends MaybeReadonlyObservableArray<Data> | MaybeReadonlyObservable<{ data: Data, as: As }>, Data, Context extends BindingContext, As extends string>(value: Value, parentContext: Context) =>
+	// 	Value extends { data: MaybeObservableArray<infer T>, as: string } ?
+	// 		Overlay<Record<Value['as'], T>, Context> :
+	// 		Overlay<ChildBindingContext<Data, Context>, Context>
+
+	// Since we do not have support for const string types in Typescript yet (see https://github.com/microsoft/TypeScript/issues/30680), we resort to simpler matching here and instead
+	// we do more comprehensive analysis for 'foreach' bindings in-code instead.
+	foreach: <Value extends MaybeReadonlyObservableArray<any> | MaybeReadonlyObservable<any>, Context extends BindingContext<any, {}>>(value: Value, parentContext: Context) =>
+		Value extends Record<'as', infer T> & Record<'data', MaybeReadonlyObservableArray<(infer V)>> ?
+			T extends string ? BindingOverlay<Record<T, V>, Overlay<ChildBindingContext<V, Context>, Context>> :
+			'\'as\' must be a string literal' :
+			//Value extends MaybeReadonlyObservable<Record<infer Key, MaybeReadonlyObservableArray<infer T>>> ? Overlay<Record<Key, T>, Overlay<ChildBindingContext<T, Context>, Context>> :
+		Value extends MaybeReadonlyObservableArray<infer Data> ? Overlay<ChildBindingContext<Data, Context>, Context> :
+		unknown
+	
 	using: StandardBindingContextTransforms['with']
-	with: <V extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<V>, parentContext: Context) => Overlay<ChildBindingContext<V, Context>, Context>
-	let: <T extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<T>, parentContext: Context) => Overlay<Context, T>
+	with: <V extends object, Context extends BindingContext<any, {}>>(value: MaybeReadonlyObservable<V>, parentContext: Context) => Overlay<ChildBindingContext<V, Context>, Context>
+	let: <T extends object, Context extends BindingContext<any, {}>>(value: MaybeReadonlyObservable<T>, parentContext: Context) => Overlay<T, Context>
 }

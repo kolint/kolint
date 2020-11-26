@@ -1,29 +1,116 @@
-import injectTypes from './type-injection'
+/* eslint-disable @typescript-eslint/unbound-method */
 import * as path from 'path'
-import * as ts from 'typescript/lib/tsserverlibrary'
+import * as ts from 'typescript'
+import { RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
+import { injectContextTypes } from './type-injection'
+import { ViewBindingsEmitter } from './emit'
+import { Document } from '../parser'
 
-export class ScriptFile {
-	public version: number
-	public filePath: string
-	public constructor(public fileName: string, viewPath: string, public data: string) {
-		this.version = 1
-		this.filePath = path.join(path.parse(viewPath).dir, fileName)
+interface TextWriter {
+	getTextPos(): number
+	getText(): string
+}
+
+/** Horrible Hack: We are exposing one of the internal typescript API methods to be able to print out typescript from AST's with SourceMaps */
+interface ts2 {
+	createTextWriter(newLine: string): TextWriter
+	// createSourceMapGenerator(host: ts.EmitHost, file: string, sourceRoot: string, sourcesDirectoryPath: string, generatorOptions: SourceMapGeneratorOptions): SourceMapGenerator
+}
+
+interface InternalPrinter extends ts.Printer {
+	writeFile(sourceFile: ts.SourceFile, output: TextWriter, sourceMapGenerator: SourceMapAdapter | undefined): void
+}
+
+interface LineAndCharacter {
+	line: number
+	character: number
+}
+
+/** The SourceMapAdapter implements the source map interface that typescript expects, but we are using our
+ * own source-map library. (We need to do this since the typescript internal sourcemap in itself would
+ * require us to create an even more advanced wrapper for the TextWriter instead.)  */
+class SourceMapAdapter {
+	private sm: SourceMapGenerator
+	private sources: string[] = []
+	private names: string[] = []
+
+	public constructor(generatedFileName: string) {
+		this.sm = new SourceMapGenerator({
+			file: generatedFileName
+		})
 	}
 
-	public static getPath(fileName: string, viewPath: string): string {
-		return path.join(path.parse(viewPath).dir, fileName)
+	public addMapping(line: number, column: number, sourceMapSourceIndex: number, sourceLine: number, sourceColumn: number, nameIndex: number | undefined): void {
+		this.sm.addMapping({
+			original: {
+				line: sourceLine + 1,
+				column: sourceColumn
+			},
+			generated: {
+				line: line + 1,
+				column: column
+			},
+			source: this.sources[sourceMapSourceIndex],
+			name: nameIndex ? this.names[nameIndex] : undefined
+		})
+	}
+	public addSource(filename: string): number {
+		const idx = this.sources.findIndex(source => source === filename)
+		if (idx >= 0)
+			return idx
+		this.sources.push(filename)
+		return this.sources.length - 1
+	}
+
+	public getSources(): string[] {
+		return this.sources
+	}
+	
+	public setSourceContent(sourceIndex: number, content: string | null): void {
+		if (!content)
+			return
+		this.sm.setSourceContent(this.sources[sourceIndex], content)
+	}
+
+	public addName(name: string): number {
+		const idx = this.names.findIndex(name => name === name)
+		if (idx >= 0)
+			return idx
+		this.names.push(name)
+		return this.names.length - 1
+	}
+
+	public appendSourceMap(_generatedLine: number, _generatedCharacter: number, _map: RawSourceMap, _sourceMapPath: string, _start?: LineAndCharacter, _end?: LineAndCharacter): void {
+		throw new Error('appendSourceMap is not yet supported')
+	}
+
+	public toJSON() {
+		return this.sm.toJSON()
+	}
+
+	public toString() {
+		return this.sm.toString()
+	}
+
+	/**
+	 * When dealing with multiple stepf of transformations we need to make sure that the
+	 * source map correctly points to the original source locations. Therefore, we can base
+	 * our sourcemap on the previous souce map.
+	 * @param oldRawSourceMap Sourcemap to base our sourcemap on
+	 */
+	public async mergeSourceMaps(oldRawSourceMap: RawSourceMap): Promise<void> {
+		const consumer = await new SourceMapConsumer(oldRawSourceMap)
+		this.sm.applySourceMap(consumer)
+		consumer.destroy()
 	}
 }
 
 export class Compiler {
-	public scriptFiles: ScriptFile[] = []
-	private service: ts.LanguageService
+	private compiledViewPath: string
 
-	public constructor(private viewPath: string) {
+	private static getStandardOptions(viewPath: string): ts.CompilerOptions {
 		const configFileName = ts.findConfigFile(path.parse(viewPath).dir, (p: string) => ts.sys.fileExists(path.resolve(path.parse(viewPath).dir, p)))
-
 		let compilerOptions: ts.CompilerOptions
-
 		if (configFileName) {
 			const configFile = ts.readConfigFile(configFileName, (path: string, encoding?: string | undefined) => ts.sys.readFile(path, encoding))
 			const args = ts.parseJsonConfigFileContent(configFile.config, ts.sys, './')
@@ -31,93 +118,65 @@ export class Compiler {
 		} else {
 			compilerOptions = {}
 		}
+		return compilerOptions
+	}
+
+	public constructor(private viewPath: string) {
+		// Initialize the template file
+		this.compiledViewPath = this.viewPath + '.g.ts'
+	}
+
+	public async compile(document: Document): Promise<{ source: ts.SourceFile, diagnostics: readonly ts.Diagnostic[] }> {
+		const typeLibPath = path.resolve(__dirname, '../../lib/resources/context')
+		const compilerOptions = Compiler.getStandardOptions(path.resolve(this.viewPath))
+
+		const writeSourceFile = async (file: ts.SourceFile, previousFileName: string | undefined, tsFileName: string) => {
+			const sm = new SourceMapAdapter(tsFileName)
+	
+			// We are exposing unofficial API's to be able to emit TS backed with Source Maps
+			const unofficialAPI = ts as unknown as ts2
+			const textWriter = unofficialAPI.createTextWriter(ts.sys.newLine)
+			const printer = ts.createPrinter({ removeComments: false }) as InternalPrinter
+			printer.writeFile(file, textWriter, sm)
+			ts.sys.writeFile(tsFileName, textWriter.getText())
+
+			// Inject the previous source map to make our new source map to point to the original source
+			if (previousFileName) {
+				const oldMap = JSON.parse(ts.sys.readFile(previousFileName + '.map') ?? '') as RawSourceMap
+				await sm.mergeSourceMaps(oldMap)
+			}
+			ts.sys.writeFile(tsFileName + '.map', sm.toString())
+		}
+
+		// Load scaffold into a source file
+		const templateFile = path.join(__dirname, '../../lib/resources/scaffold.ts')
+		const text = ts.sys.readFile(templateFile)
+		if (!text)
+			throw new Error('Could not load template file')
+		const scaffoldFile = ts.createSourceFile(templateFile, text, ts.ScriptTarget.ES2018)
+
+		// Generate Source Map based on the Html View (Precompiled View -> Html View)
+		const htmlFile = ts.sys.readFile(this.viewPath)
+		if (!htmlFile)
+			throw new Error(`Could not load view file ${this.viewPath}`)
+		const sourceMapSource = ts.createSourceMapSource(this.viewPath, htmlFile)
+
+		// Transform the AST Fill out the placeholders with data form the view.
+		const emitter = new ViewBindingsEmitter(document, ts.factory, typeLibPath, sourceMapSource)
+		const result = ts.transform(scaffoldFile, [emitter.transformerFactory], compilerOptions)
+		await writeSourceFile(result.transformed[0], undefined, this.compiledViewPath + '_0.ts')
 
 		const compilerHost = ts.createCompilerHost(compilerOptions)
 
-		const getScriptFiles = () => this.scriptFiles
+		// Iteratively fill out the placeholders with inferred types
+		const filenameX = await injectContextTypes(this.compiledViewPath, compilerHost, compilerOptions, writeSourceFile)
 
-		const findScriptFile = (fileNameOrPath: string) => (file: ScriptFile) => file.filePath === fileNameOrPath || file.fileName === fileNameOrPath
+		const typingProgram2 = ts.createProgram([filenameX], compilerOptions, compilerHost /*, templProg*/)
+		const typedFile2 = typingProgram2.getSourceFile(filenameX)
+		if (!typedFile2)
+			throw new Error('fail')
 
-		const host: ts.LanguageServiceHost = {
-			getCompilationSettings: (): ts.CompilerOptions => compilerOptions,
-			getScriptFileNames: (): string[] => getScriptFiles().map(file => file.filePath),
-			getScriptVersion: (fileName: string): string => getScriptFiles().find(findScriptFile(fileName))?.version.toString() ?? '1',
-
-			getScriptSnapshot(fileName: string): ts.IScriptSnapshot {
-				const data = getScriptFiles().find(findScriptFile(fileName))?.data ?? ts.sys.readFile(fileName) ?? ''
-				return ts.ScriptSnapshot.fromString(data)
-			},
-
-			getCurrentDirectory: (): string => ts.sys.getCurrentDirectory(),
-			getDefaultLibFileName: ts.getDefaultLibFilePath,
-
-			readFile(filepath: string, encoding?: string): string | undefined {
-				const file = getScriptFiles().find(findScriptFile(filepath))
-
-				if (file)
-					return file.data
-
-				return ts.sys.readFile(filepath, encoding)
-			},
-			resolveModuleNames(moduleNames: string[], containingFile: string, reusedNames: string[] | undefined, redirectedReference: ts.ResolvedProjectReference | undefined, options: ts.CompilerOptions): (ts.ResolvedModuleFull | undefined)[] {
-				const moduleResolutionCache = ts.createModuleResolutionCache(host.getCurrentDirectory(), x => x, options)
-
-				const mods = moduleNames.map(moduleName => {
-					{
-						const matches = /^ko-view-lint:\/\/(.*)/.exec(moduleName)
-						// TODO: use the absolute path to ko-view-lint libs here.
-						if (matches)
-							moduleName = path.resolve(__dirname, '../..', matches[1])
-					}
-
-					{
-						const matches = /^ko:\/\/(.*)/.exec(moduleName)
-						if (matches) {
-							moduleName = path.join(__dirname, '../../node_modules/knockout/build/types', matches[1])
-						}
-					}
-					return ts.resolveModuleName(moduleName, containingFile, options, compilerHost, moduleResolutionCache, redirectedReference).resolvedModule
-				})
-
-				return mods
-			}
-		}
-		this.service = ts.createLanguageService(host, ts.createDocumentRegistry())
-	}
-
-	public compile(template: string, generatedFileName: string): string {
-		this.scriptFiles.push(new ScriptFile('template.o.ts', this.viewPath, template))
-
-		const tsProgram = this.service.getProgram()
-
-		if (!tsProgram)
-			throw new Error('Could not compile files')
-
-		const source = tsProgram?.getSourceFile(ScriptFile.getPath('template.o.ts', this.viewPath))
-
-		if (!source)
-			throw new Error('Broken intermediate file')
-
-		const generated = injectTypes(tsProgram, source, template)
-
-		this.scriptFiles.push(new ScriptFile(generatedFileName, this.viewPath, generated))
-
-		return generated
-	}
-
-	public getService(): ts.LanguageService {
-		return this.service
-	}
-
-	public getSource(fileName: string): { program: ts.Program, source: ts.SourceFile, path: string } {
-		const program = this.service.getProgram()
-
-		if (!program)
-			throw new Error('No program available')
-
-		const source = program.getSourceFile(ScriptFile.getPath(fileName, this.viewPath))
-		if (!source) throw new Error(`File ${fileName} doesn't exists`)
-
-		return { program, source, path: ScriptFile.getPath(fileName, this.viewPath) }
+		const diags = ts.getPreEmitDiagnostics(typingProgram2, typedFile2)
+		return { source: typedFile2, diagnostics: diags }
 	}
 }

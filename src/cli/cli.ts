@@ -75,7 +75,7 @@ function log(filepath: string, diagnostics: lint.Diagnostic[]) {
 		if (diag.severity === lint.Severity.Off) continue
 
 		const severity = diag.severity === lint.Severity.Error ? 'error' : 'warning'
-		const location = diag.location?.coords ? `${diag.location.coords.first_line ?? 'n/a'}:${diag.location.coords.first_column ?? 'n/a'}` : ''
+		const location = diag.location?.coords ? `${diag.location.coords.first_line}:${diag.location.coords.first_column}` : ''
 		// const link = `${path.relative(process.cwd(), filepath).replace(/^(?:\.(?:\/|\\)|)/, './').replace(/\\/g, '/')}${location}`
 
 		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`  ${location.padEnd(9, ' ')}${color(31)}${severity.padEnd(9, ' ')}${color(0)}${diag.message.padEnd(longestMessageLength, ' ')}  ${color(90)}${diag.code}${color(0)}`)
@@ -138,22 +138,17 @@ async function main() {
 
 			const document = program.parse(textDoc)
 
-			const typescriptEmit = await program.compile(filepath, document)
+			await program.compile(filepath, document)
 
-			const diagnostics = new Array<lint.Diagnostic>().concat(
-				typescriptEmit.getDiagnostics(),
-				program.getDiagnostics()
-			).sort((a, b) => (a.location?.coords?.first_line ?? -1) - (b.location?.coords?.first_line ?? -1))
-
-			if (diagnostics.length > 0)
+			const diagnostics = program.getDiagnostics()
+			if (diagnostics.length > 0) {
 				console.log(`\n${color(90)}${filepath.replace(/\\/g, '/')}${color(0)}`)
-
-			for (const diag of diagnostics) {
-				if (diag.severity === lint.Severity.Error)
-					errors++
-				if (diag.severity === lint.Severity.Warning)
-					warnings++
-			}
+				for (const diag of diagnostics) {
+					if (diag.severity === lint.Severity.Error)
+						errors++
+					if (diag.severity === lint.Severity.Warning)
+						warnings++
+				}
 
 			if (config.out) {
 				const outDir = path.join(typeof config.root === 'string' ? config.root : process.cwd(), config.out)
@@ -165,6 +160,7 @@ async function main() {
 				fs.writeFileSync(outFile, typescriptEmit.rawSource)
 			}
 
+			const sortedDiags = diagnostics?.slice().sort((a, b) => (a.location?.coords?.first_line ?? -1) - (b.location?.coords?.first_line ?? -1))
 			log(filepath, diagnostics)
 		} catch (err) {
 			if (err instanceof lint.Diagnostic)

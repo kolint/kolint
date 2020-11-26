@@ -1,6 +1,5 @@
 /** This file is deprecated. It is here just for reference while implementing all rules for the new parser infrastructure. */
 import * as meriyah from 'meriyah'
-import { getPosFromIndex as getPositionFromOffsetInFile } from '../utils'
 import { Location } from './location'
 import { Binding, BindingName, BindingExpression } from './bindingDOM'
 import { Reporting } from '../program'
@@ -103,33 +102,24 @@ function parseDataBind(reporting: Reporting, data: string, loc: Location): Prope
 
 	const properties = objectExpression.properties
 		.filter(isProperty)
-		.map<Property>(node => ({
-			expression: data.substring((node.value.start ?? 0) - 2, (node.value.end ?? 0) - 2),
-			node: node
-		}))
+		.map<Property>(node => {
+
+			// Special treatment of 'foreach' bindings that returns objects on the form { data: <data>, as: <alias> }
+			// This is not possible to handle in typescript until we get support for generic 'as const'
+			const asProperty = node.value.type === 'ObjectExpression' && node.value.properties.filter(isProperty).find(propp => propp.key.name === 'as')
+			let expression: string
+			if (asProperty) {
+				const injectionPoint = asProperty.value.start - 2
+				expression = `${data.slice(node.value.start - 2, injectionPoint)}<const>${data.slice(injectionPoint, node.value.end - 2)}`
+			} else
+				expression = data.substring((node.value.start ?? 0) - 2, (node.value.end ?? 0) - 2)
+
+			return {
+				expression,
+				node: node
+			}})
 
 	return properties
-}
-
-/**
- * Returns a new location relative to loc starting position.
- * @param data
- * @param loc
- * @param startOffset
- * @param endOffset
- */
-function getRelativeLocation(data: string, loc: Location, startOffset: number, endOffset: number): Location {
-	const startPosition = getPositionFromOffsetInFile(data, startOffset)
-	const endPosition = getPositionFromOffsetInFile(data, endOffset)
-	return {
-		coords: {
-			first_column: loc.coords?.first_column ?? 0 + startPosition.column,
-			first_line: loc.coords?.first_line ?? 0 + startPosition.line,
-			last_column: loc.coords?.first_column ?? 0 + endPosition.column,
-			last_line: loc.coords?.first_line ?? 0 + endPosition.line
-		},
-		range: [loc.range[0] + startOffset, loc.range[1] + endOffset]
-	}
 }
 
 export function parseBindingExpression(reporting: Reporting, data: string, loc: Location): Binding[] {

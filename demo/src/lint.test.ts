@@ -2,7 +2,7 @@ import * as lint from '../../build'
 import * as path from 'path'
 import * as fs from 'fs'
 
-function log(relativeFilepath: string, diagnostics: lint.Diagnostic[]) {
+function log(relativeFilepath: string, diagnostics: readonly lint.Diagnostic[]) {
 	if (diagnostics.length <= 0) {
 		console.log('[No errors]\n')
 
@@ -10,7 +10,7 @@ function log(relativeFilepath: string, diagnostics: lint.Diagnostic[]) {
 	}
 
 	for (const diag of diagnostics)
-		console.log(`${relativeFilepath}${diag.location ? `:${diag.location.coords?.first_line ?? 'n/a'}:${diag.location.coords?.first_column ?? 'n/a'}` : ''}: ${diag.message}`)
+		console.log(`${relativeFilepath}${diag.location ? `:${diag.location.coords?.first_line}:${diag.location.coords?.first_column}` : ''}: ${diag.message}`)
 
 	console.log('')
 }
@@ -26,14 +26,12 @@ async function main() {
 
 		const document = program.parse(textDoc)
 
-		const typescriptEmit = await program.compile(filename, document)
+		await program.compile(filename, document)
 
-		const diagnostics = program.getDiagnostics().concat(typescriptEmit.getDiagnostics())
+		const diagnostics = program.getDiagnostics()
 
 		if (!fs.existsSync(path.join(__dirname, '../temp')))
 			fs.mkdirSync(path.join(__dirname, '../temp'))
-
-		fs.writeFileSync(path.join(__dirname, '../temp/output.ts'), typescriptEmit.rawSource)
 
 		log(relFilename, diagnostics)
 	} catch (err) {

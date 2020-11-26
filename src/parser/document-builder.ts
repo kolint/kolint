@@ -100,5 +100,5 @@ export function createDocument(ast: Node[], reporting: Reporting): Document {
 			throw new Diagnostic(diagnostics['unbalanced-start-end-tags'], nodeStack.pop()?.loc)
 		}
 	}
-	return new Document(root.childBindings, viewmodels, bindinghandlers)
+	return new Document(root, viewmodels, bindinghandlers)
 }

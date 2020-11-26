@@ -67,7 +67,7 @@ export class BindingExpression {
 }
 
 export class Document {
-	public constructor(public bindings: Binding[], public viewmodelReferences: ViewModelNode[], public bindingHandlerReferences: BindingHandlerImportNode[]) { }
+	public constructor(public rootBinding: Binding, public viewmodelReferences: ViewModelNode[], public bindingHandlerReferences: BindingHandlerImportNode[]) { }
 }
 
 export class Binding {
