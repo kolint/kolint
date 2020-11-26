@@ -118,7 +118,7 @@ const parseTests = {
 	]
 }
 
-let correctPositionEmitCache: lint.Diagnostic[] = []
+let correctPositionEmitCache: readonly lint.Diagnostic[] = []
 // Do not change this unsless you know what you are doing!
 const emitTestString = '<!-- ko-viewmodel: import default from \'nothing2\' -->\n<img data-bind="test: undefined">\n<img data-bind="text: notdefined">'
 
@@ -127,11 +127,8 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 		'Correct start and end positions (import)',
 
 		async (program: lint.Program) => {
-			const doc = program.parse(emitTestString)
-			const emit = await program.compile('nothing1', doc)
-			correctPositionEmitCache = emit.getDiagnostics()
-			
-			const diags = correctPositionEmitCache
+			await program.compile('nothing1', program.parse(emitTestString))
+			const diags = correctPositionEmitCache = program.getDiagnostics()
 
 			return (diags.length === 3 &&
 			diags[0].location?.coords?.first_column === 39 && diags[0].location?.coords?.last_column === 49 &&

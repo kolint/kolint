@@ -1,6 +1,6 @@
 import { createDocument, Document, Node, parse } from './parser'
 import { Diagnostic } from './diagnostic'
-import { Compiler, emit } from './compiler'
+import { Compiler } from './compiler'
 import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
 import { canonicalPath } from './utils'
@@ -73,60 +73,28 @@ export class Program implements Reporting {
 		return createDocument(parse(document, this, bindingNames, forceToXML), this)
 	}
 
-	public async compile(viewFilePath: string, document: Document): Promise<CompilerResult> {
+	public async compile(viewFilePath: string, document: Document): Promise<void> {
 		viewFilePath = canonicalPath(viewFilePath)
 		const compiler = new Compiler(viewFilePath)
-		const template = emit(viewFilePath, document)
-		const generated = compiler.compile(template.file, 'generated.o.ts')
-		const service = compiler.getService()
-		const { program: tsprogram, source, path: generatedPath } = compiler.getSource('generated.o.ts')
+		const { source, diagnostics: diags } = await compiler.compile(document)
 
-		const sourceMap = await new SourceMapConsumer(template.sourceMap)
+		const kolintDiags = await Promise.all(diags.map(async diag => {
+			if (diag.file && diag.start && diag.length) {
+				const fileText = ts.sys.readFile(source.fileName + '.map')
+				const sm = await new SourceMapConsumer(fileText ?? '')
 
-		function convertDiagnostics(diags: ts.Diagnostic[] | ts.DiagnosticWithLocation[]): Diagnostic[] {
-			const diagnostics: Diagnostic[] = []
-			for (const diag of diags) {
-				if (diag.start && diag.length) {
-					const generatedStart = ts.getLineAndCharacterOfPosition(source, diag.start)
-					const generatedEnd = ts.getLineAndCharacterOfPosition(source, diag.start + diag.length)
-
-					// TODO:...
-					const start = sourceMap.originalPositionFor({
-						line: generatedStart.line + 1,
-						column: generatedStart.character
-						//bias: SourceMapConsumer.LEAST_UPPER_BOUND
-					})
-
-					// Don't log error if the original position not exists
-					if (start.line && start.column) {
-						diagnostics.push(new Diagnostic(diag, {
-							coords: {
-								first_column: start.column + 1,
-								first_line: start.line,
-								last_column: start.column + 1 + (generatedEnd.character - generatedStart.character),
-								last_line: start.line + (generatedEnd.line - generatedStart.line)
-							},
-							range: [0, 0]
-						}))
-					} else {
-						// TODO: handle internal diagnostics
-					}
+				const generatedStart = ts.getLineAndCharacterOfPosition(diag.file, diag.start)
+				const generatedEnd = ts.getLineAndCharacterOfPosition(diag.file, diag.start + diag.length)
+				const start = sm.originalPositionFor({ line: generatedStart.line + 1, column: generatedStart.character })
+				const end = sm.originalPositionFor({ line: generatedEnd.line + 1, column: generatedEnd.character })
+				if (start.line !== null && end.line !== null && start.column !== null && end.column !== null) {
+					const range = diag.start ? [diag.start, diag.start + diag.length] as const : [-1, -1] as const
+					return new Diagnostic(diag, { range, coords: { first_line: start.line + 1, first_column: start.column, last_line: end.line + 1, last_column: end.column }})
 				}
 			}
-			return diagnostics
-		}
+			return new Diagnostic(diag, { range: [-1, -1], coords: { first_line: 0, first_column: 0, last_line: 0, last_column: 0 }})
+		}))
 
-		return {
-			rawSource: generated,
-			sourceMap: template.sourceMap,
-			getDiagnostics() {
-				return convertDiagnostics(
-					Array.from(ts.sortAndDeduplicateDiagnostics([
-						...ts.getPreEmitDiagnostics(tsprogram, source),
-						...service.getSuggestionDiagnostics(generatedPath)
-					]))
-				)
-			}
-		}
+		this.diagnostics = this.diagnostics.concat(kolintDiags)
 	}
 }

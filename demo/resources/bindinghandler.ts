@@ -1,8 +1,8 @@
 import ko from 'knockout'
-import { BindingContext, Overlay } from '../../lib/context'
+import { BindingContext, ChildBindingContext, Overlay } from '../../lib/resources/context'
 type koko<Value = string[]> = {
 	init(element, value: () => Value)
 
-	transformContext<BC extends BindingContext>(input: Value, parentContext: BC): Overlay<BindingContext<Value, BC>, BC>
+	transformContext<BC extends BindingContext<any>>(input: Value, parentContext: BC): Overlay<ChildBindingContext<Value, BC>, BC>
 }
 export default koko

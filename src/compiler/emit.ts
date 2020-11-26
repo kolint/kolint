@@ -1,240 +1,282 @@
-import { Document, Binding, Node, BindingName, BindingExpression, Diagnostic } from '../parser'
-import { SourceNode } from 'source-map'
-import * as path from 'path'
-import { BindingHandlerImportNode } from '../parser/bindingDOM'
+import { isReserved } from '../utils'
+import { Document, BindingHandlerImportNode, IdentifierNode } from '../parser/bindingDOM'
+import { Binding } from '../parser'
+import * as ts from 'typescript'
 
-//#region init
-
-type Chunk = string | SourceNode | (string | SourceNode)[]
-
-const _flat = (acc: (string | SourceNode)[], val: string | SourceNode | (string | SourceNode)[]) =>
-	Array.isArray(val) ? acc.concat(...val) : acc.concat(val)
-const flat: [typeof _flat, []] = [_flat, []]
+interface BindingRelation {
+	parent: Binding
+	child: Binding
+}
 
 /**
- * **1.** Adds newline for each chunk.
- *
- * **2.** If *template string*, trims newlines and spaces in the start and end of string.
- *
- * **3.** If *array with string and source nodes*, does not add new line for each chunk, just at the end.
- *
- * **4.** If *empty*, returns a new line.
- *
- * ```
- * 1. newline('line1', 'line2')
- * 2. newline`interface Example { ... }`
- * 3. newline(['same line', new SourceNode])
- * 4. newline; newline()
- * ```
+ * Transformer responsible for filling out the scaffold with code based on the Knockout View Document Object Model
  */
-function newline(strings: TemplateStringsArray, ...values: string[]): string
-function newline(chunks: (string | SourceNode)[]): (string | SourceNode)[]
-function newline(strings: string[]): string
-function newline(...strings: string[]): string
-function newline(): '\n'
-function newline(...chunks: unknown[]): unknown {
-	if (chunks.length === 0)
-		return '\n'
-	else if (chunks.length === 1) {
-		const chunk = chunks[0] as (string | SourceNode)[]
+export class ViewBindingsEmitter {
+	private readonly bindingRelations: BindingRelation[]
 
-		const hasSourceNode = Boolean(chunk.find(chunk => chunk instanceof SourceNode))
+	public constructor(private document: Document, private factory: ts.NodeFactory, private typeLibPath: string, private sourceMapSource: ts.SourceMapSource) {
+		this.bindingRelations = this.flattenedBindingRelations(document.rootBinding)
+	}
 
-		if (hasSourceNode) {
-			return chunk.concat('\n')
-		} else {
-			return chunk.join('\n') + '\n'
+	public transformerFactory: ts.TransformerFactory<ts.SourceFile> = context => {
+		const document = this.document
+		const bindingRelations = this.bindingRelations
+		const childVisitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
+			if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier) && node.moduleSpecifier.text === '$typelib_placeholder')
+				return context.factory.updateImportDeclaration(node, node.decorators, node.modifiers, node.importClause, context.factory.createStringLiteral(this.typeLibPath))
+			if (ts.isExpressionStatement(node) && ts.isStringLiteral(node.expression)) {
+				switch (node.expression.text) {
+					case '$viewmodel_placeholder':
+						return this.createViewmodelImports(document, context.factory)
+					case '$bindinghandlers_placeholder':
+						return this.createBindingImports(document.bindingHandlerReferences, context.factory)
+					case '$transforms_placeholder':
+						return this.createBindingLiteralTypes(document.bindingHandlerReferences, context.factory)
+					case '$generated_contexts':
+						return this.createTransformedContexts(document, bindingRelations, context.factory)
+					case '$generated_bindings':
+						return this.createBindingTransformations(bindingRelations, context.factory, this.sourceMapSource)
+				}
+			}
+			return ts.visitEachChild(node, childVisitor, context)
 		}
-	} else if (chunks[0] && typeof chunks[0] === 'object' && 'raw' in chunks[0]) {
-		const strings = chunks[0] as TemplateStringsArray
-		const values = chunks.slice(1) as string[]
-
-		return strings.map((string, index) => values[index] ? string + values[index] : string).join('').replace(/(?:^[\s\n]*|[\s\n]*?$)/g, '') + '\n'
-	} else {
-		return chunks.join('\n') + '\n'
-	}
-}
-
-//#endregion init
-
-//#region emit
-
-export function emit(viewPath: string, document: Document): { file: string, sourceMap: string } {
-	const emit = (node: Node | BindingName | BindingExpression, action: () => Chunk): SourceNode => {
-		return new SourceNode(node.loc.coords?.first_line ?? 1, node.loc.coords?.first_column ?? 0, viewPath, action())
-	}
-
-	if (document.viewmodelReferences.length < 1) {
-		throw new Diagnostic('no-viewmodel-reference', undefined, path.relative(process.cwd(), viewPath))
-	}
-
-	const root = new SourceNode(null, null, null)
-
-	const contextDeclarationFilePath = path.join(__dirname, '../../lib/context').replace(/\\/g, '/')
-	const { bindingContexts, bindings: bindingStubs } = generateBindingStubs(document.bindings, 'root_context', emit)
-
-	const viewmodelImportModulePath = new SourceNode(
-		// modulePath is a string and can therefore not be multiline
-		document.viewmodelReferences[0].modulePath.location.coords?.first_line ?? 1,
-		document.viewmodelReferences[0].modulePath.location.coords?.first_column ?? 1 - 1,
-		viewPath,
-		`'${document.viewmodelReferences[0].modulePath.value}'`
-	)
-
-	root.add(([
-
-		newline`/* eslint-disable */`,
-
-		newline`import { RootBindingContext, StandardBindingContextTransforms, Overlay, BindingContextTransform } from '${contextDeclarationFilePath}'`,
-
-		// TODO: multiple import statemnets
-		// TODO: Unique ViewModel names
-		newline(document.viewmodelReferences[0].isTypeof ? [
-			'import _ViewModel from ', viewmodelImportModulePath, '\n',
-			'type ViewModel = typeof _ViewModel\n'
-		] :
-			[
-				'import ViewModel from ', viewmodelImportModulePath, '\n'
-			]),
-
-		newline(
-			'function getBindingContextFactory<K extends keyof BindingContextTransforms>(bindingHandlerName: K) {',
-			'	void bindingHandlerName',
-			'	const factory: BindingContextTransforms[K] = 0 as any;',
-			'	return factory;',
-			'}',
-		),
-
-		// TODO: move to emit (root.add)
-		emitBHImportStatements(document.bindingHandlerReferences, viewPath),
-
-		// newline(
-		// 	`interface ${names.Types.BindingHandlers} extends ${names.Types.BuiltInBindingHandlers} {`,
-		// 	`	'koko': BindingHandler<${names.Types.BindingHandlerType}<custombindinghandler_1>>`,
-		// 	`}`
-		// ),
-
-		newline,
-
-		newline,
-
-		newline`const root_context: RootBindingContext<ViewModel> = undefined as any`,
-
-		newline,
-
-		// TODO: move to emit (root.add)
-		bindingContexts, bindingStubs,
-
-		`//@ sourceMappingURL=${viewPath}`
-
-	] as (string | SourceNode | (() => string))[]).map(item => typeof item === 'function' ? item() : item).reduce(...flat))
-
-	// T extends ko.BindingHandler<(infer U)> ? U : never;
-	//
-	const unit = root.toStringWithSourceMap({ file: 'tmp.ts' })
-	const generatedCode = unit.code
-	const generatedMap = unit.map.toJSON()
-
-	// TODO: maybe add option to save sourcemap to file
-	//	let sourceMap = generatedMap.toString()
-
-	return { file: generatedCode, sourceMap: JSON.stringify(generatedMap) }
-}
-
-//#endregion emit
-
-//#region util
-
-let contextCount = 0
-function generateBindingStubs(bindings: Binding[], bindingContextId: string, emit: (node: Node | BindingName | BindingExpression, action: () => Chunk) => SourceNode): { bindingContexts: SourceNode, bindings: SourceNode } {
-	const bindingContextStubs = new SourceNode()
-	const bindingStubs = new SourceNode()
-
-	for (const childBinding of bindings) {
-		const sn = new SourceNode()
-		sn.add([
-			'function ', childBinding.identifierName, '($context: typeof ', bindingContextId, ') {\n',
-			'    const context_placeholder = $context\n',
-			'    {\n',
-			'        const data_placeholder = $context.$data\n',
-			'        return ', emit(childBinding.expression, () => childBinding.expression.text), '\n',
-			'    }\n',
-			'}\n'
-		])
-		bindingStubs.add(sn)
-
-		// TODO: separate node preparations from sourcemap emit.
-		const childBindingContextId = `context_${contextCount++}`
-		const getChildBindingContextId = `getChildContext_${contextCount++}`
-		const stub = new SourceNode()
-		stub.add([
-			`const ${getChildBindingContextId} = getBindingContextFactory(`, emit(childBinding.bindingHandler, () => `'${childBinding.bindingHandler.name}'`), ')\n',
-			`const ${childBindingContextId} = ${getChildBindingContextId}(`, emit(childBinding.expression, () => [childBinding.identifierName, '(', bindingContextId, ')']), ', ', bindingContextId, ')\n'
-		])
-
-		bindingContextStubs.add(stub)
-		const { bindingContexts, bindings } = generateBindingStubs(childBinding.childBindings, childBindingContextId, emit)
-		bindingContextStubs.add(bindingContexts)
-		bindingStubs.add(bindings)
-	}
-	return { bindingContexts: bindingContextStubs, bindings: bindingStubs }
-}
-
-function is<T>(value: T | undefined | null): value is T {
-	return Boolean(value)
-}
-
-function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: string): (string | SourceNode)[] {
-	const imports = refs.map(ref => {
-		function getModulePathNode() {
-			return new SourceNode(ref.modulePath.location.coords?.first_line ?? 1, ref.modulePath.location.coords?.first_column ?? 1 - 1, sourcePath, ['\'', ref.modulePath.value, '\''])
+		return (file) => {
+			const source = ts.visitEachChild(file, childVisitor, context)
+			return context.factory.updateSourceFile(file, source.statements)
 		}
+	}
 
-		if (!ref.imports) return
+	private flattenedBindingRelations(parentBinding: Binding): BindingRelation[] {
+		const bindings = parentBinding.childBindings
+		if (!bindings)
+			return []
+		return bindings.map(binding =>
+			[{ parent: parentBinding, child: binding }, ...this.flattenedBindingRelations(binding)]
+		).flat(1)
+	}
 
-		const imports = ref.imports
+	private createViewLiteral(literal: IdentifierNode<string>) {
+		const _stringLiteral = this.factory.createStringLiteral(literal.value)
+		const stringLiteral = ts.setSourceMapRange(_stringLiteral, {
+			pos: literal.location.range[0],
+			end: literal.location.range[1],
+			source: this.sourceMapSource
+		})
+		return stringLiteral
+	}
 
-		if (imports.length === 1 && ['*', 'default'].includes(imports[0].alias.value)) {
-			// Single import
-
-			const cimport = imports[0]
-
-			const nodes = [
-				`import ${cimport.alias.value === '*' ? '* as ' : ''}${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.index} from `, getModulePathNode(), ';\n'
-			]
-
-			if (cimport.isTypeof)
-				nodes.push(`type bindinghandler_${cimport.index} = typeof _bindinghandler_${cimport.index};\n`)
-
-			return nodes
-		} else {
-			// Mutliple imports
-
-			const importExpressions = imports.map(cimport => `${cimport.name.value} as ${cimport.isTypeof ? '_' : ''}${cimport.alias.value}`)
-
-			const nodes = [
-				`import { ${importExpressions.join(', ')} } from `, getModulePathNode(), ';\n'
-			]
-
-			for (const cimport of imports)
-				if (cimport.isTypeof)
-					nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.index};\n`)
-
-			return nodes
-
+	private createViewIdentifier(literal: IdentifierNode<string>, override?: string) {
+		const idName = override ?? literal.value
+		if (isReserved(idName)) {
+			// TODO: create a diagnostic instead of throwing
+			throw new Error(`Identifier is using the reserved keyword '${idName}'.`)
 		}
+		const _identifier = this.factory.createIdentifier(idName)
+		const identifier = ts.setSourceMapRange(_identifier, {
+			pos: literal.location.range[0],
+			end: literal.location.range[1],
+			source: this.sourceMapSource
+		})
 
-	}).filter(is).flat(1)
+		return identifier
+	}
 
-	const bindinghandlers = refs.map(ref => {
-		if (!ref.imports) return
+	private createViewmodelImports(document: Document, factory: ts.NodeFactory): ts.ImportDeclaration[] {
+		return document.viewmodelReferences.map(ref => {
+			// TODO: * star imports defaults to 'ViewModel'. Add support for all other import types
+			return factory.createImportDeclaration(undefined, undefined,
+				factory.createImportClause(false, factory.createIdentifier('ViewModel'), undefined),
+				this.createViewLiteral(ref.modulePath)
+			)
+		})
+	}
 
-		return ref.imports.map(imp => `'${imp.alias.value}': BindingContextTransform<bindinghandler_${imp.alias.value}>`)
-	}).filter(is).flat(1)
+	private createBindingImports(bindingRefs: BindingHandlerImportNode[], factory: ts.NodeFactory): ts.Node[] {
+		return bindingRefs.map(ref => {
+			const entries = ref.imports ?? []
+			// TODO: support the other types of imports "*, * as, {...}"
+			//		if (entries.length === 1 && ['*', 'default'].includes(ref.imports[entries[0]].value)) {
+			if (entries.length === 1) {
+				const { alias } = entries[0]
+				return factory.createImportDeclaration(undefined, undefined,
+					factory.createImportClause(false, this.createViewIdentifier(alias, `bindinghandler_${alias.value}`), undefined),
+					this.createViewLiteral(ref.modulePath)
+				)
+			} else {
+				throw new Error('namespaced imports are not yet supported')
+				// return entries.map(([_ /*name*/, alias]) => {
+				// 	const modulePathLiteral = factory.createStringLiteral(ref.modulePath)
+				// 	ts.setSourceMapRange(modulePathLiteral, {
+				// 		pos: ref.loc.range[0],
+				// 		end: ref.loc.range[1],
+				// 		source: sourceMapSource
+				// 	})
+			}
+		})
+	}
 
-	const bindinghandlersInterface = `interface BindingContextTransforms extends Overlay<{\n${bindinghandlers.join('\n')}\n}, StandardBindingContextTransforms> { }`
+	private createBindingLiteralTypes(bindingRefs: BindingHandlerImportNode[], factory: ts.NodeFactory): ts.Node {
+		const transforms = bindingRefs.map<ts.PropertySignature>(ref => {
+			const entries = ref.imports ?? []
+			// TODO: handle multiple entries.
+			// if (entries.length != 1)
+			// 	return [];
+			const { alias } = entries[0]
+			return factory.createPropertySignature(undefined,
+				this.createViewLiteral(alias), undefined,
+				factory.createTypeReferenceNode(
+					factory.createIdentifier('BindingContextTransform'),
+					[factory.createTypeReferenceNode(
+						this.createViewIdentifier(alias, `bindinghandler_${alias.value}`),
+						undefined
+					)]
+				)
+			)
+		})
+		return factory.createInterfaceDeclaration(undefined, undefined,
+			factory.createIdentifier('CustomBindingTransforms'), undefined, undefined, transforms
+		)
+	}
 
-	return imports.concat(bindinghandlersInterface)
+	private createRootTransformedContext(document: Document, factory: ts.NodeFactory) {
+		// TODO: Handle case when we have multiple viewmodels...
+		// const viewModelName = document.viewmodelReferences[0].name
+		// const viewModelIdentifier = viewModelName ?
+		// 	this.createViewIdentifier(viewModelName) :
+		// 	factory.createIdentifier('ViewModel')
+		return factory.createVariableDeclarationList(
+			[factory.createVariableDeclaration(
+				factory.createIdentifier('context_binding_0'),
+				undefined,
+				factory.createTypeReferenceNode(
+					factory.createIdentifier('RootBindingContext'),
+					[factory.createTypeReferenceNode(
+						'ViewModel',
+						undefined
+					)]
+				),
+				factory.createAsExpression(
+					factory.createIdentifier('undefined'),
+					factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword)
+				)
+			)],
+			ts.NodeFlags.Const
+		)
+	}
+
+	private createTransformedContexts(document: Document, bindingRelations: { parent: Binding, child: Binding }[], factory: ts.NodeFactory): ts.Node[] {
+		const statements = bindingRelations.map(relation => {
+			return factory.createVariableStatement(undefined,
+				factory.createVariableDeclarationList(
+					[factory.createVariableDeclaration(
+						factory.createIdentifier(`context_${relation.child.identifierName}`),
+						undefined,
+						undefined,
+						factory.createCallExpression(
+							factory.createIdentifier(`transformation_${relation.child.identifierName}`),
+							undefined,
+							[factory.createIdentifier(`context_${relation.parent.identifierName}`)]
+						)
+					)],
+					ts.NodeFlags.Const
+				)
+			)
+		})
+		return [this.createRootTransformedContext(document, factory), ...statements]
+	}
+
+	private createBindingTransformations(bindingRelations: { parent: Binding, child: Binding }[], factory: ts.NodeFactory, sourceMapSource: ts.SourceMapSource): ts.Node[] {
+		return bindingRelations.map(relation => {
+			const childId = relation.child.identifierName
+			const _bindingHandlerIdentifier = factory.createStringLiteral(relation.child.bindingHandler.name)
+			const bindingHandlerIdentifier = ts.setSourceMapRange(_bindingHandlerIdentifier, {
+				pos: relation.child.bindingHandler.loc.range[0],
+				end: relation.child.bindingHandler.loc.range[1],
+				source: sourceMapSource
+			})
+			const _returnStatement = factory.createIdentifier(relation.child.expression.text)
+			const returnStatement = ts.setSourceMapRange(_returnStatement, {
+				pos: relation.child.expression.loc.range[0],
+				end: relation.child.expression.loc.range[1],
+				source: sourceMapSource
+			})
+
+			return factory.createFunctionDeclaration(undefined, undefined, undefined,
+				factory.createIdentifier(`transformation_${childId}`), undefined,
+				[factory.createParameterDeclaration(undefined, undefined, undefined,
+					factory.createIdentifier('$context'), undefined,
+					factory.createTypeQueryNode(factory.createIdentifier(`context_${relation.parent.identifierName}`)), undefined
+				)],
+				undefined,
+				factory.createBlock(
+					[
+						factory.createVariableStatement(
+							undefined,
+							factory.createVariableDeclarationList(
+								[factory.createVariableDeclaration(
+									factory.createIdentifier('$context_placeholder'),
+									undefined,
+									undefined,
+									factory.createIdentifier('$context')
+								)],
+								ts.NodeFlags.Const
+							)
+						),
+						factory.createFunctionDeclaration(undefined, undefined, undefined,
+							factory.createIdentifier('tmp'), undefined,
+							[],
+							undefined,
+							factory.createBlock(
+								[
+									factory.createVariableStatement(
+										undefined,
+										factory.createVariableDeclarationList(
+											[factory.createVariableDeclaration(
+												factory.createIdentifier('$data_placeholder'),
+												undefined,
+												undefined,
+												factory.createPropertyAccessExpression(
+													factory.createIdentifier('$context'),
+													factory.createIdentifier('$data')
+												)
+											)],
+											ts.NodeFlags.Const
+										)
+									),
+									factory.createReturnStatement(returnStatement)
+								],
+								true
+							)
+						),
+						factory.createVariableStatement(
+							undefined,
+							factory.createVariableDeclarationList(
+								[factory.createVariableDeclaration(
+									factory.createIdentifier('bindingTransform'), undefined, undefined,
+									factory.createCallExpression(
+										factory.createIdentifier('getBindingContextFactory'), undefined,
+										[bindingHandlerIdentifier]
+									)
+								)],
+								ts.NodeFlags.Const
+							)
+						),
+						factory.createReturnStatement(factory.createCallExpression(
+							factory.createIdentifier('bindingTransform'),
+							undefined,
+							[
+								factory.createCallExpression(
+									factory.createIdentifier('tmp'),
+									undefined,
+									[]
+								),
+								factory.createIdentifier('$context')
+							]
+						))
+					],
+					true
+				)
+			)
+		})
+	}
 }
-
-//#endregion util
