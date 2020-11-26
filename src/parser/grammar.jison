@@ -221,20 +221,20 @@ bhImportSpec
   // Don't export as ident because we are unable to do it below. Do it in referneces instead.
     { $$ = $bhImportBlockIdentifiers }
   | STAR AS Ident
-    { $$ = { name: yy.ident($2, @2), alias: '*', isTypeof: false } }
+    { $$ = [{ name: yy.ident($2, @2), alias: '*', isTypeof: false }] }
   | Ident
-    { $$ = { name: yy.ident($0, @0), alias: 'default', isTypeof: false } }
+    { $$ = [{ name: yy.ident($0, @0), alias: 'default', isTypeof: false }] }
   | TYPEOF STAR AS Ident
-    { $$ = { name: yy.ident($3, @3), alias: '*', isTypeof: true } }
+    { $$ = [{ name: yy.ident($3, @3), alias: '*', isTypeof: true }] }
   | TYPEOF Ident
-    { $$ = { name: yy.ident($1, @1), alias: 'default', isTypeof: true } }
+    { $$ = [{ name: yy.ident($1, @1), alias: 'default', isTypeof: true }] }
   ;
 
 bhImportBlockIdentifiers
   : bhImportBlockIdentifiers COMMA bhImportIdentifier
     { $$ = $bhImportBlockIdentifiers.concat(yy.ident($2, @2)) }
   | bhImportBlockIdentifiers COMMA
-    { $$ = $0 }
+    { $$ = [$0] }
   | bhImportIdentifier
     { $$ = [yy.ident($0, @0)] }
   ;
