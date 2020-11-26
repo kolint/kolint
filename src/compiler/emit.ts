@@ -195,19 +195,20 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 		const imports = ref.imports.value
 
 		if (imports.length === 1 && ['*', 'default'].includes(imports[0].alias.value)) {
+			// Single import
 
-			// Import is a grammar keyword use import0
-			const import0 = imports[0]
+			const cimport = imports[0]
 
 			const nodes = [
-				`import ${import0.alias.value === '*' ? '* as' : ''}${import0.isTypeof ? '_' : ''}bindinghandler_${import0.name.value} from `, getModulePathNode(), ';\n'
+				`import ${cimport.alias.value === '*' ? '* as' : ''}${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.name.value} from `, getModulePathNode(), ';\n'
 			]
 
-			if (import0.isTypeof)
-				nodes.push(`type bindinghandler_${import0.name.value} = typeof _bindinghandler_${import0.alias.value};\n`)
+			if (cimport.isTypeof)
+				nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.alias.value};\n`)
 
 			return nodes
 		} else {
+			// Mutliple imports
 
 			const importExpressions = imports.map(cimport => {
 				if (cimport.isTypeof)
@@ -234,7 +235,6 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 		if (!ref.imports) return
 
 		return ref.imports.value.map(alias => `'${alias.name.value}': BindingContextTransform<bindinghandler_${alias.name.value}>`)
-
 	}).filter(is).flat(1)
 
 	const bindinghandlersInterface = `interface BindingContextTransforms extends Overlay<{\n${bindinghandlers.join('\n')}\n}, StandardBindingContextTransforms> { }`
