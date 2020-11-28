@@ -48,7 +48,7 @@ KOLint is a lint tool for Knockout.JS. It can catch syntax errors, it also has a
 
 ## Why?
 
-Knockouthas worked the same since 2010 and has never disappointed me. Due to it being a core library, it is compact, has cross-browser compatibility, and can be extended from parsing bindings differently and building view models with TypeScript decorators, to be used as a framework. The bindings works as simple as it gets using HTML attributes.
+Knockout has worked the same since 2010 and has never disappointed me. Due to it being a core library, it is compact, has cross-browser compatibility, and can be extended from parsing bindings differently and building view models with TypeScript decorators, to be used as a framework. The bindings works as simple as it gets using HTML attributes.
 
 Headline features:
 
