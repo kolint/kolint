@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-<a href="https://github.com/kolint/kolint/releases"><img src="https://img.shields.io/npm/v/knockout-lint?style=flat-square" alt="npm - version"></a>
+<a href="https://www.npmjs.com/package/knockout-lint"><img src="https://img.shields.io/npm/v/knockout-lint?style=flat-square" alt="npm - version"></a>
 <a href="https://app.codacy.com/gh/kolint/kolint?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kolint/kolint&amp;utm_campaign=Badge_Grade_Settings"><img src="https://api.codacy.com/project/badge/Grade/55445591f0a1422484fba50da71aef79" alt="Codacy Badge"></a>
 <a href="https://www.npmjs.com/package/knockout-lint"><img src="https://img.shields.io/badge/npm-knockout--lint-red?style=flat-square" alt="npm - knockout-lint"></a>
 <a href="https://github.com/kolint/kolint"><img src="https://img.shields.io/badge/GitHub-kolint-blue?style=flat-square" alt="GitHub - kolint"></a>
