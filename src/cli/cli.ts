@@ -4,6 +4,12 @@ import * as lint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as _glob from 'glob'
+import * as yargs from 'yargs'
+import { getConfigs, joinConfigs } from './config'
+
+const { argv: args } = yargs
+	.option('config', { alias: 'c', type: 'string' })
+	.option('out', { alias: 'o', type: 'string' })
 
 function color(code: number): string {
 	return `\x1b[${code}m`
@@ -61,6 +67,23 @@ async function main() {
 					errors++
 				if (diag.severity === lint.Severity.Warning)
 					warnings++
+			}
+
+			const parsedFilePath = path.parse(filepath)
+
+			// Remove the below line when config is used.
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const config = joinConfigs(getConfigs(parsedFilePath.dir))
+
+			if (args.out) {
+				const out = args.out
+					.replace(new RegExp('${base}'), parsedFilePath.base)
+					.replace(new RegExp('${dir}'), parsedFilePath.dir)
+					.replace(new RegExp('${ext}'), parsedFilePath.ext)
+					.replace(new RegExp('${name}'), parsedFilePath.name)
+					.replace(new RegExp('${root}'), parsedFilePath.root)
+
+				fs.writeFileSync(out, typescriptEmit.rawSource)
 			}
 
 			log(filepath, diagnostics)
