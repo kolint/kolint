@@ -10,12 +10,14 @@
   <p align="center">
     <strong>TypeScript</strong> type check Knockout HTML files using view models
     <br />
-    <a href="https://github.com/kolint/kolint/wiki"><strong>Explore the wiki »</strong></a>
+    <a href="https://docs.kolint.org"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="#installation">Getting Started</a>
     <b>·</b>
     <a href="https://github.com/kolint/kolint/issues/new/choose">Report Bug</a>
+    <b>·</b>
+    <b><a href="https://kolint.org">Website</a></b>
     <b>·</b>
     <a href="https://github.com/kolint/kolint/blob/master/CONTRIBUTING.md">Contributing</a>
     <b>·</b>
@@ -34,82 +36,35 @@
 
 <br>
 
-<!-- TABLE OF CONTENTS -->
-<!-- omit in toc -->
-## Table of Contents
-
-- [About The Project](#about-the-project)
-  - [Built with](#built-with)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Using the CLI](#using-the-cli)
-  - [Using the API](#using-the-api)
-- [Roadmap](#roadmap)
-
-
-
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-This project is a lint for the [Knockout](https://knockoutjs.com/) library. The lint includes the features to lint both the HTML and the Knockout bindings and compile and type check the bindings with the [TypeScript Compiler API][ts-compiler-api]. We mainly focus on keeping the lint fast to lint and type check. That is why we use our own parser for HTML only to parse the necessary nodes.
+KOLint is a lint tool for Knockout.JS. It can catch syntax errors, it also has a built-in TypeScript type checker that can be used on views to get type and TypeScript syntax errors.
 
 ### Built with
   - [meriyah][meriyah] - A 100% compliant, self-hosted javascript parser. Has support for ES2020 and TypeScript syntax.
   - [TypeScript Compiler API][ts-compiler-api] - Superset of JavaScript that compiles to clean JavaScript output.
   - [jison][jison] - Generates bottom-up parsers in JavaScript. Its API is similar to Bison's.
 
-## Installation
+## Why?
 
-```
-npm i -D knockout-lint
-```
+Knockouthas worked the same since 2010 and has never disappointed me. Due to it being a core library, it is compact, has cross-browser compatibility, and can be extended from parsing bindings differently and building view models with TypeScript decorators, to be used as a framework. The bindings works as simple as it gets using HTML attributes.
 
-<!-- USAGE EXAMPLES -->
-## Usage
+Headline features:
 
-**Note!** If you want to learn about the syntax used in views. Please refer to [the wiki](https://github.com/kolint/kolint/wiki) on GitHub.
+- **Elegant dependency tracking** - automatically updates the right parts of your UI whenever your data model changes.
+- **Declarative bindings** - a simple and obvious way to connect parts of your UI to your data model. You can construct a complex dynamic UIs easily using arbitrarily nested binding contexts.
+- **Trivially extensible** - implement custom behaviors as new declarative bindings for easy reuse in just a few lines of code.
 
-### Using the CLI
+Additional benefits:
+- **Pure JavaScript library** - works with any server or client-side technology.
+- **Can be added on top of your existing web application** without requiring major architectural changes
+- **Compact** - around 13kb after gzipping
+- **Works on any mainstream browser** (IE 6+, Firefox 2+, Chrome, Safari, Edge, others)
+- **Comprehensive suite of specifications** (developed BDD-style) means its correct functioning can easily be verified on new browsers and platforms
 
-**Installing npm globally**
-```
-npm i -g knockout-lint
-```
+Check out the demos at [Knockout.JS](https://knockoutjs.com) website.
 
-**Running the CLI**
-
-~Use `-c` or `--config` to specify a path to a config file. Default is `.kolintrc` or `.kolintrc.*`.~
-
-```
-knockout-lint views/**/*.html
-```
-
-### Using the API
-
-```typescript
-import * as kolint from 'knockout-lint';
-
-// Creates a new program, can be used with multiple files.
-const program = kolint.createProgram();
-
-// Parsing a document
-const document = program.parse(/* document text */);
-
-// Compiling the document with built-in TypeScript compiler
-const tsOut = program.typescriptCompiler.compile(/* document path */, document);
-
-// Getting diagnostics from program and built-in TypeScript compiler
-const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());
-```
-
-### View Syntax
-Please refer to [the wiki](https://github.com/kolint/kolint/wiki) on GitHub.
-
-_For more information about the usage, please refer to the [Documentation](https://github.com/kolint/kolint/wiki)._
-
-
-
-<!-- ROADMAP -->
 ## Roadmap
 
 **Knockout TypeScript Decorators Support**
