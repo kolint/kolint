@@ -33,7 +33,9 @@ export function getConfigs(dir: string, patterns = ['.kolint.*'], _i = -1): Map<
 
 			if (dir !== newDir && !config.root)
 				getConfigs(newDir, patterns, _i)
-		} catch {/**/ }
+		} catch (err) {
+			console.log(err)
+		}
 	}
 
 	return configs
