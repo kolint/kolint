@@ -17,7 +17,8 @@
 	"parserOptions": {
 		"ecmaVersion": 2015,
 		"sourceType": "module",
-		"project": "./tsconfig.json"
+		"project": "./tsconfig.json",
+		"extraFileExtensions": []
 	},
 	"plugins": [
 		"@typescript-eslint"
@@ -96,6 +97,9 @@
 		}
 	],
 	"ignorePatterns": [
+		"*",
+		"!**/*.ts",
+		"!*/",
 		"lib",
 		"build",
 		"demo",
