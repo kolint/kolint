@@ -40,7 +40,7 @@ KOLint is a lint tool for Knockout.JS. It can catch syntax errors, it also has a
 
 ### Built with
   - [meriyah][meriyah] - A 100% compliant, self-hosted javascript parser. Has support for ES2020 and TypeScript syntax.
-  - [TypeScript Compiler API][ts-compiler-api] - Superset of JavaScript that compiles to clean JavaScript output.
+  - [TypeScript][ts-compiler-api] - Superset of JavaScript that compiles to clean JavaScript output.
   - [jison][jison] - Generates bottom-up parsers in JavaScript. Its API is similar to Bison's.
 
 ## Why?
