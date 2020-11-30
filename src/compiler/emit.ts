@@ -200,22 +200,17 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 			const cimport = imports[0]
 
 			const nodes = [
-				`import ${cimport.alias.value === '*' ? '* as' : ''}${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.name.value} from `, getModulePathNode(), ';\n'
+				`import ${cimport.alias.value === '*' ? '* as ' : ''}${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.index} from `, getModulePathNode(), ';\n'
 			]
 
 			if (cimport.isTypeof)
-				nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.alias.value};\n`)
+				nodes.push(`type bindinghandler_${cimport.index} = typeof _bindinghandler_${cimport.index};\n`)
 
 			return nodes
 		} else {
 			// Mutliple imports
 
-			const importExpressions = imports.map(cimport => {
-				if (cimport.isTypeof)
-					if (cimport.name.value === cimport.alias.value) return cimport.name.value
-					else return `${cimport.name.value} as bindinghandler_${cimport.alias.value}`
-				else return `${cimport.name.value} as _bindinghandler_${cimport.alias.value}`
-			})
+			const importExpressions = imports.map(cimport => `${cimport.name.value} as ${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.index}`)
 
 			const nodes = [
 				`import { ${importExpressions.join(', ')} } from `, getModulePathNode(), ';\n'
@@ -223,7 +218,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
 			for (const cimport of imports)
 				if (cimport.isTypeof)
-					nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.name.value};\n`)
+					nodes.push(`type bindinghandler_${cimport.name.value} = typeof _bindinghandler_${cimport.index};\n`)
 
 			return nodes
 
