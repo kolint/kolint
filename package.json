@@ -35,7 +35,8 @@
 		"test": "node ./spec/build/spec.js",
 		"demo": "node ./demo/build/lint.test.js",
 		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts",
-		"compile-parser": "node build/parser/parser-compiler.js"
+		"compile-parser": "node build/parser/parser-compiler.js",
+		"gen-config-schema": "npx typescript-json-schema src/cli/cli.ts Config --noExtraProps --required --strictNullChecks --ignoreErrors --excludePrivate --out lib/config.schema.json"
 	},
 	"publishConfig": {
 		"registry": "https://npm.pkg.github.com/"
