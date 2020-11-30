@@ -53,8 +53,10 @@ export class YY {
 		return new ViewModelNode(location, modulePath, isTypeof, name)
 	}
 
-	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, names: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
-		return new BindingHandlerImportNode(location, modulePath, names)
+	private bhIndex = 0
+	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, imports: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
+		imports.value.map(cimport => cimport.index = this.bhIndex++)
+		return new BindingHandlerImportNode(location, modulePath, imports)
 	}
 
 	public createStartNode = (loc: Location, key: string): Node => {

@@ -34,6 +34,7 @@ export interface BindingHandlerImport {
 	isTypeof: boolean
 	name: IdentifierNode<string>
 	alias: IdentifierNode<string>
+	index: number
 }
 
 export class BindingHandlerImportNode extends Node {
