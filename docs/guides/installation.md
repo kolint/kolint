@@ -30,7 +30,7 @@ const program = kolint.createProgram();
 const document = program.parse(/* document text */);
 ​
 // Compiling the document with built-in TypeScript compiler
-const tsOut = program.typescriptCompiler.compile(/* document path */, document);
+const tsOut = program.compile(/* document path */, document);
 ​
 // Getting diagnostics from program and built-in TypeScript compiler
 const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());

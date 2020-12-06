@@ -12,16 +12,9 @@ export interface Reporting {
 	enableDiagnostics(keys: string[]): void
 }
 
-export interface TypeScriptCompiler {
-	compile(viewFilePath: string, document: Document): Promise<TypeScriptCompilerEmit>
-}
-
-export interface TypeScriptCompilerEmit {
+export interface CompilerResult {
 	rawSource: string
 	sourceMap: string
-	source: ts.SourceFile
-	program: ts.Program
-	service: ts.LanguageService
 	getDiagnostics(): Diagnostic[]
 }
 
@@ -79,7 +72,7 @@ export class Program implements Reporting {
 		return createDocument(parse(document, this, bindingNames, forceToXML), this)
 	}
 
-	public async compile(viewFilePath: string, document: Document): Promise<TypeScriptCompilerEmit> {
+	public async compile(viewFilePath: string, document: Document): Promise<CompilerResult> {
 		const compiler = new Compiler(viewFilePath)
 		const template = emit(viewFilePath, document)
 		const generated = compiler.compile(template.file, 'generated.o.ts')
@@ -122,9 +115,6 @@ export class Program implements Reporting {
 		return {
 			rawSource: generated,
 			sourceMap: template.sourceMap,
-			source,
-			service,
-			program: tsprogram,
 			getDiagnostics() {
 				return convertDiagnostics(
 					Array.from(ts.sortAndDeduplicateDiagnostics([
