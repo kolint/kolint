@@ -192,7 +192,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 
 		if (!ref.imports) return
 
-		const imports = ref.imports.value
+		const imports = ref.imports
 
 		if (imports.length === 1 && ['*', 'default'].includes(imports[0].alias.value)) {
 			// Single import
@@ -210,7 +210,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 		} else {
 			// Mutliple imports
 
-			const importExpressions = imports.map(cimport => `${cimport.name.value} as ${cimport.isTypeof ? '_' : ''}bindinghandler_${cimport.index}`)
+			const importExpressions = imports.map(cimport => `${cimport.name.value} as ${cimport.isTypeof ? '_' : ''}${cimport.alias.value}`)
 
 			const nodes = [
 				`import { ${importExpressions.join(', ')} } from `, getModulePathNode(), ';\n'
@@ -229,7 +229,7 @@ function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: st
 	const bindinghandlers = refs.map(ref => {
 		if (!ref.imports) return
 
-		return ref.imports.value.map(alias => `'${alias.name.value}': BindingContextTransform<bindinghandler_${alias.name.value}>`)
+		return ref.imports.map(imp => `'${imp.alias.value}': BindingContextTransform<bindinghandler_${imp.alias.value}>`)
 	}).filter(is).flat(1)
 
 	const bindinghandlersInterface = `interface BindingContextTransforms extends Overlay<{\n${bindinghandlers.join('\n')}\n}, StandardBindingContextTransforms> { }`
