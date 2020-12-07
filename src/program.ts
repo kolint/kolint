@@ -26,7 +26,7 @@ export class Program implements Reporting {
 	private diagnostics: Diagnostic[] = []
 
 	private allDiagnosticsDisabled = false
-	private disabledDiagnostics = new Array<string>()
+	private disabledDiagnostics: string[] = []
 
 	public addDiagnostic(...diags: Diagnostic[]) : void {
 		if (this.allDiagnosticsDisabled) return
