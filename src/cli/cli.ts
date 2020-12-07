@@ -129,7 +129,7 @@ async function main() {
 
 			const document = program.parse(textDoc)
 
-			const typescriptEmit = await program.typescriptCompiler.compile(filepath, document)
+			const typescriptEmit = await program.compile(filepath, document)
 
 			const diagnostics = new Array<lint.Diagnostic>().concat(
 				typescriptEmit.getDiagnostics(),

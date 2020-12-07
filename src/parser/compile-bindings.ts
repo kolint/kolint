@@ -3,7 +3,7 @@ import * as meriyah from 'meriyah'
 import { getPosFromIndex as getPositionFromOffsetInFile } from '../utils'
 import { Location } from './location'
 import { Binding, BindingName, BindingExpression } from './bindingDOM'
-import { ProgramInternal } from '../program'
+import { Reporting } from '../program'
 import { Diagnostic } from '../diagnostic'
 
 export class ImportStatement {
@@ -68,7 +68,7 @@ function isParserError(err: unknown): err is ParseError {
 		typeof _err.description === 'string'
 }
 
-function parseDataBind(program: ProgramInternal, data: string, loc: Location): Property[] | undefined {
+function parseDataBind(reporting: Reporting, data: string, loc: Location): Property[] | undefined {
 	let tree: meriyah.ESTree.Program
 
 	try {
@@ -80,7 +80,7 @@ function parseDataBind(program: ProgramInternal, data: string, loc: Location): P
 		})
 	} catch (err) {
 		if (isParserError(err))
-			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', {
+			reporting.addDiagnostic(new Diagnostic('javascript-syntax-error', {
 				first_line: err.line,
 				first_column: err.column,
 				// Error end position is not implemeted yet (meriyah/meriyah#156)
@@ -134,8 +134,8 @@ function getRelativeLocation(data: string, loc: Location, startOffset: number, e
 	}
 }
 
-export function parseBindingExpression(program: ProgramInternal, data: string, loc: Location): Binding[] {
-	const properties = parseDataBind(program, data, loc)
+export function parseBindingExpression(reporting: Reporting, data: string, loc: Location): Binding[] {
+	const properties = parseDataBind(reporting, data, loc)
 	const bindings: Binding[] = []
 
 	if (!properties)
@@ -148,7 +148,7 @@ export function parseBindingExpression(program: ProgramInternal, data: string, l
 		// Adjust for the two extra characters added during parsing.
 		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
 		if (!(propertyRange.start && propertyRange.end))
-			program._internal.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression'))
+			reporting.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression'))
 
 		const identifier = property.node.key
 

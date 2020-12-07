@@ -2,12 +2,10 @@ import { Node, Document, BindingName, Binding, ViewModelNode, BindingExpression,
 import { parseBindingExpression } from './compile-bindings'
 import { Location } from './location'
 import { Diagnostic, diagnostics } from '../diagnostic'
-import { ProgramInternal } from '../program'
+import { Reporting } from '../program'
 
 // Build binding tree
-export function createDocument(ast: Node[], program: ProgramInternal): Document {
-	const internal = program._internal
-
+export function createDocument(ast: Node[], reporting: Reporting): Document {
 	// TODO: Remove root binding
 	const root = new Binding(new BindingName('root', undefined as unknown as Location), new BindingExpression('', undefined as unknown as Location))
 	const bindingStack: Binding[] = [root]
@@ -21,20 +19,17 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 
 	for (const node of ast) {
 		if (node instanceof DiagNode) {
-			if (internal) {
-				if (node.enable) {
-					if (node.keys.length)
-						internal.disabledDiagnostics = internal.disabledDiagnostics.filter(diag => !node.keys.includes(diag))
-					else {
-						internal.disableAllDiagnostics = false
-						internal.disabledDiagnostics = []
-					}
-				} else {
-					if (node.keys.length)
-						internal.disabledDiagnostics = internal.disabledDiagnostics.concat(node.keys)
-					else
-						internal.disableAllDiagnostics = true
+			if (node.enable) {
+				if (node.keys.length)
+					reporting.enableDiagnostics(node.keys)
+				else {
+					reporting.enableAllDiagnostics()
 				}
+			} else {
+				if (node.keys.length)
+					reporting.disableDiagnostics(node.keys)
+				else
+					reporting.disableAllDiagnostics()
 			}
 			// TODO: Only disable diagnostics inside of current element block.
 			continue
@@ -59,7 +54,7 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 				if (node.bindings?.length) {
 					// TODO: parse all binding strings. not just index 0
 					const bindingData = node.bindings[0]
-					const bindings = parseBindingExpression(program, bindingData.bindingText, bindingData.location)
+					const bindings = parseBindingExpression(reporting, bindingData.bindingText, bindingData.location)
 					for (const binding of bindings)
 						binding.viewModelReference = viewmodelStack[viewmodelStack.length - 1]
 					parentBinding.childBindings.splice(-1, 0, ...bindings)
@@ -91,7 +86,7 @@ export function createDocument(ast: Node[], program: ProgramInternal): Document 
 				if (node.bindings?.length) {
 					// TODO: parse all binding strings
 					const bindingData = node.bindings[0]
-					const bindings = parseBindingExpression(program, bindingData.bindingText, bindingData.location)
+					const bindings = parseBindingExpression(reporting, bindingData.bindingText, bindingData.location)
 					const parentBinding = bindingStack[bindingStack.length - 1]
 					for (const binding of bindings)
 						binding.viewModelReference = parentBinding.viewModelReference

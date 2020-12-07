@@ -1,7 +1,7 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
 import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode, IdentifierNode, BindingHandlerImport } from './bindingDOM'
-import { Program } from '../program'
+import { Reporting } from '../program'
 
 const selfClosingNodeNames = [
 	'area',
@@ -53,8 +53,10 @@ export class YY {
 		return new ViewModelNode(location, modulePath, isTypeof, name)
 	}
 
-	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, names: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
-		return new BindingHandlerImportNode(location, modulePath, names)
+	private bhIndex = 0
+	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, imports: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
+		imports.value.map(cimport => cimport.index = this.bhIndex++)
+		return new BindingHandlerImportNode(location, modulePath, imports)
 	}
 
 	public createStartNode = (loc: Location, key: string): Node => {
@@ -95,7 +97,7 @@ export class YY {
  * @param bindingNames attribute names to interpret as bindings
  * @param forceToXML interpret document as XML
  */
-export function parse(document: string, program: Program, bindingNames?: string[], forceToXML = false): Node[] {
+export function parse(document: string, reporting: Reporting, bindingNames?: string[], forceToXML = false): Node[] {
 	// const _ = program['_']
 
 	const nodeParser = new documentParser.Parser<Node[]>()

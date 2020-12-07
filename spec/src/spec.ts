@@ -127,7 +127,8 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 		'Correct start and end positions (import)',
 
 		async (program: lint.Program) => {
-			const emit = await program.typescriptCompiler.compile('nothing1', program.parse(emitTestString))
+			const doc = program.parse(emitTestString)
+			const emit = await program.compile('nothing1', doc)
 
 			const diags = correctPositionEmitCache = emit.getDiagnostics()
 

@@ -26,7 +26,7 @@ async function main() {
 
 		const document = program.parse(textDoc)
 
-		const typescriptEmit = await program.typescriptCompiler.compile(filename, document)
+		const typescriptEmit = await program.compile(filename, document)
 
 		const diagnostics = program.getDiagnostics().concat(typescriptEmit.getDiagnostics())
 
