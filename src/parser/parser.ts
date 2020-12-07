@@ -1,7 +1,7 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
 import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode, IdentifierNode, BindingHandlerImport } from './bindingDOM'
-import { Program } from '../program'
+import { Reporting } from '../program'
 
 const selfClosingNodeNames = [
 	'area',
@@ -97,7 +97,7 @@ export class YY {
  * @param bindingNames attribute names to interpret as bindings
  * @param forceToXML interpret document as XML
  */
-export function parse(document: string, program: Program, bindingNames?: string[], forceToXML = false): Node[] {
+export function parse(document: string, reporting: Reporting, bindingNames?: string[], forceToXML = false): Node[] {
 	// const _ = program['_']
 
 	const nodeParser = new documentParser.Parser<Node[]>()
