@@ -3,7 +3,7 @@
 		"module": "commonjs",
 		"target": "ES6",
 		"outDir": "build",
-		"lib": ["ES6"],
+		"lib": ["ES6", "DOM"],
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true,
@@ -15,9 +15,10 @@
 		"moduleResolution": "node"
 	},
 	"exclude": [
-		"test",
-		"build",
-		"spec",
-		"demo"
+		"./test",
+		"./build",
+		"./spec",
+		"./demo",
+		"./lib/resources"
 	]
 }

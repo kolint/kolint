@@ -61,7 +61,7 @@ function newline(...chunks: unknown[]): unknown {
 
 export function emit(viewPath: string, document: Document): { file: string, sourceMap: string } {
 	const emit = (node: Node | BindingName | BindingExpression, action: () => Chunk): SourceNode => {
-		return new SourceNode(node.loc.first_line, node.loc.first_column, viewPath, action())
+		return new SourceNode(node.loc.coords?.first_line ?? 1, node.loc.coords?.first_column ?? 0, viewPath, action())
 	}
 
 	if (document.viewmodelReferences.length < 1) {
@@ -75,8 +75,8 @@ export function emit(viewPath: string, document: Document): { file: string, sour
 
 	const viewmodelImportModulePath = new SourceNode(
 		// modulePath is a string and can therefore not be multiline
-		document.viewmodelReferences[0].modulePath.location.first_line,
-		document.viewmodelReferences[0].modulePath.location.first_column - 1,
+		document.viewmodelReferences[0].modulePath.location.coords?.first_line ?? 1,
+		document.viewmodelReferences[0].modulePath.location.coords?.first_column ?? 1 - 1,
 		viewPath,
 		`'${document.viewmodelReferences[0].modulePath.value}'`
 	)
@@ -187,7 +187,7 @@ function is<T>(value: T | undefined | null): value is T {
 function emitBHImportStatements(refs: BindingHandlerImportNode[], sourcePath: string): (string | SourceNode)[] {
 	const imports = refs.map(ref => {
 		function getModulePathNode() {
-			return new SourceNode(ref.modulePath.location.first_line, ref.modulePath.location.first_column - 1, sourcePath, ['\'', ref.modulePath.value, '\''])
+			return new SourceNode(ref.modulePath.location.coords?.first_line ?? 1, ref.modulePath.location.coords?.first_column ?? 1 - 1, sourcePath, ['\'', ref.modulePath.value, '\''])
 		}
 
 		if (!ref.imports) return
