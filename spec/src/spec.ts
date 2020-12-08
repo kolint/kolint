@@ -129,12 +129,13 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 		async (program: lint.Program) => {
 			const doc = program.parse(emitTestString)
 			const emit = await program.compile('nothing1', doc)
-
-			const diags = correctPositionEmitCache = emit.getDiagnostics()
+			correctPositionEmitCache = emit.getDiagnostics()
+			
+			const diags = correctPositionEmitCache
 
 			return (diags.length === 3 &&
-			diags[0].location?.first_column === 39 && diags[0].location?.last_column === 49 &&
-			diags[0].location?.first_line === 1 && diags[0].location?.last_line === 1) ||
+			diags[0].location?.coords?.first_column === 39 && diags[0].location?.coords?.last_column === 49 &&
+			diags[0].location?.coords?.first_line === 1 && diags[0].location?.coords?.last_line === 1) ||
 			'Invalid start and end positions'
 		}
 	],
@@ -145,8 +146,8 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 			const diags = correctPositionEmitCache
 
 			return (diags.length === 3 &&
-			diags[1].location?.first_column === 16 && diags[1].location?.last_column === 22 &&
-			diags[1].location?.first_line === 2 && diags[1].location?.last_line === 2) ||
+			diags[1].location?.coords?.first_column === 16 && diags[1].location?.coords?.last_column === 22 &&
+			diags[1].location?.coords?.first_line === 2 && diags[1].location?.coords?.last_line === 2) ||
 			'Invalid start and end positions'
 		}
 	],
@@ -157,8 +158,8 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 			const diags = correctPositionEmitCache
 
 			return (diags.length === 3 &&
-			diags[2].location?.first_column === 22 && diags[2].location?.last_column === 32 &&
-			diags[2].location?.first_line === 3 && diags[2].location?.last_line === 3) ||
+			diags[2].location?.coords?.first_column === 22 && diags[2].location?.coords?.last_column === 32 &&
+			diags[2].location?.coords?.first_line === 3 && diags[2].location?.coords?.last_line === 3) ||
 			'Invalid start and end positions'
 		}
 	],

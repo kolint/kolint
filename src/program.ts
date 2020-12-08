@@ -98,11 +98,13 @@ export class Program implements Reporting {
 					// Don't log error if the original position not exists
 					if (start.line && start.column) {
 						diagnostics.push(new Diagnostic(diag, {
-							first_column: start.column + 1,
-							first_line: start.line,
-							last_column: start.column + 1 + (generatedEnd.character - generatedStart.character),
-							last_line: start.line + (generatedEnd.line - generatedStart.line),
-							range: []
+							coords: {
+								first_column: start.column + 1,
+								first_line: start.line,
+								last_column: start.column + 1 + (generatedEnd.character - generatedStart.character),
+								last_line: start.line + (generatedEnd.line - generatedStart.line)
+							},
+							range: [0, 0]
 						}))
 					} else {
 						// TODO: handle internal diagnostics

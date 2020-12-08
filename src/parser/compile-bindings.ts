@@ -81,11 +81,7 @@ function parseDataBind(reporting: Reporting, data: string, loc: Location): Prope
 	} catch (err) {
 		if (isParserError(err))
 			reporting.addDiagnostic(new Diagnostic('javascript-syntax-error', {
-				first_line: err.line,
-				first_column: err.column,
 				// Error end position is not implemeted yet (meriyah/meriyah#156)
-				last_column: loc.last_column,
-				last_line: loc.last_line,
 				range: [err.index, loc.range[1]]
 			}, err.message))
 
@@ -126,10 +122,12 @@ function getRelativeLocation(data: string, loc: Location, startOffset: number, e
 	const startPosition = getPositionFromOffsetInFile(data, startOffset)
 	const endPosition = getPositionFromOffsetInFile(data, endOffset)
 	return {
-		first_column: loc.first_column + startPosition.column,
-		first_line: loc.first_line + startPosition.line,
-		last_column: loc.first_column + endPosition.column,
-		last_line: loc.first_line + endPosition.line,
+		coords: {
+			first_column: loc.coords?.first_column ?? 0 + startPosition.column,
+			first_line: loc.coords?.first_line ?? 0 + startPosition.line,
+			last_column: loc.coords?.first_column ?? 0 + endPosition.column,
+			last_line: loc.coords?.first_line ?? 0 + endPosition.line
+		},
 		range: [loc.range[0] + startOffset, loc.range[1] + endOffset]
 	}
 }
@@ -145,16 +143,16 @@ export function parseBindingExpression(reporting: Reporting, data: string, loc: 
 		// TODO: bind variables to context (rewrite property names to include $data or $context)
 		// (property: string) => property in $data ? `$data.${property}` : property in $context ? `$context.${property}` : --emitError--
 
-		// Adjust for the two extra characters added during parsing.
-		const propertyRange = { start: property.node.value.start - 2, end: property.node.value.end - 2 }
-		if (!(propertyRange.start && propertyRange.end))
+		const identifier = property.node.key
+		const valueRange = property.node.value
+		if (!(valueRange.start && valueRange.end))
 			reporting.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression'))
 
-		const identifier = property.node.key
-
+		const [start] = loc.range
+		// Adjust for the two extra characters added during parsing.
 		const binding = new Binding(
-			new BindingName(property.node.key.name, getRelativeLocation(data, loc, identifier.start - 2, identifier.end - 2)),
-			new BindingExpression(property.expression, getRelativeLocation(data, loc, propertyRange.start, propertyRange.end)))
+			new BindingName(property.node.key.name, { range: [start + identifier.start - 2, start + identifier.end - 2] }),
+			new BindingExpression(property.expression, { range: [ start + valueRange.start - 2, start + valueRange.end - 2] }))
 		bindings.push(binding)
 	}
 

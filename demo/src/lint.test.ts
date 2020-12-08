@@ -10,7 +10,7 @@ function log(relativeFilepath: string, diagnostics: lint.Diagnostic[]) {
 	}
 
 	for (const diag of diagnostics)
-		console.log(`${relativeFilepath}${diag.location ? `:${diag.location.first_line}:${diag.location.first_column}` : ''}: ${diag.message}`)
+		console.log(`${relativeFilepath}${diag.location ? `:${diag.location.coords?.first_line ?? 'n/a'}:${diag.location.coords?.first_column ?? 'n/a'}` : ''}: ${diag.message}`)
 
 	console.log('')
 }
