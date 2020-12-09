@@ -3,6 +3,7 @@ import { Diagnostic } from './diagnostic'
 import { Compiler, emit } from './compiler'
 import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
+import { canonicalPath } from './utils'
 
 export interface Reporting {
 	addDiagnostic(...diags: Diagnostic[]): void
@@ -73,6 +74,7 @@ export class Program implements Reporting {
 	}
 
 	public async compile(viewFilePath: string, document: Document): Promise<CompilerResult> {
+		viewFilePath = canonicalPath(viewFilePath)
 		const compiler = new Compiler(viewFilePath)
 		const template = emit(viewFilePath, document)
 		const generated = compiler.compile(template.file, 'generated.o.ts')
