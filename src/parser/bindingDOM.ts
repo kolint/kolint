@@ -38,7 +38,7 @@ export interface BindingHandlerImport {
 }
 
 export class BindingHandlerImportNode extends Node {
-	public constructor(loc: Location, public modulePath: IdentifierNode<string>, public imports?: IdentifierNode<BindingHandlerImport[]>) {
+	public constructor(loc: Location, public modulePath: IdentifierNode<string>, public imports?: BindingHandlerImport[]) {
 		super(loc, '', NodeType.Empty)
 	}
 }
