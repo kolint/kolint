@@ -54,8 +54,8 @@ export class YY {
 	}
 
 	private bhIndex = 0
-	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, imports: IdentifierNode<BindingHandlerImport[]>): BindingHandlerImportNode => {
-		imports.value.map(cimport => cimport.index = this.bhIndex++)
+	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, imports: BindingHandlerImport[]): BindingHandlerImportNode => {
+		imports.map(cimport => cimport.index = this.bhIndex++)
 		return new BindingHandlerImportNode(location, modulePath, imports)
 	}
 
@@ -106,6 +106,9 @@ export function parse(document: string, reporting: Reporting, bindingNames?: str
 
 	nodeParser.lexer.options.ranges = true
 
+	// Skip the byte order mark (BOM), if present.
+	if (document.charAt(0) === '\uFEFF')
+		document = document.slice(1)
 	const ast = nodeParser.parse(document)
 
 	if (!forceToXML)

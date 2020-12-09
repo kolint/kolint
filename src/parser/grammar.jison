@@ -20,8 +20,8 @@ XMLPITEXT                         .+?(?=\?>)
 <tag>">"                          this.popState(); return '>'
 <tag>"/"                          return '/'
 <tag>"="                          return 'EQ'
-<tag,bhimport,vmimport>{QTEXT}    yytext = yytext.slice(1,-1); ++yylloc.first_column; --yylloc.last_column; return 'TEXT'
-<tag,bhimport,vmimport>{SQTEXT}   yytext = yytext.slice(1,-1); ++yylloc.first_column; --yylloc.last_column; return 'TEXT'
+<tag,bhimport,vmimport>{QTEXT}    yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
+<tag,bhimport,vmimport>{SQTEXT}   yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
 <tag>{IDENT}                      return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
 <bhimport,vmimport>"{"            return 'LBRACE'
 <bhimport,vmimport>"}"            return 'RBRACE'
@@ -185,9 +185,9 @@ attribValue
 
 vmImportRef
   : IMPORT TYPEOF vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), true, $vmImportSpec) }
+    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), true, yy.ident($vmImportSpec, @vmImportSpec)) }
   | IMPORT vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false, $vmImportSpec) }
+    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false, yy.ident($vmImportSpec, @vmImportSpec)) }
   | TEXT
     { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false) }
   // TODO:
@@ -209,7 +209,7 @@ vmImportSpec
 
 bhImportRef
   : IMPORT bhImportSpec FROM TEXT
-    { $$ = yy.createBindingHandlerRefNode(@$, yy.ident($TEXT, @TEXT), yy.ident($bhImportSpec, @bhImportSpec)) }
+    { $$ = yy.createBindingHandlerRefNode(@$, yy.ident($TEXT, @TEXT), $bhImportSpec) }
 
     // TODO:
     // Check for `get from` import statements which can be used as a little trick for typescript
@@ -221,13 +221,13 @@ bhImportSpec
   // Don't export as ident because we are unable to do it below. Do it in referneces instead.
     { $$ = $bhImportBlockIdentifiers }
   | STAR AS Ident
-    { $$ = [{ name: yy.ident($3, @3), alias: yy.ident('*'), isTypeof: false }] }
+    { $$ = [{ name: yy.ident('*', @STAR), alias: yy.ident($3, @3), isTypeof: false }] }
   | Ident
-    { $$ = [{ name: yy.ident($1, @1), alias: yy.ident('default'), isTypeof: false }] }
+    { $$ = [{ name: yy.ident('default', @$), alias: yy.ident($1, @1), isTypeof: false }] }
   | TYPEOF STAR AS Ident
-    { $$ = [{ name: yy.ident($4, @4), alias: yy.ident('*'), isTypeof: true }] }
+    { $$ = [{ name: yy.ident('*', @STAR), alias: yy.ident($4, @4), isTypeof: true }] }
   | TYPEOF Ident
-    { $$ = [{ name: yy.ident($2, @2), alias: yy.ident('default'), isTypeof: true }] }
+    { $$ = [{ name: yy.ident('default', @$), alias: yy.ident($2, @2), isTypeof: true }] }
   ;
 
 bhImportBlockIdentifiers
@@ -245,9 +245,9 @@ bhImportIdentifier
   |	Ident
     { $$ = { name: yy.ident($1, @1), alias: yy.ident($1, @1), isTypeof: false } }
   | TYPEOF Ident AS Ident
-    { $$ = { name: yy.ident($1, @1), alias: yy.ident($3, @3), isTypeof: true } }
+    { $$ = { name: yy.ident($2, @2), alias: yy.ident($4, @4), isTypeof: true } }
   | TYPEOF Ident
-    { $$ = { name: yy.ident($1, @1), alias: yy.ident($1, @1), isTypeof: true } }
+    { $$ = { name: yy.ident($2, @2), alias: yy.ident($2, @2), isTypeof: true } }
   ;
 
 //#regionend bh_import
