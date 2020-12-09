@@ -28,7 +28,7 @@ const config = (<T extends _Config>(x: T) => x)({
 	config: {
 		type: 'string',
 		alias: ['c'],
-		description: 'aaa'
+		description: 'glob pattern or path to config files'
 	},
 	'ts-base': {
 		type: 'string',
