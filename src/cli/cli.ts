@@ -4,7 +4,7 @@ import * as lint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as _glob from 'glob'
-import * as yargs from 'yargs'
+import * as _yargs from 'yargs'
 import { getConfigs, joinConfigs } from './config'
 
 interface _Config {
@@ -45,14 +45,19 @@ const config = (<T extends _Config>(x: T) => x)({
 })
 
 const { argv: args } = (() => {
-	let args = yargs
+	let yargs = _yargs
 
 	for (const [key, options] of Object.entries(config)) {
-		args = args.option(key, options)
+		yargs = yargs.option(key, options)
 	}
 
-	return args as yargs.Argv<Partial<Config>>
+	return yargs as _yargs.Argv<Partial<Config>>
 })()
+
+if (args._.length < 1) {
+	console.log('[Error] Specify pattern or path to views.')
+	process.exit(1)
+}
 
 function color(code: number): string {
 	return `\x1b[${code}m`
@@ -113,8 +118,7 @@ function ensureDirectoryExistence(filePath: string) {
 }
 
 async function main() {
-	const filePatterns = process.argv.slice(2)
-	const files = (await Promise.all(filePatterns.map(async pattern => glob(pattern)))).flat()
+	const files = (await Promise.all(args._.map(async pattern => glob(pattern)))).flat()
 	const filesFolder = getContainingFolder(files)
 
 	let errors = 0
