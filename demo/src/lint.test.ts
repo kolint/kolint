@@ -1,7 +1,7 @@
 import * as lint from '../../build'
 import * as path from 'path'
 import * as fs from 'fs'
-
+ 
 function log(relativeFilepath: string, diagnostics: readonly lint.Diagnostic[]) {
 	if (diagnostics.length <= 0) {
 		console.log('[No errors]\n')
@@ -18,15 +18,15 @@ function log(relativeFilepath: string, diagnostics: readonly lint.Diagnostic[]) 
 async function main() {
 	const filename = path.join(__dirname, '../resources/view.html')
 	const relFilename = path.relative(process.cwd(), filename).replace(/\\/g, '/')
-
 	const textDoc = fs.readFileSync(filename).toString()
+	if (!textDoc)
+		throw new Error(`Cannot open file '${filename}'`)
 
 	try {
 		const program = lint.createProgram()
-
 		const document = program.parse(textDoc)
-
-		await program.compile(filename, document)
+		const fileHost = new lint.MemoryFileHost();
+		await program.compile(filename, document, fileHost, textDoc)
 
 		const diagnostics = program.getDiagnostics()
 

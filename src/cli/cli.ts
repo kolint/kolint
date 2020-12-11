@@ -6,6 +6,7 @@ import * as path from 'path'
 import * as _glob from 'glob'
 import * as _yargs from 'yargs'
 import { getConfigs, joinConfigs } from './config'
+import { MemoryFileHost } from '../program'
 
 interface Options {
 	/** Root directory, defaults to cwd. */
@@ -135,33 +136,33 @@ async function main() {
 
 		try {
 			const program = lint.createProgram()
-
 			const document = program.parse(textDoc)
-
-			await program.compile(filepath, document)
+			const fileHost = new MemoryFileHost()
+			const outFileHandle = await program.compile(filepath, document, fileHost, textDoc)
 
 			const diagnostics = program.getDiagnostics()
-			if (diagnostics.length > 0) {
+			if (diagnostics.length > 0)
 				console.log(`\n${color(90)}${filepath.replace(/\\/g, '/')}${color(0)}`)
-				for (const diag of diagnostics) {
-					if (diag.severity === lint.Severity.Error)
-						errors++
-					if (diag.severity === lint.Severity.Warning)
-						warnings++
-				}
+				
+			for (const diag of diagnostics) {
+				if (diag.severity === lint.Severity.Error)
+					errors++
+				if (diag.severity === lint.Severity.Warning)
+					warnings++
+			}
 
 			if (config.out) {
 				const outDir = path.join(typeof config.root === 'string' ? config.root : process.cwd(), config.out)
-
-				const outFile = path.join(outDir, path.relative(filesFolder, path.parse(file).name + (config.outExt ?? '.ko.ts')))
-
-				ensureDirectoryExistence(outFile)
-
-				fs.writeFileSync(outFile, typescriptEmit.rawSource)
+				const outFilePath = path.join(outDir, path.relative(filesFolder, path.parse(file).name + (config.outExt ?? '.ko.ts')))
+				ensureDirectoryExistence(outFilePath)
+				const fileContent = fileHost.readFile(outFileHandle)
+				if (!fileContent)
+					throw new Error('Catastrophic Error. The generated file is not available.')
+				fs.writeFileSync(outFilePath, fileContent)
 			}
 
 			const sortedDiags = diagnostics?.slice().sort((a, b) => (a.location?.coords?.first_line ?? -1) - (b.location?.coords?.first_line ?? -1))
-			log(filepath, diagnostics)
+			log(filepath, sortedDiags)
 		} catch (err) {
 			if (err instanceof lint.Diagnostic)
 				log(filepath, [err])

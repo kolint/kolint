@@ -5,6 +5,22 @@ import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
 import { canonicalPath } from './utils'
 
+export interface FileHost {
+	writeFile(name: string, data: string): void
+	readFile(name: string): string | undefined
+}
+
+export class PhysicalFileHost implements FileHost {
+	public readFile(fileName: string): string | undefined { return ts.sys.readFile(fileName) }
+	public writeFile(filename: string, data: string): void { ts.sys.writeFile(filename, data) }
+}
+
+export class MemoryFileHost implements FileHost {
+	private files: Record<string, string> = {};
+	public readFile(fileName: string): string | undefined { return this.files[fileName] }
+	public writeFile(fileName: string, data: string): void { this.files[fileName] = data }
+}
+
 export interface Reporting {
 	addDiagnostic(...diags: Diagnostic[]): void
 	disableAllDiagnostics(): void
@@ -73,14 +89,22 @@ export class Program implements Reporting {
 		return createDocument(parse(document, this, bindingNames, forceToXML), this)
 	}
 
-	public async compile(viewFilePath: string, document: Document): Promise<void> {
+	/**
+	 * Creates a pre-compiled view from the input view. Used for type checking.
+	 * @param viewFilePath file path to the view to compile
+	 * @param document the parsed AST of the view
+	 * @param fileHost manages all files produced during compilation (including intermediate files)
+	 * @param viewContent the actual view file contents (used for sourcemapping etc)
+	 * @returns the file path to the generated compiled view
+	 */
+	public async compile(viewFilePath: string, document: Document, fileHost: FileHost, viewContent: string): Promise<string> {
 		viewFilePath = canonicalPath(viewFilePath)
-		const compiler = new Compiler(viewFilePath)
-		const { source, diagnostics: diags } = await compiler.compile(document)
+		const compiler = new Compiler(fileHost)
+		const { source, diagnostics: diags } = await compiler.compile(document, viewFilePath, viewContent)
 
 		const kolintDiags = await Promise.all(diags.map(async diag => {
 			if (diag.file && diag.start && diag.length) {
-				const fileText = ts.sys.readFile(source.fileName + '.map')
+				const fileText = fileHost.readFile(source.fileName + '.map')
 				const sm = await new SourceMapConsumer(fileText ?? '')
 
 				const generatedStart = ts.getLineAndCharacterOfPosition(diag.file, diag.start)
@@ -96,5 +120,6 @@ export class Program implements Reporting {
 		}))
 
 		this.diagnostics = this.diagnostics.concat(kolintDiags)
+		return source.fileName
 	}
 }
