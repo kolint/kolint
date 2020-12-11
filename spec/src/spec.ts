@@ -1,3 +1,4 @@
+import * as path from 'path'
 import * as lint from '../../build'
 
 const parseTests = {
@@ -127,12 +128,15 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 		'Correct start and end positions (import)',
 
 		async (program: lint.Program) => {
-			await program.compile('nothing1', program.parse(emitTestString))
+			const fileHost = new lint.MemoryFileHost()
+			const filename = path.join(__dirname, '../resources/nothing1')
+			fileHost.writeFile(filename, emitTestString)
+			await program.compile(filename, program.parse(emitTestString), fileHost, emitTestString)
 			const diags = correctPositionEmitCache = program.getDiagnostics()
 
-			return (diags.length === 3 &&
-			diags[0].location?.coords?.first_column === 39 && diags[0].location?.coords?.last_column === 49 &&
-			diags[0].location?.coords?.first_line === 1 && diags[0].location?.coords?.last_line === 1) ||
+			return (diags.length === 4 &&
+			diags[0].location?.coords?.first_column === 40 && diags[0].location?.coords?.last_column === 48 &&
+			diags[0].location?.coords?.first_line === 2 && diags[0].location?.coords?.last_line === 2) ||
 			'Invalid start and end positions'
 		}
 	],
@@ -142,9 +146,9 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 		() => {
 			const diags = correctPositionEmitCache
 
-			return (diags.length === 3 &&
-			diags[1].location?.coords?.first_column === 16 && diags[1].location?.coords?.last_column === 22 &&
-			diags[1].location?.coords?.first_line === 2 && diags[1].location?.coords?.last_line === 2) ||
+			return (diags.length === 4 &&
+			diags[1].location?.coords?.first_column === 22 && diags[1].location?.coords?.last_column === 32 &&
+			diags[1].location?.coords?.first_line === 4 && diags[1].location?.coords?.last_line === 4) ||
 			'Invalid start and end positions'
 		}
 	],
@@ -154,8 +158,8 @@ const compilerTests: ([string, (program: lint.Program) => Promise<string | true>
 		() => {
 			const diags = correctPositionEmitCache
 
-			return (diags.length === 3 &&
-			diags[2].location?.coords?.first_column === 22 && diags[2].location?.coords?.last_column === 32 &&
+			return (diags.length === 4 &&
+			diags[2].location?.coords?.first_column === 16 && diags[2].location?.coords?.last_column === 20 &&
 			diags[2].location?.coords?.first_line === 3 && diags[2].location?.coords?.last_line === 3) ||
 			'Invalid start and end positions'
 		}

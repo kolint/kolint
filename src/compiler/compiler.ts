@@ -5,6 +5,7 @@ import { RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
 import { injectContextTypes } from './type-injection'
 import { ViewBindingsEmitter } from './emit'
 import { Document } from '../parser'
+import { FileHost } from '../program'
 
 interface TextWriter {
 	getTextPos(): number
@@ -106,8 +107,6 @@ class SourceMapAdapter {
 }
 
 export class Compiler {
-	private compiledViewPath: string
-
 	private static getStandardOptions(viewPath: string): ts.CompilerOptions {
 		const configFileName = ts.findConfigFile(path.parse(viewPath).dir, (p: string) => ts.sys.fileExists(path.resolve(path.parse(viewPath).dir, p)))
 		let compilerOptions: ts.CompilerOptions
@@ -121,14 +120,11 @@ export class Compiler {
 		return compilerOptions
 	}
 
-	public constructor(private viewPath: string) {
-		// Initialize the template file
-		this.compiledViewPath = this.viewPath + '.g.ts'
-	}
+	public constructor(private fileHost: FileHost) {}
 
-	public async compile(document: Document): Promise<{ source: ts.SourceFile, diagnostics: readonly ts.Diagnostic[] }> {
+	public async compile(document: Document, viewPath: string, viewContent: string): Promise<{ source: ts.SourceFile, diagnostics: readonly ts.Diagnostic[] }> {
 		const typeLibPath = path.resolve(__dirname, '../../lib/resources/context')
-		const compilerOptions = Compiler.getStandardOptions(path.resolve(this.viewPath))
+		const compilerOptions = Compiler.getStandardOptions(path.resolve(viewPath))
 
 		const writeSourceFile = async (file: ts.SourceFile, previousFileName: string | undefined, tsFileName: string) => {
 			const sm = new SourceMapAdapter(tsFileName)
@@ -138,14 +134,14 @@ export class Compiler {
 			const textWriter = unofficialAPI.createTextWriter(ts.sys.newLine)
 			const printer = ts.createPrinter({ removeComments: false }) as InternalPrinter
 			printer.writeFile(file, textWriter, sm)
-			ts.sys.writeFile(tsFileName, textWriter.getText())
+			this.fileHost.writeFile(tsFileName, textWriter.getText())
 
 			// Inject the previous source map to make our new source map to point to the original source
 			if (previousFileName) {
-				const oldMap = JSON.parse(ts.sys.readFile(previousFileName + '.map') ?? '') as RawSourceMap
+				const oldMap = JSON.parse(this.fileHost.readFile(previousFileName + '.map') ?? '') as RawSourceMap
 				await sm.mergeSourceMaps(oldMap)
 			}
-			ts.sys.writeFile(tsFileName + '.map', sm.toString())
+			this.fileHost.writeFile(tsFileName + '.map', sm.toString())
 		}
 
 		// Load scaffold into a source file
@@ -156,20 +152,24 @@ export class Compiler {
 		const scaffoldFile = ts.createSourceFile(templateFile, text, ts.ScriptTarget.ES2018)
 
 		// Generate Source Map based on the Html View (Precompiled View -> Html View)
-		const htmlFile = ts.sys.readFile(this.viewPath)
-		if (!htmlFile)
-			throw new Error(`Could not load view file ${this.viewPath}`)
-		const sourceMapSource = ts.createSourceMapSource(this.viewPath, htmlFile)
+		const sourceMapSource = ts.createSourceMapSource(viewPath, viewContent)
 
 		// Transform the AST Fill out the placeholders with data form the view.
 		const emitter = new ViewBindingsEmitter(document, ts.factory, typeLibPath, sourceMapSource)
 		const result = ts.transform(scaffoldFile, [emitter.transformerFactory], compilerOptions)
-		await writeSourceFile(result.transformed[0], undefined, this.compiledViewPath + '_0.ts')
+
+		const compiledViewPath = viewPath + '.g'
+		await writeSourceFile(result.transformed[0], undefined, compiledViewPath + '_0.ts')
 
 		const compilerHost = ts.createCompilerHost(compilerOptions)
+		compilerHost.readFile = (fileName: string) => {
+			const data = this.fileHost.readFile(fileName)
+			return data ?? ts.sys.readFile(fileName)
+		}
+		compilerHost.writeFile = (fileName: string, data: string) => this.fileHost.writeFile(fileName, data)
 
 		// Iteratively fill out the placeholders with inferred types
-		const filenameX = await injectContextTypes(this.compiledViewPath, compilerHost, compilerOptions, writeSourceFile)
+		const filenameX = await injectContextTypes(compiledViewPath, compilerHost, compilerOptions, writeSourceFile)
 
 		const typingProgram2 = ts.createProgram([filenameX], compilerOptions, compilerHost /*, templProg*/)
 		const typedFile2 = typingProgram2.getSourceFile(filenameX)
