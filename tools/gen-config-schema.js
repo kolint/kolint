@@ -47,7 +47,7 @@ if (isdocs) {
 		)
 		.join('\n')
 
-	const table = `<!--\nTHIS FILE IS AUTO GENERATED\nTHIS FILE !!SHOULD!! BE COMMITED\nSEE 'tools/gen-config-schema.js'\n-->\n\n# Config\n\nAll of the options available in KOLint's config file. JSON schema available at \`lib/config.schema.json\` in the package.\n\n| name | type | description | default |\n| :-: | :-: | :- | :-: |\n${tableItems}\n\n_Do not edit this documentation file._\n`
+	const table = `<!--\nTHIS FILE IS AUTO GENERATED\nTHIS FILE !!SHOULD!! BE COMMITED\nSEE 'tools/gen-config-schema.js'\n-->\n\n# Config\n\nAll of the options available in KOLint's config file. JSON schema available at \`lib/config.schema.json\` in the package.\n\n| name | type | description | default |\n| :- | :- | :- | :- |\n${tableItems}\n\n_Do not edit this documentation file._\n`
 
 	fs.writeFileSync(docsPath, table)
 }
