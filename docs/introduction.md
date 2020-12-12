@@ -1,6 +1,6 @@
 # Introduction
 
-KOLint is a lint tool for [Knockout.JS](https://knockoutjs.com). It can catch syntax errors, it also has a built-in \[TypeScript\]\[ts\] type checker that can be used on views to get type and syntax errors.
+KOLint is a lint tool for [Knockout.JS](https://knockoutjs.com). It can catch syntax errors, it also has a built-in [TypeScript](https://typescriptlang.org) type checker that can be used on views to get type and syntax errors.
 
 ## Why?
 
@@ -27,6 +27,4 @@ Knockout has worked the same since 2010 and has never disappointed me. Due to it
 **Comprehensive suite of specifications** \(developed BDD-style\) means its correct functioning can easily be verified on new browsers and platforms
 
 Check out the demos at [Knockout.JS](https://knockoutjs.com) website.
-
-\[ts\]: [https://typescriptlang.org](https://typescriptlang.org)
 
