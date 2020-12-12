@@ -17,7 +17,8 @@
 		"eslint": "^7.14.0",
 		"jison": "^0.4.18",
 		"mocha": "^8.2.1",
-		"ts-node": "^9.0.0"
+		"ts-node": "^9.0.0",
+		"typescript-json-schema": "^0.45.0"
 	},
 	"dependencies": {
 		"glob": "^7.1.6",
@@ -30,6 +31,7 @@
 		"yargs": "^16.1.1"
 	},
 	"scripts": {
+		"install": "node tools/gen-config-schema.js --no-docs --no-override",
 		"build": "npx tsc --build . spec demo && npm run compile-parser",
 		"watch": "npx tsc --build . spec demo --watch",
 		"test": "node ./spec/build/spec.js",

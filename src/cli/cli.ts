@@ -7,55 +7,59 @@ import * as _glob from 'glob'
 import * as _yargs from 'yargs'
 import { getConfigs, joinConfigs } from './config'
 
-interface _Config {
-	[key: string]: {
-		type: 'array' | 'boolean' | 'number' | 'string'
-		description: string
-		alias?: readonly string[]
-		default?: unknown
-	}
+interface Options {
+	/** Root directory, defaults to cwd. */
+	root?: string | boolean
+	/** Output directory, works similarly to tsconfig's outDir. */
+	out?: string
+	/** TS output file extension, should start with dot. */
+	outExt?: string
 }
 
-export type Config = {
-	[key in keyof typeof config]:
-	(typeof config)[key]['type'] extends 'array' ? unknown[] :
-	(typeof config)[key]['type'] extends 'boolean' ? boolean :
-	(typeof config)[key]['type'] extends 'number' ? number :
-	(typeof config)[key]['type'] extends 'string' ? string :
-	never
+interface ArgsOptions extends Options {
+	/** Glob pattern or path to config files. Alias: '-c'. */
+	config?: string
 }
-const config = (<T extends _Config>(x: T) => x)({
-	config: {
-		type: 'string',
-		alias: ['c'],
-		description: 'glob pattern or path to config files'
-	},
-	'ts-base': {
-		type: 'string',
-		description: 'TS base folder, defaults to cwd'
-	},
-	'ts-out': {
-		type: 'string',
-		description: 'TS output folder, works simmilary to tsconfig'
-	},
-	'ts-ext': {
-		type: 'string',
-		description: 'TS output file extension, should start with dot'
-	}
-})
 
-const { argv: args } = (() => {
+/** Options exclusive to config file. See options. */
+export interface ConfigOptions extends Options {
+	/** Severity for rules. Map with the key with the diagnostic name or code and the value as 'off', 'warning' or 'error'. */
+	severity?: { [key: string]: 'off' | 'warning' | 'error' }
+}
+
+const yargs = (() => {
 	let yargs = _yargs
 
-	for (const [key, options] of Object.entries(config)) {
-		yargs = yargs.option(key, options)
+	const options: { [key in keyof ArgsOptions]: _yargs.Options } = {
+		config: {
+			type: 'string',
+			alias: ['c'],
+			description: 'Glob pattern or path to config files'
+		},
+		root: {
+			type: 'string',
+			description: 'Root directory, defaults to cwd'
+		},
+		out: {
+			type: 'string',
+			description: 'Output directory, works similarly to tsconfig\'s outDir'
+		},
+		outExt: {
+			type: 'string',
+			description: 'TS output file extension, should start with dot'
+		}
 	}
 
-	return yargs as _yargs.Argv<Partial<Config>>
+	for (const [key, _options] of Object.entries(options)) {
+		if (!_options) continue
+		yargs = yargs.option(key, _options)
+	}
+
+	return yargs as _yargs.Argv<Options>
 })()
 
-if (args._.length < 1) {
-	console.log('[Error] Specify pattern or path to views.')
+if (yargs.argv._.length < 1) {
+	yargs.showHelp()
 	process.exit(1)
 }
 
@@ -118,7 +122,7 @@ function ensureDirectoryExistence(filePath: string) {
 }
 
 async function main() {
-	const files = (await Promise.all(args._.map(async pattern => glob(pattern)))).flat()
+	const files = (await Promise.all(yargs.argv._.map(async pattern => glob(pattern)))).flat()
 	const filesFolder = getContainingFolder(files)
 
 	let errors = 0
@@ -127,6 +131,7 @@ async function main() {
 	for (const file of files) {
 		const filepath = path.isAbsolute(file) ? file : path.join(process.cwd(), file)
 		const textDoc = fs.readFileSync(filepath).toString()
+		const config = joinConfigs(getConfigs(yargs.argv, path.parse(filepath).dir))
 
 		try {
 			const program = lint.createProgram()
@@ -150,16 +155,10 @@ async function main() {
 					warnings++
 			}
 
-			const parsedFilePath = path.parse(filepath)
+			if (config.out) {
+				const outDir = path.join(typeof config.root === 'string' ? config.root : process.cwd(), config.out)
 
-			// Remove the below line when config is used.
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const config = joinConfigs(getConfigs(parsedFilePath.dir))
-
-			if (args['ts-out']) {
-				const outDir = path.join(args['ts-base'] ?? process.cwd(), args['ts-out'])
-
-				const outFile = path.join(outDir, path.relative(filesFolder, path.parse(file).name + (args['ts-ext'] ?? '.ko.ts')))
+				const outFile = path.join(outDir, path.relative(filesFolder, path.parse(file).name + (config.outExt ?? '.ko.ts')))
 
 				ensureDirectoryExistence(outFile)
 
