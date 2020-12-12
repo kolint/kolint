@@ -9,7 +9,7 @@ import { getConfigs, joinConfigs } from './config'
 
 interface Options {
 	/** Root directory, defaults to cwd. */
-	root?: string | boolean
+	root?: string
 	/** Output directory, works similarly to tsconfig's outDir. */
 	out?: string
 	/** TS output file extension, should start with dot. */
@@ -136,7 +136,8 @@ async function main() {
 	for (const file of files) {
 		const filepath = path.isAbsolute(file) ? file : path.join(process.cwd(), file)
 		const textDoc = fs.readFileSync(filepath).toString()
-		const config = joinConfigs(getConfigs(yargs.argv, path.parse(filepath).dir, yargs.argv.config ? [ yargs.argv.config ] : ['.kolintrc.*']))
+		const rootDir = yargs.argv.root ?? process.cwd()
+		const config = joinConfigs(getConfigs(yargs.argv, rootDir, yargs.argv.config ? [ yargs.argv.config ] : ['.kolintrc.*']))
 
 		try {
 			const program = lint.createProgram({

@@ -34,7 +34,7 @@ export class ViewBindingsEmitter {
 			if (framework.viewmodels?.length)
 				viewmodelReferences.push(...framework.viewmodels.map(viewmodel => new ViewModelNode(undefined, new IdentifierNode(viewmodel.path), viewmodel.isTypeof, new IdentifierNode(viewmodel.name))))
 			if (framework.bindinghandlers?.length)
-				bindingHandlerReferences.push(...framework.bindinghandlers.map(bindinghandler => new BindingHandlerImportNode(undefined, new IdentifierNode(bindinghandler.path), bindinghandler.imports)))
+				bindingHandlerReferences.push(...framework.bindinghandlers.map(bindinghandler => new BindingHandlerImportNode(undefined, new IdentifierNode(bindinghandler.path), bindinghandler.imports.map(cimport => ({ alias: new IdentifierNode(cimport.alias), index: cimport.index, isTypeof: cimport.isTypeof, name: new IdentifierNode(cimport.name) })))))
 		}
 
 		const bindingRelations = this.bindingRelations

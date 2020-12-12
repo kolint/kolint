@@ -4,7 +4,6 @@ import { Compiler } from './compiler'
 import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
 import { canonicalPath } from './utils'
-import { BindingHandlerImport } from './parser/bindingDOM'
 
 export interface FileHost {
 	writeFile(name: string, data: string): void
@@ -39,7 +38,15 @@ export interface CompilerResult {
 export interface ProgramOptions {
 	framework?: (filepath: string) => {
 		viewmodels?: { path: string, name: string, isTypeof: boolean }[]
-		bindinghandlers?: { path: string, imports: BindingHandlerImport[] }[]
+		bindinghandlers?: {
+			path: string
+			imports: {
+				isTypeof: boolean
+				name: string
+				alias: string
+				index: number
+			}[]
+		}[]
 	}
 }
 
