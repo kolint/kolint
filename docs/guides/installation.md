@@ -2,7 +2,7 @@
 
 ## Installation
 
-**Note!** If you want to learn about the syntax used in views, refer to the \[syntax\]\[syntax\] documentation.
+**Note!** If you want to learn about the syntax used in views, refer to the [syntax](../syntax) documentation.
 
 ```bash
 npm i -D knockout-lint
@@ -41,6 +41,3 @@ const tsOut = program.compile(/* document path */, document);
 // Getting diagnostics from program and built-in TypeScript compiler
 const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());
 ```
-
-\[syntax\]: ../syntax/view-models.md
-
