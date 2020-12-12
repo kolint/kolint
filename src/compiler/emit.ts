@@ -1,11 +1,16 @@
 import { isReserved } from '../utils'
-import { Document, BindingHandlerImportNode, IdentifierNode } from '../parser/bindingDOM'
+import { Document, BindingHandlerImportNode, IdentifierNode, ViewModelNode } from '../parser/bindingDOM'
 import { Binding } from '../parser'
 import * as ts from 'typescript'
+import { ProgramOptions } from '../program'
 
 interface BindingRelation {
 	parent: Binding
 	child: Binding
+}
+
+export interface ViewBindingsEmitterOptions {
+	framework?: () => ReturnType<Required<ProgramOptions>['framework']>
 }
 
 /**
@@ -14,12 +19,24 @@ interface BindingRelation {
 export class ViewBindingsEmitter {
 	private readonly bindingRelations: BindingRelation[]
 
-	public constructor(private document: Document, private factory: ts.NodeFactory, private typeLibPath: string, private sourceMapSource: ts.SourceMapSource) {
+	public constructor(private document: Document, private factory: ts.NodeFactory, private typeLibPath: string, private sourceMapSource: ts.SourceMapSource, private options?: ViewBindingsEmitterOptions) {
 		this.bindingRelations = this.flattenedBindingRelations(document.rootBinding)
 	}
 
 	public transformerFactory: ts.TransformerFactory<ts.SourceFile> = context => {
 		const document = this.document
+
+		const viewmodelReferences = document.viewmodelReferences
+		const bindingHandlerReferences = document.bindingHandlerReferences
+
+		if (this.options?.framework) {
+			const framework = this.options.framework()
+			if (framework.viewmodels?.length)
+				viewmodelReferences.push(...framework.viewmodels.map(viewmodel => new ViewModelNode(undefined, new IdentifierNode(viewmodel.path), viewmodel.isTypeof, new IdentifierNode(viewmodel.name))))
+			if (framework.bindinghandlers?.length)
+				bindingHandlerReferences.push(...framework.bindinghandlers.map(bindinghandler => new BindingHandlerImportNode(undefined, new IdentifierNode(bindinghandler.path), bindinghandler.imports)))
+		}
+
 		const bindingRelations = this.bindingRelations
 		const childVisitor = (node: ts.Node): ts.VisitResult<ts.Node> => {
 			if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier) && node.moduleSpecifier.text === '$typelib_placeholder')
@@ -27,11 +44,11 @@ export class ViewBindingsEmitter {
 			if (ts.isExpressionStatement(node) && ts.isStringLiteral(node.expression)) {
 				switch (node.expression.text) {
 					case '$viewmodel_placeholder':
-						return this.createViewmodelImports(document, context.factory)
+						return this.createViewmodelImports(viewmodelReferences, context.factory)
 					case '$bindinghandlers_placeholder':
-						return this.createBindingImports(document.bindingHandlerReferences, context.factory)
+						return this.createBindingImports(bindingHandlerReferences, context.factory)
 					case '$transforms_placeholder':
-						return this.createBindingLiteralTypes(document.bindingHandlerReferences, context.factory)
+						return this.createBindingLiteralTypes(bindingHandlerReferences, context.factory)
 					case '$generated_contexts':
 						return this.createTransformedContexts(document, bindingRelations, context.factory)
 					case '$generated_bindings':
@@ -57,11 +74,11 @@ export class ViewBindingsEmitter {
 
 	private createViewLiteral(literal: IdentifierNode<string>) {
 		const _stringLiteral = this.factory.createStringLiteral(literal.value)
-		const stringLiteral = ts.setSourceMapRange(_stringLiteral, {
+		const stringLiteral = literal.location ? ts.setSourceMapRange(_stringLiteral, {
 			pos: literal.location.range[0],
 			end: literal.location.range[1],
 			source: this.sourceMapSource
-		})
+		}) : _stringLiteral
 		return stringLiteral
 	}
 
@@ -72,17 +89,17 @@ export class ViewBindingsEmitter {
 			throw new Error(`Identifier is using the reserved keyword '${idName}'.`)
 		}
 		const _identifier = this.factory.createIdentifier(idName)
-		const identifier = ts.setSourceMapRange(_identifier, {
+		const identifier = literal.location ? ts.setSourceMapRange(_identifier, {
 			pos: literal.location.range[0],
 			end: literal.location.range[1],
 			source: this.sourceMapSource
-		})
+		}) : _identifier
 
 		return identifier
 	}
 
-	private createViewmodelImports(document: Document, factory: ts.NodeFactory): ts.ImportDeclaration[] {
-		return document.viewmodelReferences.map(ref => {
+	private createViewmodelImports(viewmodelRefs: ViewModelNode[], factory: ts.NodeFactory): ts.ImportDeclaration[] {
+		return viewmodelRefs.map(ref => {
 			// TODO: * star imports defaults to 'ViewModel'. Add support for all other import types
 			return factory.createImportDeclaration(undefined, undefined,
 				factory.createImportClause(false, factory.createIdentifier('ViewModel'), undefined),

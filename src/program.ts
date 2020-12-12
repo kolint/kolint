@@ -4,6 +4,7 @@ import { Compiler } from './compiler'
 import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
 import { canonicalPath } from './utils'
+import { BindingHandlerImport } from './parser/bindingDOM'
 
 export interface FileHost {
 	writeFile(name: string, data: string): void
@@ -35,8 +36,15 @@ export interface CompilerResult {
 	getDiagnostics(): Diagnostic[]
 }
 
-export function createProgram(): Program {
-	return new Program()
+export interface ProgramOptions {
+	framework?: (filepath: string) => {
+		viewmodels?: { path: string, name: string, isTypeof: boolean }[]
+		bindinghandlers?: { path: string, imports: BindingHandlerImport[] }[]
+	}
+}
+
+export function createProgram(options?: ProgramOptions): Program {
+	return Program.createProgram(options)
 }
 
 export class Program implements Reporting {
@@ -45,7 +53,9 @@ export class Program implements Reporting {
 	private allDiagnosticsDisabled = false
 	private disabledDiagnostics: string[] = []
 
-	public addDiagnostic(...diags: Diagnostic[]) : void {
+	private constructor(private options?: ProgramOptions) { }
+
+	public addDiagnostic(...diags: Diagnostic[]): void {
 		if (this.allDiagnosticsDisabled) return
 		for (const diag of diags)
 			if (this.disabledDiagnostics.includes(diag.code) || this.disabledDiagnostics.includes(diag.name)) return
@@ -99,7 +109,14 @@ export class Program implements Reporting {
 	 */
 	public async compile(viewFilePath: string, document: Document, fileHost: FileHost, viewContent: string): Promise<string> {
 		viewFilePath = canonicalPath(viewFilePath)
-		const compiler = new Compiler(fileHost)
+
+		// Using `this.options.framework` right of the bat will cause type errors when using if statements.
+		const framework = this.options?.framework
+
+		const compiler = new Compiler(fileHost, {
+			framework: framework ? (() => framework(viewFilePath)) : undefined
+		})
+
 		const { source, diagnostics: diags } = await compiler.compile(document, viewFilePath, viewContent)
 
 		const kolintDiags = await Promise.all(diags.map(async diag => {
@@ -113,13 +130,17 @@ export class Program implements Reporting {
 				const end = sm.originalPositionFor({ line: generatedEnd.line + 1, column: generatedEnd.character })
 				if (start.line !== null && end.line !== null && start.column !== null && end.column !== null) {
 					const range = diag.start ? [diag.start, diag.start + diag.length] as const : [-1, -1] as const
-					return new Diagnostic(diag, { range, coords: { first_line: start.line + 1, first_column: start.column, last_line: end.line + 1, last_column: end.column }})
+					return new Diagnostic(diag, { range, coords: { first_line: start.line + 1, first_column: start.column, last_line: end.line + 1, last_column: end.column } })
 				}
 			}
-			return new Diagnostic(diag, { range: [-1, -1], coords: { first_line: 0, first_column: 0, last_line: 0, last_column: 0 }})
+			return new Diagnostic(diag, { range: [-1, -1], coords: { first_line: 0, first_column: 0, last_line: 0, last_column: 0 } })
 		}))
 
 		this.diagnostics = this.diagnostics.concat(kolintDiags)
 		return source.fileName
+	}
+
+	public static createProgram(options?: ProgramOptions): Program {
+		return new Program(options)
 	}
 }

@@ -3,7 +3,7 @@ import * as path from 'path'
 import * as ts from 'typescript'
 import { RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
 import { injectContextTypes } from './type-injection'
-import { ViewBindingsEmitter } from './emit'
+import { ViewBindingsEmitter, ViewBindingsEmitterOptions } from './emit'
 import { Document } from '../parser'
 import { FileHost } from '../program'
 
@@ -66,7 +66,7 @@ class SourceMapAdapter {
 	public getSources(): string[] {
 		return this.sources
 	}
-	
+
 	public setSourceContent(sourceIndex: number, content: string | null): void {
 		if (!content)
 			return
@@ -106,6 +106,8 @@ class SourceMapAdapter {
 	}
 }
 
+export type CompilerOptions = ViewBindingsEmitterOptions
+
 export class Compiler {
 	private static getStandardOptions(viewPath: string): ts.CompilerOptions {
 		const configFileName = ts.findConfigFile(path.parse(viewPath).dir, (p: string) => ts.sys.fileExists(path.resolve(path.parse(viewPath).dir, p)))
@@ -120,7 +122,7 @@ export class Compiler {
 		return compilerOptions
 	}
 
-	public constructor(private fileHost: FileHost) {}
+	public constructor(private fileHost: FileHost, private options?: CompilerOptions | undefined) {}
 
 	public async compile(document: Document, viewPath: string, viewContent: string): Promise<{ source: ts.SourceFile, diagnostics: readonly ts.Diagnostic[] }> {
 		const typeLibPath = path.resolve(__dirname, '../../lib/resources/context')
@@ -128,7 +130,7 @@ export class Compiler {
 
 		const writeSourceFile = async (file: ts.SourceFile, previousFileName: string | undefined, tsFileName: string) => {
 			const sm = new SourceMapAdapter(tsFileName)
-	
+
 			// We are exposing unofficial API's to be able to emit TS backed with Source Maps
 			const unofficialAPI = ts as unknown as ts2
 			const textWriter = unofficialAPI.createTextWriter(ts.sys.newLine)
@@ -155,7 +157,7 @@ export class Compiler {
 		const sourceMapSource = ts.createSourceMapSource(viewPath, viewContent)
 
 		// Transform the AST Fill out the placeholders with data form the view.
-		const emitter = new ViewBindingsEmitter(document, ts.factory, typeLibPath, sourceMapSource)
+		const emitter = new ViewBindingsEmitter(document, ts.factory, typeLibPath, sourceMapSource, this.options)
 		const result = ts.transform(scaffoldFile, [emitter.transformerFactory], compilerOptions)
 
 		const compiledViewPath = viewPath + '.g'

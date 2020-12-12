@@ -78,7 +78,7 @@ export function createDocument(ast: Node[], reporting: Reporting): Document {
 				const lastNode = nodeStack.pop()
 
 				if (lastNode?.key !== node.key)
-					throw new Diagnostic(diagnostics['unbalanced-start-end-tags'], lastNode?.loc)
+					throw new Diagnostic(diagnostics['unbalanced-start-end-tags'], lastNode?.location)
 
 				break
 			}
@@ -97,7 +97,7 @@ export function createDocument(ast: Node[], reporting: Reporting): Document {
 
 		if (!bindingStack.length) {
 			// nodeStack.pop() will always return a node because bindingStack isn't 0 and can not be below.
-			throw new Diagnostic(diagnostics['unbalanced-start-end-tags'], nodeStack.pop()?.loc)
+			throw new Diagnostic(diagnostics['unbalanced-start-end-tags'], nodeStack.pop()?.location)
 		}
 	}
 	return new Document(root, viewmodels, bindinghandlers)

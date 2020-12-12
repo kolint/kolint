@@ -6,7 +6,6 @@ import * as path from 'path'
 import * as _glob from 'glob'
 import * as _yargs from 'yargs'
 import { getConfigs, joinConfigs } from './config'
-import { MemoryFileHost } from '../program'
 
 interface Options {
 	/** Root directory, defaults to cwd. */
@@ -26,6 +25,11 @@ interface ArgsOptions extends Options {
 export interface ConfigOptions extends Options {
 	/** Severity for rules. Map with the key with the diagnostic name or code and the value as 'off', 'warning' or 'error'. */
 	severity?: { [key: string]: 'off' | 'warning' | 'error' }
+
+	/**
+	 * Framework function. Only available in JavaScript config files. `function (filepath, options): { bindinghandlers, viewmodels }`
+	 */
+	framework?: lint.ProgramOptions['framework']
 }
 
 const yargs = (() => {
@@ -56,7 +60,7 @@ const yargs = (() => {
 		yargs = yargs.option(key, _options)
 	}
 
-	return yargs as _yargs.Argv<Options>
+	return yargs as _yargs.Argv<ArgsOptions>
 })()
 
 if (yargs.argv._.length < 1) {
@@ -132,18 +136,20 @@ async function main() {
 	for (const file of files) {
 		const filepath = path.isAbsolute(file) ? file : path.join(process.cwd(), file)
 		const textDoc = fs.readFileSync(filepath).toString()
-		const config = joinConfigs(getConfigs(yargs.argv, path.parse(filepath).dir))
+		const config = joinConfigs(getConfigs(yargs.argv, path.parse(filepath).dir, yargs.argv.config ? [ yargs.argv.config ] : ['.kolintrc.*']))
 
 		try {
-			const program = lint.createProgram()
+			const program = lint.createProgram({
+				framework: config.framework
+			})
 			const document = program.parse(textDoc)
-			const fileHost = new MemoryFileHost()
+			const fileHost = new lint.MemoryFileHost()
 			const outFileHandle = await program.compile(filepath, document, fileHost, textDoc)
 
 			const diagnostics = program.getDiagnostics()
 			if (diagnostics.length > 0)
 				console.log(`\n${color(90)}${filepath.replace(/\\/g, '/')}${color(0)}`)
-				
+
 			for (const diag of diagnostics) {
 				if (diag.severity === lint.Severity.Error)
 					errors++

@@ -17,7 +17,7 @@ export type ContextChain<BC extends BindingContext<any, any>> =
 	BC extends RootBindingContext<infer V> ? [V] :
 	[]
 
-export type BindingContext<ViewModel extends any, ParentBinding extends BindingContext<any, any> | null = null> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentBinding> | BindingOverlay<ViewModel, ParentBinding>
+export type BindingContext<ViewModel extends Record<string, any>, ParentBinding extends BindingContext<any, any> | null = null> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentBinding> | BindingOverlay<ViewModel, ParentBinding>
 
 export interface RootBindingContext<ViewModel> {
 	$parents: []
@@ -152,7 +152,7 @@ export interface StandardBindingContextTransforms {
 			//Value extends MaybeReadonlyObservable<Record<infer Key, MaybeReadonlyObservableArray<infer T>>> ? Overlay<Record<Key, T>, Overlay<ChildBindingContext<T, Context>, Context>> :
 		Value extends MaybeReadonlyObservableArray<infer Data> ? Overlay<ChildBindingContext<Data, Context>, Context> :
 		unknown
-	
+
 	using: StandardBindingContextTransforms['with']
 	with: <V extends object, Context extends BindingContext<any, {}>>(value: MaybeReadonlyObservable<V>, parentContext: Context) => Overlay<ChildBindingContext<V, Context>, Context>
 	let: <T extends object, Context extends BindingContext<any, {}>>(value: MaybeReadonlyObservable<T>, parentContext: Context) => Overlay<T, Context>

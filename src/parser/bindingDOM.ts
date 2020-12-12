@@ -19,13 +19,13 @@ export class BindingData {
  * XML and HTML documents are parsed to a series of nodes (non hierarchical).
  */
 export class Node {
-	public constructor(public loc: Location, public key: string, public type: NodeType) { }
+	public constructor(public location: Location | undefined, public key: string, public type: NodeType) { }
 	public bindings: BindingData[] | undefined // TODO: move to a subclass that is only used when we have an actual Knockout-Node
 }
 
 /** Lint Node identifying a viewmodel module to use during type checking */
 export class ViewModelNode extends Node {
-	public constructor(location: Location, public modulePath: IdentifierNode<string>, public isTypeof: boolean, public name?: IdentifierNode<string>) {
+	public constructor(location: Location | undefined, public modulePath: IdentifierNode<string>, public isTypeof: boolean, public name?: IdentifierNode<string>) {
 		super(location, '', NodeType.Empty)
 	}
 }
@@ -38,7 +38,7 @@ export interface BindingHandlerImport {
 }
 
 export class BindingHandlerImportNode extends Node {
-	public constructor(loc: Location, public modulePath: IdentifierNode<string>, public imports?: BindingHandlerImport[]) {
+	public constructor(loc: Location | undefined, public modulePath: IdentifierNode<string>, public imports?: BindingHandlerImport[]) {
 		super(loc, '', NodeType.Empty)
 	}
 }
@@ -51,7 +51,7 @@ export class DiagNode extends Node {
 }
 
 export class IdentifierNode<T> {
-	public constructor(public value: T, public location: Location) { }
+	public constructor(public value: T, public location?: Location) { }
 }
 
 ///

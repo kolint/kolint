@@ -35,7 +35,7 @@
 		"build": "npx tsc --build . spec demo && npm run compile-parser",
 		"watch": "npx tsc --build . spec demo --watch",
 		"test": "node ./spec/build/spec.js",
-		"demo": "node ./demo/build/lint.test.js",
+		"demo": "node ./build/cli/cli.js ./demo/*.html --out ./demo",
 		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts",
 		"compile-parser": "node build/parser/parser-compiler.js",
 		"gen-config-schema": "node tools/gen-config-schema.js"

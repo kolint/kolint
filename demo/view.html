@@ -1,0 +1,15 @@
+<!-- ko-bindinghandler: import koko1 from './bindinghandler' -->
+
+<div data-bind="foreach: { data: [prop], as: 'kropp' }">
+    <div data-bind="text: kropp">
+    </div>
+</div>
+<div data-bind="foreach: [prop]">
+    <span data-bind="text: $root.propp"></span>
+    <div data-bind="foreach: { data: [$data], as: 'kropp' }">
+        <div data-bind="koko1: [kropp]">
+        </div>
+    </div>
+</div>
+<div data-bind="koko1: [prop]">
+</div>

@@ -5,14 +5,8 @@
 		"outDir": "build",
 		"lib": ["ES6"],
 		"sourceMap": true,
-		"rootDir": "src",
 		"strict": true,
 		"types": [ "node" ],
 		"moduleResolution": "node"
-	},
-	"exclude": [
-		"resources",
-		"build",
-		"temp"
-	]
+	}
 }

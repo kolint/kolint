@@ -5,7 +5,7 @@ import * as stripJsonComments from 'strip-json-comments'
 import * as yaml from 'js-yaml'
 import { ConfigOptions } from './cli'
 
-export function getConfigs(argv: unknown, dir: string, patterns = ['.kolint.*'], _i = -1): Map<number, ConfigOptions> {
+export function getConfigs(argv: unknown, dir: string, patterns: string[], _i = -1): Map<number, ConfigOptions> {
 	const configs = new Map<number, ConfigOptions>()
 
 	if (argv)
