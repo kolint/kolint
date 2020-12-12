@@ -1,25 +1,31 @@
-## Installation
-**Note!** If you want to learn about the syntax used in views, refer to the [syntax][syntax] documentation.
+# Installation
 
-```sh
+## Installation
+
+**Note!** If you want to learn about the syntax used in views, refer to the \[syntax\]\[syntax\] documentation.
+
+```bash
 npm i -D knockout-lint
 ```
 
 ## Using the CLI
 
-### Installing npm globally (optional)
-```sh
+### Installing npm globally \(optional\)
+
+```bash
 npm i -g knockout-lint
 ```
 
 ### Running the CLI
-Use -c or --config to specify a path to a config file. Default is .kolintrc or .kolintrc.*.
 
-```sh
+Use -c or --config to specify a path to a config file. Default is .kolintrc or .kolintrc.\*.
+
+```bash
 knockout-lint views/**/*.html
 ```
 
 ## Using the API
+
 ```typescript
 import * as kolint from 'knockout-lint';
 ​
@@ -36,4 +42,5 @@ const tsOut = program.compile(/* document path */, document);
 const diagnostics = program.diagnostics.concat(tsOut.getDiagnostics());
 ```
 
-[syntax]: ../syntax/view-models.md
+\[syntax\]: ../syntax/view-models.md
+
