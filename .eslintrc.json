@@ -63,6 +63,13 @@
 				}
 			}
 		],
+		"@typescript-eslint/no-unused-vars": [
+			"warn",
+			{
+				"varsIgnorePattern": "_.*",
+				"args": "none"
+			}
+		],
 		"semi": [
 			"error",
 			"never"
