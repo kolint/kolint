@@ -7,30 +7,38 @@
 	"bin": "./build/cli/cli.js",
 	"devDependencies": {
 		"@types/glob": "^7.1.3",
+		"@types/js-yaml": "^3.12.5",
 		"@types/mocha": "^8.0.4",
-		"@types/node": "^14.14.9",
+		"@types/node": "^14.14.10",
 		"@types/source-map": "^0.5.7",
-		"@typescript-eslint/eslint-plugin": "^4.8.1",
-		"@typescript-eslint/parser": "^4.8.1",
+		"@types/yargs": "^15.0.10",
+		"@typescript-eslint/eslint-plugin": "^4.8.2",
+		"@typescript-eslint/parser": "^4.8.2",
 		"eslint": "^7.14.0",
 		"jison": "^0.4.18",
 		"mocha": "^8.2.1",
-		"ts-node": "^9.0.0"
+		"ts-node": "^9.0.0",
+		"typescript-json-schema": "^0.45.0"
 	},
 	"dependencies": {
 		"glob": "^7.1.6",
+		"js-yaml": "^3.14.0",
 		"knockout": "^3.5.1",
 		"meriyah": "^3.1.6",
 		"source-map": "^0.7.3",
-		"typescript": "^4.1.2"
+		"strip-json-comments": "^3.1.1",
+		"typescript": "^4.1.2",
+		"yargs": "^16.1.1"
 	},
 	"scripts": {
+		"install": "node tools/gen-config-schema.js --no-docs --no-override",
 		"build": "npx tsc --build . spec demo && npm run compile-parser",
 		"watch": "npx tsc --build . spec demo --watch",
 		"test": "node ./spec/build/spec.js",
 		"demo": "node ./demo/build/lint.test.js",
 		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts",
-		"compile-parser": "node build/parser/parser-compiler.js"
+		"compile-parser": "node build/parser/parser-compiler.js",
+		"gen-config-schema": "node tools/gen-config-schema.js"
 	},
 	"publishConfig": {
 		"registry": "https://npm.pkg.github.com/"

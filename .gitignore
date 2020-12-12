@@ -1,6 +1,7 @@
 node_modules
 build
 temp
+lib/config.schema.json
 lib/document-parser.js
 test/_output.ts.txt
 *.tsbuildinfo

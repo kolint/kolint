@@ -84,7 +84,13 @@
 		"require-await": "off",
 		"@typescript-eslint/require-await": "warn",
 		"camelcase": "off",
-		"@typescript-eslint/camelcase": "off"
+		"@typescript-eslint/camelcase": "off",
+		"no-empty": [
+			"error",
+			{
+				"allowEmptyCatch": true
+			}
+		]
 	},
 	"overrides": [
 		{
