@@ -2,7 +2,7 @@
 
 | FLAG | MEANING |
 | :- | :- |
-| 🏳️ | output file |
+| 🏳️ | generated file |
 | 🏴‍☠️ | depricated file |
 
 <br>
