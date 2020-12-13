@@ -3,7 +3,7 @@
 | FLAG | MEANING |
 | :- | :- |
 | 🏳️ | generated file |
-| 🏴‍☠️ | depricated file |
+| 🏴‍☠️ | deprecated file |
 
 <br>
 
