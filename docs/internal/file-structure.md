@@ -27,7 +27,7 @@
 │   │   ├── compiler.ts ------------ Compiler
 │   │   ├── emit.ts                  Emitter
 │   │   ├── index.ts --------------- Index, Compiler                                   🏴‍☠️
-│   │   ├── knockout.ts              Exports knockout module
+│   │   ├── knockout.ts              Exports knockout module                           🏴‍☠️
 │   │   └── type-injection.ts ------ Injects type to output, used by compiler
 │   ├── parser
 │   │   ├── binding-handlers.ts      Emitter and typings for binding handlers          🏴‍☠️
