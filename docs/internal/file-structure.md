@@ -17,8 +17,8 @@
 │   ├── document-parser.d.ts         Declaration file for document-parser.js
 │   ├── document-parser.js --------- Document parser, JISON output                     🏳️
 │   ├── jison.d.ts                   Declaration file for JSION module
-│   ├── knockout.d.ts -------------- Declaration file for ko://knockout
-│   └── nodejs.d.ts                  Declrartion file for NodeJS
+│   ├── knockout.d.ts -------------- Declaration file for ko://knockout                🏴‍☠️
+│   └── nodejs.d.ts                  Declaration file for NodeJS
 ├── src
 │   ├── cli
 │   │   ├── cli.ts ----------------- CLI
