@@ -22,7 +22,7 @@
 	},
 	"dependencies": {
 		"glob": "^7.1.6",
-		"js-yaml": "^3.14.0",
+		"js-yaml": "^4.0.0",
 		"knockout": "^3.5.1",
 		"meriyah": "^3.1.6",
 		"source-map": "^0.7.3",
