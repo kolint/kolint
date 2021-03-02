@@ -40,9 +40,6 @@
 		"compile-parser": "node build/parser/parser-compiler.js",
 		"gen-config-schema": "node tools/gen-config-schema.js"
 	},
-	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/"
-	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/kolint/kolint.git"
