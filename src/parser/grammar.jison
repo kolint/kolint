@@ -8,6 +8,7 @@ TEXT                              [^\s>]+
 IDENT                             [_a-zA-Z][_\-0-9a-zA-Z]*
 CTEXT                             .+?/(\-\-\>)
 XMLPITEXT                         .+?(?=\?>)
+ATTRNAME                          [^\s"'>/=]*
 
 %%
 
@@ -22,7 +23,7 @@ XMLPITEXT                         .+?(?=\?>)
 <tag>"="                          return 'EQ'
 <tag,bhimport,vmimport>{QTEXT}    yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
 <tag,bhimport,vmimport>{SQTEXT}   yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
-<tag>{IDENT}                      return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
+<tag>{ATTRNAME}                   return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
 <bhimport,vmimport>"{"            return 'LBRACE'
 <bhimport,vmimport>"}"            return 'RBRACE'
 <bhimport,vmimport>","            return 'COMMA'
