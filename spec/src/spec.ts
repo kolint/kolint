@@ -30,6 +30,10 @@ const parseTests = {
 		[
 			'Self closed tag with one attribute without / at end',
 			'<img src="./path/to">'
+		],
+		[
+			'Tag with XML namespace (#203)',
+			'<use xlink:href="#slack-tile">'
 		]
 	],
 
