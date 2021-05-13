@@ -32,10 +32,9 @@
 	},
 	"scripts": {
 		"install": "node tools/gen-config-schema.js --no-docs --no-override",
-		"build": "npx tsc --build . spec demo && npm run compile-parser",
-		"watch": "npx tsc --build . spec demo --watch",
+		"build": "npx tsc --build . spec && npm run compile-parser",
+		"watch": "npx tsc --build . spec --watch",
 		"test": "node ./spec/build/spec.js",
-		"demo": "node ./demo/build/lint.test.js",
 		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts",
 		"compile-parser": "node build/parser/parser-compiler.js",
 		"gen-config-schema": "node tools/gen-config-schema.js"
