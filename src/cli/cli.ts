@@ -5,8 +5,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import * as _glob from 'glob'
 import * as _yargs from 'yargs'
-import { getConfigs, joinConfigs } from './config'
-import { MemoryFileHost } from '../program'
+import { parse } from '../parser/parser'
+import { createDocument } from '../parser/document-builder'
+import { canonicalPath } from '../utils'
+import { Diagnostic } from '../parser'
 
 interface Options {
 	/** Root directory, defaults to cwd. */
@@ -68,18 +70,15 @@ function color(code: number): string {
 	return `\x1b[${code}m`
 }
 
-function log(filepath: string, diagnostics: lint.Diagnostic[]) {
-	// Can not call reduce on empty array: https://mzl.la/2HSk4nW
-	const longestMessageLength = diagnostics.length > 0 ? diagnostics.reduce((a, b) => a.message.length > b.message.length ? a : b)?.message.length : 0
-
+function log(diagnostics: lint.Diagnostic[]) {
 	for (const diag of diagnostics) {
 		if (diag.severity === lint.Severity.Off) continue
 
 		const severity = diag.severity === lint.Severity.Error ? 'error' : 'warning'
-		const location = diag.location?.coords ? `${diag.location.coords.first_line}:${diag.location.coords.first_column}` : ''
-		// const link = `${path.relative(process.cwd(), filepath).replace(/^(?:\.(?:\/|\\)|)/, './').replace(/\\/g, '/')}${location}`
-
-		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`  ${location.padEnd(9, ' ')}${color(31)}${severity.padEnd(9, ' ')}${color(0)}${diag.message.padEnd(longestMessageLength, ' ')}  ${color(90)}${diag.code}${color(0)}`)
+		const location = diag.location ? `${diag.location.first_line}:${diag.location.first_column}` : ''
+		const relativePath = './' + canonicalPath(path.relative(process.cwd(), diag.filePath))
+		const link = `${relativePath}(${location})`
+		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`${link} ${color(31)}${severity} ${color(90)}${diag.code}${color(0)} ${color(0)}${diag.message}`)
 	}
 }
 
@@ -90,85 +89,65 @@ async function glob(pattern: string) {
 	}))
 }
 
-function getFolderSegments(file: string) {
-	return file.split(/\\|\//g)
-}
-
-function getContainingFolder(files: string[]) {
-	const getFilesFolderSegments = (file: string) => {
-		let segments = getFolderSegments(file).slice(0, -1)
-
-		if (/[A-Za-z]:/.test(segments[0]))
-			segments = segments.slice(1)
-
-		return segments
-	}
-
-	let segments = getFilesFolderSegments(files[0])
-
-	for (const file of files.slice(1)) {
-		const fileSegments = getFilesFolderSegments(file)
-
-		segments = segments.filter((segment, index) => segment === fileSegments[index])
-	}
-
-	return segments.join(path.sep)
-}
-
-function ensureDirectoryExistence(filePath: string) {
-	const dirname = path.dirname(filePath)
-	if (fs.existsSync(dirname)) return
-	ensureDirectoryExistence(dirname)
-	fs.mkdirSync(dirname)
-}
-
 async function main() {
-	const files = (await Promise.all(yargs.argv._.map(async pattern => glob(pattern)))).flat()
-	const filesFolder = getContainingFolder(files)
+	const files = (await Promise.all(yargs.argv._.filter((option): option is string => typeof option === 'string').map(async pattern => glob(pattern)))).flat()
+	if (files.length === 0) {
+		console.error('No matching file(s)')
+		process.exit(2)
+	}
 
 	let errors = 0
 	let warnings = 0
 
-	for (const file of files) {
+	const program = lint.createProgram()
+	const documents = files.map(file => {
 		const filepath = path.isAbsolute(file) ? file : path.join(process.cwd(), file)
 		const textDoc = fs.readFileSync(filepath).toString()
-		const config = joinConfigs(getConfigs(yargs.argv, path.parse(filepath).dir))
+		// const config = joinConfigs(getConfigs(yargs.argv, path.parse(filepath).dir))
 
 		try {
-			const program = lint.createProgram()
-			const document = program.parse(textDoc)
-			const fileHost = new MemoryFileHost()
-			const outFileHandle = await program.compile(filepath, document, fileHost, textDoc)
-
-			const diagnostics = program.getDiagnostics()
-			if (diagnostics.length > 0)
-				console.log(`\n${color(90)}${filepath.replace(/\\/g, '/')}${color(0)}`)
-				
-			for (const diag of diagnostics) {
-				if (diag.severity === lint.Severity.Error)
-					errors++
-				if (diag.severity === lint.Severity.Warning)
-					warnings++
-			}
-
-			if (config.out) {
-				const outDir = path.join(typeof config.root === 'string' ? config.root : process.cwd(), config.out)
-				const outFilePath = path.join(outDir, path.relative(filesFolder, path.parse(file).name + (config.outExt ?? '.ko.ts')))
-				ensureDirectoryExistence(outFilePath)
-				const fileContent = fileHost.readFile(outFileHandle)
-				if (!fileContent)
-					throw new Error('Catastrophic Error. The generated file is not available.')
-				fs.writeFileSync(outFilePath, fileContent)
-			}
-
-			const sortedDiags = diagnostics?.slice().sort((a, b) => (a.location?.coords?.first_line ?? -1) - (b.location?.coords?.first_line ?? -1))
-			log(filepath, sortedDiags)
+			const ast = parse(textDoc, program)
+			return createDocument(filepath, ast, program)
 		} catch (err) {
-			if (err instanceof lint.Diagnostic)
-				log(filepath, [err])
+			if (err instanceof Diagnostic)
+				program.addDiagnostic(err)
 			else
-				throw err
+			{
+				console.error(`${filepath}:`)
+				console.error(err)
+			}
 		}
+	}).filter((e): e is lint.Document => Boolean(e))
+
+	try {
+		const diagnostics = await program.compile(documents)
+		// if (diagnostics.length > 0)
+		// 	console.log(`\n${color(90)}${filepath.replace(/\\/g, '/')}${color(0)}`)
+
+		for (const diag of diagnostics) {
+			if (diag.severity === lint.Severity.Error)
+				errors++
+			if (diag.severity === lint.Severity.Warning)
+				warnings++
+		}
+
+		// if (config.out) {
+		// 	const outDir = path.join(typeof config.root === 'string' ? config.root : process.cwd(), config.out)
+		// 	const outFilePath = path.join(outDir, path.relative(filesFolder, path.parse(file).name + (config.outExt ?? '.ko.ts')))
+		// 	ensureDirectoryExistence(outFilePath)
+		// 	const fileContent = fs.readFileSync(outFileHandle, 'utf8')
+		// 	if (!fileContent)
+		// 		throw new Error('Catastrophic Error. The generated file is not available.')
+		// 	fs.writeFileSync(outFilePath, fileContent)
+		// }
+
+		const sortedDiags = diagnostics?.slice().sort((a, b) => (a.location?.first_line ?? -1) - (b.location?.first_line ?? -1))
+		log(sortedDiags)
+	} catch (err) {
+		if (err instanceof lint.Diagnostic)
+			log([err])
+		else
+			throw err
 	}
 
 	if (errors > 0 || warnings > 0)

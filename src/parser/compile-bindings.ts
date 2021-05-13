@@ -67,7 +67,7 @@ function isParserError(err: unknown): err is ParseError {
 		typeof _err.description === 'string'
 }
 
-function parseDataBind(reporting: Reporting, data: string, loc: Location): Property[] | undefined {
+function parseDataBind(filePath: string, reporting: Reporting, data: string, loc: Location): Property[] | undefined {
 	let tree: meriyah.ESTree.Program
 
 	try {
@@ -79,11 +79,7 @@ function parseDataBind(reporting: Reporting, data: string, loc: Location): Prope
 		})
 	} catch (err) {
 		if (isParserError(err))
-			reporting.addDiagnostic(new Diagnostic('javascript-syntax-error', {
-				// Error end position is not implemeted yet (meriyah/meriyah#156)
-				range: [err.index, loc.range[1]]
-			}, err.message))
-
+			reporting.addDiagnostic(new Diagnostic(filePath, 'javascript-syntax-error', Object.assign({}, loc), 'Malformed binding expression'))
 		return
 	}
 
@@ -122,8 +118,8 @@ function parseDataBind(reporting: Reporting, data: string, loc: Location): Prope
 	return properties
 }
 
-export function parseBindingExpression(reporting: Reporting, data: string, loc: Location): Binding[] {
-	const properties = parseDataBind(reporting, data, loc)
+export function parseBindingExpression(filePath: string, reporting: Reporting, data: string, loc: Location): Binding[] {
+	const properties = parseDataBind(filePath, reporting, data, loc)
 	const bindings: Binding[] = []
 
 	if (!properties)
@@ -136,13 +132,28 @@ export function parseBindingExpression(reporting: Reporting, data: string, loc: 
 		const identifier = property.node.key
 		const valueRange = property.node.value
 		if (!(valueRange.start && valueRange.end))
-			reporting.addDiagnostic(new Diagnostic('javascript-syntax-error', loc, 'Expected expression'))
+			reporting.addDiagnostic(new Diagnostic(filePath, 'javascript-syntax-error', loc, 'Expected expression'))
 
 		const [start] = loc.range
 		// Adjust for the two extra characters added during parsing.
+		const exprLoc: Location = {
+			first_line: loc.first_line + (valueRange.loc?.start.line ?? 1) - 1,
+			first_column: loc.first_column + (valueRange.loc?.start.column ?? 2) - 2,
+			last_line: loc.first_line + (valueRange.loc?.end.line ?? 1) - 1,
+			last_column: loc.last_column + (valueRange.loc?.end.column ?? 2) - 2,
+			range: [start + valueRange.start - 2, start + valueRange.end - 2]
+		}
+		const identifierLoc: Location = {
+			first_line: loc.first_line + (identifier.loc?.start.line ?? 1) - 1,
+			first_column: loc.first_column + (identifier.loc?.start.column ?? 2) - 2,
+			last_line: loc.first_line + (identifier.loc?.end.line ?? 1) - 1,
+			last_column: loc.last_column + (identifier.loc?.end.column ?? 2) - 2,
+			range: [start + identifier.start - 2, start + identifier.end - 2]
+		}
+
 		const binding = new Binding(
-			new BindingName(property.node.key.name, { range: [start + identifier.start - 2, start + identifier.end - 2] }),
-			new BindingExpression(property.expression, { range: [ start + valueRange.start - 2, start + valueRange.end - 2] }))
+			new BindingName(property.node.key.name, identifierLoc),
+			new BindingExpression(property.expression, exprLoc))
 		bindings.push(binding)
 	}
 

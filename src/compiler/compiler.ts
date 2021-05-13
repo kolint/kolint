@@ -1,114 +1,15 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import * as path from 'path'
 import * as ts from 'typescript'
-import { RawSourceMap, SourceMapConsumer, SourceMapGenerator } from 'source-map'
-import { injectContextTypes } from './type-injection'
-import { ViewBindingsEmitter } from './emit'
-import { Document } from '../parser'
-import { FileHost } from '../program'
-
-interface TextWriter {
-	getTextPos(): number
-	getText(): string
-}
-
-/** Horrible Hack: We are exposing one of the internal typescript API methods to be able to print out typescript from AST's with SourceMaps */
-interface ts2 {
-	createTextWriter(newLine: string): TextWriter
-	// createSourceMapGenerator(host: ts.EmitHost, file: string, sourceRoot: string, sourcesDirectoryPath: string, generatorOptions: SourceMapGeneratorOptions): SourceMapGenerator
-}
-
-interface InternalPrinter extends ts.Printer {
-	writeFile(sourceFile: ts.SourceFile, output: TextWriter, sourceMapGenerator: SourceMapAdapter | undefined): void
-}
-
-interface LineAndCharacter {
-	line: number
-	character: number
-}
-
-/** The SourceMapAdapter implements the source map interface that typescript expects, but we are using our
- * own source-map library. (We need to do this since the typescript internal sourcemap in itself would
- * require us to create an even more advanced wrapper for the TextWriter instead.)  */
-class SourceMapAdapter {
-	private sm: SourceMapGenerator
-	private sources: string[] = []
-	private names: string[] = []
-
-	public constructor(generatedFileName: string) {
-		this.sm = new SourceMapGenerator({
-			file: generatedFileName
-		})
-	}
-
-	public addMapping(line: number, column: number, sourceMapSourceIndex: number, sourceLine: number, sourceColumn: number, nameIndex: number | undefined): void {
-		this.sm.addMapping({
-			original: {
-				line: sourceLine + 1,
-				column: sourceColumn
-			},
-			generated: {
-				line: line + 1,
-				column: column
-			},
-			source: this.sources[sourceMapSourceIndex],
-			name: nameIndex ? this.names[nameIndex] : undefined
-		})
-	}
-	public addSource(filename: string): number {
-		const idx = this.sources.findIndex(source => source === filename)
-		if (idx >= 0)
-			return idx
-		this.sources.push(filename)
-		return this.sources.length - 1
-	}
-
-	public getSources(): string[] {
-		return this.sources
-	}
-	
-	public setSourceContent(sourceIndex: number, content: string | null): void {
-		if (!content)
-			return
-		this.sm.setSourceContent(this.sources[sourceIndex], content)
-	}
-
-	public addName(name: string): number {
-		const idx = this.names.findIndex(name => name === name)
-		if (idx >= 0)
-			return idx
-		this.names.push(name)
-		return this.names.length - 1
-	}
-
-	public appendSourceMap(_generatedLine: number, _generatedCharacter: number, _map: RawSourceMap, _sourceMapPath: string, _start?: LineAndCharacter, _end?: LineAndCharacter): void {
-		throw new Error('appendSourceMap is not yet supported')
-	}
-
-	public toJSON() {
-		return this.sm.toJSON()
-	}
-
-	public toString() {
-		return this.sm.toString()
-	}
-
-	/**
-	 * When dealing with multiple stepf of transformations we need to make sure that the
-	 * source map correctly points to the original source locations. Therefore, we can base
-	 * our sourcemap on the previous souce map.
-	 * @param oldRawSourceMap Sourcemap to base our sourcemap on
-	 */
-	public async mergeSourceMaps(oldRawSourceMap: RawSourceMap): Promise<void> {
-		const consumer = await new SourceMapConsumer(oldRawSourceMap)
-		this.sm.applySourceMap(consumer)
-		consumer.destroy()
-	}
-}
+import { Document, Reporting } from '../parser'
+import { AstNode, BindingContext, BindingNode, TypeNode } from '../parser/bindingDOM'
+import { isReserved } from '../utils'
+import { SourceBuilder } from './SourceBuilder'
 
 export class Compiler {
-	private static getStandardOptions(viewPath: string): ts.CompilerOptions {
-		const configFileName = ts.findConfigFile(path.parse(viewPath).dir, (p: string) => ts.sys.fileExists(path.resolve(path.parse(viewPath).dir, p)))
+	private static getStandardOptions(): ts.CompilerOptions {
+		const configPath = process.cwd()
+		const configFileName = ts.findConfigFile(configPath, (p: string) => ts.sys.fileExists(path.resolve(configPath, p)))
 		let compilerOptions: ts.CompilerOptions
 		if (configFileName) {
 			const configFile = ts.readConfigFile(configFileName, (path: string, encoding?: string | undefined) => ts.sys.readFile(path, encoding))
@@ -120,63 +21,244 @@ export class Compiler {
 		return compilerOptions
 	}
 
-	public constructor(private fileHost: FileHost) {}
+	private getIdentifier(node: ts.Node, id: string): ts.Identifier | undefined {
+		return node.forEachChild(child => {
+			if (ts.isVariableDeclaration(child))
+				if (ts.isIdentifier(child.name) && child.name.text === id)
+					return child.name
+			return this.getIdentifier(child, id)
+		})
+	}
 
-	public async compile(document: Document, viewPath: string, viewContent: string): Promise<{ source: ts.SourceFile, diagnostics: readonly ts.Diagnostic[] }> {
-		const typeLibPath = path.resolve(__dirname, '../../lib/resources/context')
-		const compilerOptions = Compiler.getStandardOptions(path.resolve(viewPath))
+	private static reservedNames = ['arguments']
+	private static isReservedName(name: string) {
+		return isReserved(name) || this.reservedNames.indexOf(name) !== -1 || name.startsWith('__')
+	}
 
-		const writeSourceFile = async (file: ts.SourceFile, previousFileName: string | undefined, tsFileName: string) => {
-			const sm = new SourceMapAdapter(tsFileName)
-	
-			// We are exposing unofficial API's to be able to emit TS backed with Source Maps
-			const unofficialAPI = ts as unknown as ts2
-			const textWriter = unofficialAPI.createTextWriter(ts.sys.newLine)
-			const printer = ts.createPrinter({ removeComments: false }) as InternalPrinter
-			printer.writeFile(file, textWriter, sm)
-			this.fileHost.writeFile(tsFileName, textWriter.getText())
+	private static getTypeProperties(type: ts.Type, checker: ts.TypeChecker): string[] {
+		return checker.getPropertiesOfType(type)
+			.filter(symbol => !symbol.valueDeclaration?.modifiers?.find(modifier => modifier.kind === ts.SyntaxKind.ProtectedKeyword || modifier.kind === ts.SyntaxKind.PrivateKeyword))
+			.map(symbol => symbol.getName())
+			.filter(name => !this.isReservedName(name)) // Reserved keywords cannot appear as varable names. Therefore we do not support binding contexts with those identifiers.
+			// TODO: Possibly add support to be able to use all context names: Rewrite all context references in the bindings to the form '$data.<reference name>'
+			// (This is done by validating that the <reference name> exists in the binding context.)
+	}
 
-			// Inject the previous source map to make our new source map to point to the original source
-			if (previousFileName) {
-				const oldMap = JSON.parse(this.fileHost.readFile(previousFileName + '.map') ?? '') as RawSourceMap
-				await sm.mergeSourceMaps(oldMap)
-			}
-			this.fileHost.writeFile(tsFileName + '.map', sm.toString())
+	/**
+	 * Get directly reachable binding nodes, plus any indirect (via type nodes) binding nodes
+	 * @param parentNodes Starting nodes from where to start tracing dependencies
+	 */
+	private reachableBindingNodes(parentNodes: AstNode[], contextCreationCallback: (typeNode: TypeNode) => void): BindingNode[] {
+		if (!parentNodes.length)
+			return []
+		const childNodes = parentNodes.map(node => node.childNodes).flat()
+		// Split child nodes into buckets
+		const bindingNodes = childNodes.filter((node: AstNode): node is BindingNode => node instanceof BindingNode)
+		const typeNodes = childNodes.filter((node: AstNode): node is TypeNode => node instanceof TypeNode)
+
+		// TODO: Move this mutating part outside of this otherwise pure function.
+		for(const node of typeNodes) {
+			node.childContext = node.getParentContext().createChildContext()
+			contextCreationCallback(node)
 		}
 
-		// Load scaffold into a source file
-		const templateFile = path.join(__dirname, '../../lib/resources/scaffold.ts')
-		const text = ts.sys.readFile(templateFile)
-		if (!text)
-			throw new Error('Could not load template file')
-		const scaffoldFile = ts.createSourceFile(templateFile, text, ts.ScriptTarget.ES2018)
+		return bindingNodes.concat(this.reachableBindingNodes(typeNodes, contextCreationCallback))
+	}
 
-		// Generate Source Map based on the Html View (Precompiled View -> Html View)
-		const sourceMapSource = ts.createSourceMapSource(viewPath, viewContent)
+	private getTypeOfIdentifier(idName: string, src: ts.Node, checker: ts.TypeChecker): ts.Type | undefined {
+		const id = this.getIdentifier(src, idName)
+		if (!id)
+			throw new Error(`Unknown identifier '${idName}'.`)
 
-		// Transform the AST Fill out the placeholders with data form the view.
-		const emitter = new ViewBindingsEmitter(document, ts.factory, typeLibPath, sourceMapSource)
-		const result = ts.transform(scaffoldFile, [emitter.transformerFactory], compilerOptions)
+		const symb = checker.getSymbolAtLocation(id)
+		if (!symb)
+			throw new Error(`Symbol '${idName}' was not defined.`)
 
-		const compiledViewPath = viewPath + '.g'
-		await writeSourceFile(result.transformed[0], undefined, compiledViewPath + '_0.ts')
+		const type = checker.getTypeOfSymbolAtLocation(symb, id)
+		if (type.flags & ts.TypeFlags.Any)
+			return undefined
+		return type
+	}
 
+	public compile(documents: Document[], reporting: Reporting): { diagnostics: readonly ts.Diagnostic[] } {
+		const srcFiles = new Map<string, ts.SourceFile>()
+		const compilerOptions = Compiler.getStandardOptions()
 		const compilerHost = ts.createCompilerHost(compilerOptions)
-		compilerHost.readFile = (fileName: string) => {
-			const data = this.fileHost.readFile(fileName)
-			return data ?? ts.sys.readFile(fileName)
+		compilerHost.getSourceFile = (fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void, shouldCreateNewSourceFile?: boolean): ts.SourceFile | undefined => {
+			if (srcFiles.has(fileName))
+				return srcFiles.get(fileName)
+
+			const content = ts.sys.readFile(fileName)
+			if (!content)
+				throw new Error(`Bad file name '${fileName}'`)
+			const src = ts.createSourceFile(fileName, content, languageVersion)
+			srcFiles.set(fileName, src)
+			return src
 		}
-		compilerHost.writeFile = (fileName: string, data: string) => this.fileHost.writeFile(fileName, data)
 
-		// Iteratively fill out the placeholders with inferred types
-		const filenameX = await injectContextTypes(compiledViewPath, compilerHost, compilerOptions, writeSourceFile)
 
-		const typingProgram2 = ts.createProgram([filenameX], compilerOptions, compilerHost /*, templProg*/)
-		const typedFile2 = typingProgram2.getSourceFile(filenameX)
-		if (!typedFile2)
-			throw new Error('fail')
+		// Start with root TypeNode
+		// NodeQueue = reachableBindingNodes(rootNode) // Direct child to a type Node or indirect via a type node (recursively)
+		// Foreach node in queue assign to context (create context if necessary)
+		// Output reachable bindings
+		// Regenerate program and types
+		// Identify new BindingContexts
+		// 	- create context and bind to node
+		// create new queue with reachableBindingNodes(oldQueue)
+		// Repeat
 
-		const diags = ts.getPreEmitDiagnostics(typingProgram2, typedFile2)
-		return { source: typedFile2, diagnostics: diags }
+		// * read scaffold
+		// * inject imports for viewmodel and bindinghandlers
+		const sources = documents.map(document => {
+			const viewFilePath = document.viewFilePath
+			const builder = new SourceBuilder(viewFilePath, document)
+
+			if (!(document.rootNode instanceof TypeNode))
+				throw new Error('Document must have a defined type at the root node')
+
+			// * inject binding context (reference to viewmodel)
+			// * store the name of the injected binding context identifier into the bindingQueue's binding object (for reference in the next iteration)
+
+			// Create child contexts (if type is known), or collect all child binding candidates
+			// (we need to investigate it's type before we know if it creates a new context or not).
+			document.rootContext = BindingContext.createRoot(document.rootNode)
+			document.rootNode.childContext = document.rootContext
+			// document.rootContext = this.processImmediateChildNodes(document.rootNode, rootContext)
+			const nodeQueue = this.reachableBindingNodes([document.rootNode], () => { /* empty */ })
+
+			const importedBindings = document.imports.map(imp => imp.importSymbols.map(symb => symb.alias.value).filter(alias => document.bindingNames.find(name => name === alias))).flat()
+			builder.createBindinghandlerImports(importedBindings)
+			builder.createRootBindingContexts(document.rootContext)
+			const code = builder.changes().toString()
+			builder.commit()
+
+			const filename = document.viewFilePath + '.g.ts'
+			// Create initial SourceFile to use in the CompilerHost (to avoid having to write the content to disk first)
+			srcFiles.set(filename, ts.createSourceFile(filename, code, ts.ScriptTarget.ES2018, true, ts.ScriptKind.TS))
+
+			// * initialize bindingQueue to [root bindings] (binding queue represents all bindings on a specific level in the binding hierarchy, since we are processing bindings in breadth-first ordering)
+			// const contextQueue = [document.rootContext]
+			return { filename, builder, /*contextQueue,*/ nodeQueue }
+		})
+
+		const filenames = sources.map(source => source.filename)
+		let program = ts.createProgram(filenames, compilerOptions, compilerHost)
+
+		// Loop while there is a bindingQueue which is not empty:
+		while (sources.some(source => source.nodeQueue.length)) {
+			const checker = program.getTypeChecker()
+
+			// Emit context transformations for all contexts (all known bindings for a context)
+			for (const source of sources) {
+				const { nodeQueue, filename, builder } = source
+				const src = program.getSourceFile(filename)
+				// * foreach binding object in bindingQueue
+				// 	- inject context transformation with expanded objects for $context and $context.$data
+				// 	(the binding context identifier is what was stored in the binding object in one of the previous steps)
+				if (!src)
+					throw new Error('missing parsed source')
+				for (const node of nodeQueue) {
+
+					// TODO: Do something like builder.getContext(node).id or something
+					const identifierName = node.getParentContext().id
+
+					const id = this.getIdentifier(src, identifierName)
+					if (!id)
+						throw new Error(`missing identifier '${identifierName}'`)
+
+					const contextType = checker.getTypeAtLocation(id)
+
+					// const binding = context.binding
+					// if (binding) {
+					// 	if (contextType.flags & ts.TypeFlags.Any) {
+					// 		reporting.addDiagnostic(new Diagnostic('binding-context-any', binding.expression.loc))
+					// 		continue
+					// 	}
+					// 	if (contextType.flags & ts.TypeFlags.Unknown) {
+					// 		reporting.addDiagnostic(new Diagnostic('binding-context-unknown', binding.expression.loc))
+					// 		continue
+					// 	}
+					// }
+
+					// TODO: verify that the contextType inherits from the correct base class, otherwise show error.
+					const contextMembers = Compiler.getTypeProperties(contextType, checker)
+
+					const dataSymbol = contextType.getProperty('$data') // Transient Property flag set
+					if (!dataSymbol) {
+						throw new Error('missing $data member')
+					}
+
+					const dataType = checker.getTypeOfSymbolAtLocation(dataSymbol, id)
+					// const dataType = checker.getTypeAtLocation(dataSymbol.valueDeclaration)
+					const dataMembers = Compiler.getTypeProperties(dataType, checker)
+
+					for(const binding of node.bindings)
+						builder.createContextTransformation(identifierName, binding, contextMembers, dataMembers)
+
+					// TODO: check the actual type produced for these. If they are idempotent (e.g. unchanged $parents-array), it should not be a child context.
+					for(const binding of node.bindings)
+						builder.emitContextDefinition(identifierName, binding)
+				}
+				const diff = builder.changes()
+				const newText = src.getText() + diff.toString()
+				ts.sys.writeFile(filename, newText)
+				srcFiles.set(filename, src.update(newText, ts.createTextChangeRange(ts.createTextSpan(0, src.end), newText.length)))
+				builder.commit()
+			}
+
+			program = ts.createProgram(filenames, compilerOptions, compilerHost, program)
+
+			// Inspect the transformations if they create new contexts. Update known bindings.
+			for (const source of sources) {
+				const checker = program.getTypeChecker()
+				const { nodeQueue, filename, builder } = source
+				const src = program.getSourceFile(filename)
+
+				if (!src)
+					throw new Error('missing parsed source')
+
+				// Identify bindings that creates new BindingContexts
+				// Create the binding contexts
+				for(const node of nodeQueue) {
+					const parentContextType = this.getTypeOfIdentifier(node.getParentContext().id, src, checker)
+					const translations = node.bindings.
+						map(binding =>	({ binding, type: this.getTypeOfIdentifier(binding.identifierName, src, checker) })).
+						filter(translation => translation.type && translation.type !== parentContextType)
+					// TODO: add to diagnostics instead of throwing an error
+					// and separate into three buckets (context generating, ordinary, filtered out)
+					if (translations.length > 1)
+						throw new Error('Knockout does not support multiple context-generating bindings on the same DOM node.')
+
+					// Create new binding contexts when new types are generated
+					if (translations.length === 1) {
+						const t = translations[0]
+						node.childContext = node.getParentContext().createChildContext()
+						node.childContext.id = t.binding.identifierName
+					}
+				}
+
+				source.nodeQueue = this.reachableBindingNodes(nodeQueue, (typeNode: TypeNode) => {
+					builder.emitContextDefinition2(typeNode)
+				})
+				const diff = builder.changes()
+				const newText = src.getText() + diff.toString()
+				ts.sys.writeFile(filename, newText)
+				srcFiles.set(filename, src.update(newText, ts.createTextChangeRange(ts.createTextSpan(0, src.end), newText.length)))
+				builder.commit()
+			}
+
+			program = ts.createProgram(filenames, compilerOptions, compilerHost, program)
+		}
+
+		for (const source of sources) {
+			const { builder, filename } = source
+			const content2 = builder.getContent()
+			ts.sys.writeFile(filename, content2.code)
+			ts.sys.writeFile(filename + '.map', content2.map.toString())
+		}
+
+		const diags = [...srcFiles].map(src => ts.getPreEmitDiagnostics(program, src[1])).reduce<ts.Diagnostic[]>((acc, val) => acc.concat(val), [])
+
+		return { diagnostics: diags }
 	}
 }

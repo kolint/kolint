@@ -1,40 +1,27 @@
+/// <reference lib="dom" />
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export type MaybeReactive<T> = ko.MaybeComputed<T> | ko.MaybeObservable<T>
 
-/// <reference lib="dom" />
-
-/** Merge properties, avoids property if the same name. `U`s type members will overwrite any conflicting type members in `T`. */
-export type Overlay<T, U> = Omit<U, keyof T> & T
-
-/** Returns the last element in a type array [ViewModel1, ViewModel2, ViewModel3] -> ViewModel3 */
-type LastElement<Arr extends [...any]> = Arr extends [...infer U, infer T] ? T : never
-
-/** Returns the first element in a type array [ViewModel1, ViewModel2, ViewModel3] -> ViewModel1 */
-type FirstElement<Arr extends [...any]> = Arr[0]
-
-export type ContextChain<BC extends BindingContext<any, any>> =
-	BC extends ChildBindingContext<infer V, BindingContext<any>> ? [V, ...BC['$parents']] :
-	BC extends RootBindingContext<infer V> ? [V] :
-	[]
-
-export type BindingContext<ViewModel extends any, ParentBinding extends BindingContext<any, any> | null = null> = RootBindingContext<ViewModel> | ChildBindingContext<ViewModel, ParentBinding> | BindingOverlay<ViewModel, ParentBinding>
+export type BindingContext<ViewModel = any, ParentContext extends BindingContext = any, Parent = any, Root = any, Ancestors extends [...any, Root] = [...any, any]> = RootBindingContext<ViewModel> | ChildBindingContextImpl<ViewModel, ParentContext, Parent, Root, Ancestors>
 
 export interface RootBindingContext<ViewModel> {
 	$parents: []
 	$root: ViewModel
 	$data: ViewModel
-	$rawData: MaybeObservable<ViewModel>
+	$rawData: MaybeReactive<ViewModel>
 }
 
-export interface ChildBindingContext<ViewModel, ParentContext extends BindingContext<any, {}>> {
-	$parents: ContextChain<ParentContext>
-	$parent: FirstElement<ContextChain<ParentContext>>
-	$root: LastElement<[ViewModel, ...ContextChain<ParentContext>]>
+export interface ChildBindingContextImpl<ViewModel, ParentContext extends BindingContext, Parent, Root, Ancestors extends BindingContext[]> {
+	$parentContext: ParentContext
+	$parents: [Parent, ...Ancestors]
+	$parent: Parent
+	$root: Root
 	$data: ViewModel
-	$rawData: MaybeObservable<ViewModel>
+	$rawData: MaybeReactive<ViewModel>
 }
 
-type BindingOverlay<Obj extends Record<string, any>, OriginalBindingContext extends BindingContext<any>> = Overlay<Obj, OriginalBindingContext>
+export type ChildBindingContext<Child, Parent extends BindingContext> = ChildBindingContextImpl<Child, Parent, Parent['$data'], Parent['$root'], [Parent['$data'], ...Parent['$parents']]>
 
 export interface BindingHandler<T> {
 	init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;
@@ -42,7 +29,7 @@ export interface BindingHandler<T> {
 }
 
 export interface ControlFlowBindingHandler<T> extends BindingHandler<T> {
-	transformContext(data?: unknown, parentContext?: BindingContext<any, {}>): object
+	transformContext(data?: unknown, parentContext?: BindingContext): object
 }
 
 /** The parent binding context to child binding context transformation (the transformation function) */
@@ -70,10 +57,13 @@ export type BindingContextTransform<Handler extends BindingHandler<any>> =
 /** The type of any binding handler */
 export type BindingHandlerType<Handler extends BindingHandler<unknown>> = Handler extends BindingHandler<(infer U)> ? U : never;
 
-export interface ReadonlyObservable<T> { (): T }
-export interface Observable<T> extends ReadonlyObservable<T> { (value: T): void }
+export type ReadonlyObservable<T> = (ko.ObservableFunctions<T> | ko.ComputedFunctions<T>) & { (): T }
+export type Observable<T> = ko.Observable<T>
 type ReadonlyObservableArray<T> = ReadonlyObservable<T[]>
-type ObservableArray<T> = Observable<T[]>
+
+
+
+type ObservableArray<T> = ko.ObservableArray<T>
 
 export interface Computed<T> {
    (): T
@@ -85,7 +75,7 @@ export interface Subscribable<T> {
 	subscribe: (...args: any[]) => any
 }
 
-export type MaybeObservable<T> = T | Observable<T>
+export type MaybeObservable<T> = ko.MaybeObservable<T>
 export type MaybeReadonlyObservable<T> = T | ReadonlyObservable<T>
 export type MaybeObservableArray<T> = T[] | ObservableArray<T>
 export type MaybeReadonlyObservableArray<T> = readonly T[] | ReadonlyObservableArray<T>
@@ -111,7 +101,7 @@ export interface StandardBindingContextTransforms {
 	class: BindingContextIdentityTransform<string>
 	css: BindingContextIdentityTransform<string | Record<string, MaybeReadonlyObservable<boolean>>>
 	style: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>>
-	attr: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>> // TODO: Create types for the standard attributes
+	attr: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<unknown>>> // TODO: Create types for the standard attributes
 	text: BindingContextIdentityTransform<string>
 	event: BindingContextIdentityTransform<WindowEventCallbacks>
 	click: BindingContextIdentityTransform<(data: any, event: MouseEvent) => void>
@@ -129,6 +119,8 @@ export interface StandardBindingContextTransforms {
 	checkedValue: BindingContextIdentityTransform<any>
 	options: BindingContextIdentityTransform<any>
 	optionsText: BindingContextIdentityTransform<string>
+	optionsCaption: BindingContextIdentityTransform<string>
+	optionsValue: BindingContextIdentityTransform<string>
 	selectedOptions: BindingContextIdentityTransform<any>
 	uniqueName: BindingContextIdentityTransform<boolean>
 	template: BindingContextIdentityTransform<any>
@@ -136,24 +128,29 @@ export interface StandardBindingContextTransforms {
 	if: BindingContextIdentityTransform<unknown>
 	ifnot: BindingContextIdentityTransform<boolean>
 
-	// TODO: Use this code instead when const string types are supported by typescript!
-	// The generic type As should NEVER be used. It exists to keep the const string type. (https://github.com/microsoft/TypeScript/issues/30680)
-	// foreach: <Value extends MaybeReadonlyObservableArray<Data> | MaybeReadonlyObservable<{ data: Data, as: As }>, Data, Context extends BindingContext, As extends string>(value: Value, parentContext: Context) =>
-	// 	Value extends { data: MaybeObservableArray<infer T>, as: string } ?
-	// 		Overlay<Record<Value['as'], T>, Context> :
-	// 		Overlay<ChildBindingContext<Data, Context>, Context>
-
-	// Since we do not have support for const string types in Typescript yet (see https://github.com/microsoft/TypeScript/issues/30680), we resort to simpler matching here and instead
-	// we do more comprehensive analysis for 'foreach' bindings in-code instead.
-	foreach: <Value extends MaybeReadonlyObservableArray<any> | MaybeReadonlyObservable<any>, Context extends BindingContext<any, {}>>(value: Value, parentContext: Context) =>
-		Value extends Record<'as', infer T> & Record<'data', MaybeReadonlyObservableArray<(infer V)>> ?
-			T extends string ? BindingOverlay<Record<T, V>, Overlay<ChildBindingContext<V, Context>, Context>> :
+	// Since we do not have support for const string types in Typescript yet (see https://github.com/microsoft/TypeScript/issues/30680), we resort to a complex type 'Narrow' to make sure
+	// it is not widened to a string. Inspiration from ts-toolbelt.
+	foreach: <Key, VM, Context extends BindingContext>(value: { data: MaybeReadonlyObservableArray<VM>, as: Narrow<Key> } | MaybeReadonlyObservableArray<VM>, parentContext: Context) =>
+		Key extends string ? string extends Key ?
 			'\'as\' must be a string literal' :
-			//Value extends MaybeReadonlyObservable<Record<infer Key, MaybeReadonlyObservableArray<infer T>>> ? Overlay<Record<Key, T>, Overlay<ChildBindingContext<T, Context>, Context>> :
-		Value extends MaybeReadonlyObservableArray<infer Data> ? Overlay<ChildBindingContext<Data, Context>, Context> :
-		unknown
-	
+			ChildBindingContext<VM, Context> & { $index: Observable<number> } & Record<Key, VM> :
+			ChildBindingContext<VM, Context> & { $index: Observable<number> }
+
 	using: StandardBindingContextTransforms['with']
-	with: <V extends object, Context extends BindingContext<any, {}>>(value: MaybeReadonlyObservable<V>, parentContext: Context) => Overlay<ChildBindingContext<V, Context>, Context>
-	let: <T extends object, Context extends BindingContext<any, {}>>(value: MaybeReadonlyObservable<T>, parentContext: Context) => Overlay<T, Context>
+	with: <V extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<V>, parentContext: Context) => ChildBindingContext<V, Context>
+	let: <T extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<T>, parentContext: Context) => Context & T
 }
+
+type Cast<A, B> = A extends B ? A : B;
+
+type Narrowable =
+	| string
+	| number
+	| bigint
+	| boolean;
+
+type Narrow<A> = Cast<A,
+	| []
+	| (A extends Narrowable ? A : never)
+	| ({ [K in keyof A]: Narrow<A[K]> })
+>;

@@ -1,25 +1,8 @@
-import { createDocument, Document, Node, parse } from './parser'
+import { Document, Node, parse } from './parser'
 import { Diagnostic } from './diagnostic'
 import { Compiler } from './compiler'
 import * as ts from 'typescript'
 import { SourceMapConsumer } from 'source-map'
-import { canonicalPath } from './utils'
-
-export interface FileHost {
-	writeFile(name: string, data: string): void
-	readFile(name: string): string | undefined
-}
-
-export class PhysicalFileHost implements FileHost {
-	public readFile(fileName: string): string | undefined { return ts.sys.readFile(fileName) }
-	public writeFile(filename: string, data: string): void { ts.sys.writeFile(filename, data) }
-}
-
-export class MemoryFileHost implements FileHost {
-	private files: Record<string, string> = {};
-	public readFile(fileName: string): string | undefined { return this.files[fileName] }
-	public writeFile(fileName: string, data: string): void { this.files[fileName] = data }
-}
 
 export interface Reporting {
 	addDiagnostic(...diags: Diagnostic[]): void
@@ -49,11 +32,7 @@ export class Program implements Reporting {
 		if (this.allDiagnosticsDisabled) return
 		for (const diag of diags)
 			if (this.disabledDiagnostics.includes(diag.code) || this.disabledDiagnostics.includes(diag.name)) return
-		this.diagnostics = this.diagnostics.concat(diags)
-	}
-
-	public getDiagnostics(): Diagnostic[] {
-		return this.diagnostics
+		this.diagnostics.push(...diags)
 	}
 
 	// Disable all diags
@@ -81,45 +60,40 @@ export class Program implements Reporting {
 		return parse(document, this, bindingNames, forceToXML)
 	}
 
-	public createDocument(nodes: Node[]): Document {
-		return createDocument(nodes, this)
-	}
-
-	public parse(document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Document {
-		return createDocument(parse(document, this, bindingNames, forceToXML), this)
-	}
-
 	/**
 	 * Creates a pre-compiled view from the input view. Used for type checking.
-	 * @param viewFilePath file path to the view to compile
-	 * @param document the parsed AST of the view
-	 * @param fileHost manages all files produced during compilation (including intermediate files)
-	 * @param viewContent the actual view file contents (used for sourcemapping etc)
+	 * @param document the tree of bindings for the view
 	 * @returns the file path to the generated compiled view
 	 */
-	public async compile(viewFilePath: string, document: Document, fileHost: FileHost, viewContent: string): Promise<string> {
-		viewFilePath = canonicalPath(viewFilePath)
-		const compiler = new Compiler(fileHost)
-		const { source, diagnostics: diags } = await compiler.compile(document, viewFilePath, viewContent)
+	public async compile(documents: Document[]): Promise<Diagnostic[]> {
+		const compiler = new Compiler()
+		const { diagnostics: diags } = compiler.compile(documents, this)
 
+		// TODO: Group all diags on diag.file.fileName and do source map lookups first.
 		const kolintDiags = await Promise.all(diags.map(async diag => {
-			if (diag.file && diag.start && diag.length) {
-				const fileText = fileHost.readFile(source.fileName + '.map')
-				const sm = await new SourceMapConsumer(fileText ?? '')
-
+			const filename = diag.file?.fileName ?? ''
+			if (diag.file && diag.start) {
 				const generatedStart = ts.getLineAndCharacterOfPosition(diag.file, diag.start)
-				const generatedEnd = ts.getLineAndCharacterOfPosition(diag.file, diag.start + diag.length)
-				const start = sm.originalPositionFor({ line: generatedStart.line + 1, column: generatedStart.character })
-				const end = sm.originalPositionFor({ line: generatedEnd.line + 1, column: generatedEnd.character })
-				if (start.line !== null && end.line !== null && start.column !== null && end.column !== null) {
-					const range = diag.start ? [diag.start, diag.start + diag.length] as const : [-1, -1] as const
-					return new Diagnostic(diag, { range, coords: { first_line: start.line + 1, first_column: start.column, last_line: end.line + 1, last_column: end.column }})
+				const generatedEnd = ts.getLineAndCharacterOfPosition(diag.file, diag.start + (diag.length ?? 0) - 1)
+
+				const sourceMapFile = ts.sys.readFile(filename + '.map')
+				if (sourceMapFile) {
+					const sm = await new SourceMapConsumer(sourceMapFile)
+					const start = sm.originalPositionFor({ line: generatedStart.line + 1, column: generatedStart.character })
+					const end = sm.originalPositionFor({ line: generatedEnd.line + 1, column: generatedEnd.character })
+					const sourceName = start.source ?? filename
+					if (start.line !== null && end.line !== null && start.column !== null && end.column !== null) {
+						const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
+						return new Diagnostic(sourceName, diag, { first_line: start.line, first_column: start.column + 1, last_line: end.line, last_column: end.column + 1, range: [range[0], range[1]] })
+					}
 				}
+				const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
+				return new Diagnostic(filename, diag, { first_line: generatedStart.line + 1, first_column: generatedStart.character, last_line: generatedEnd.line + 1, last_column: generatedEnd.character, range: [range[0], range[1]] })
 			}
-			return new Diagnostic(diag, { range: [-1, -1], coords: { first_line: 0, first_column: 0, last_line: 0, last_column: 0 }})
+			return new Diagnostic(filename, diag, { first_line: 0, first_column: 0, last_line: 0, last_column: 0, range: [-1, -1] })
 		}))
 
-		this.diagnostics = this.diagnostics.concat(kolintDiags)
-		return source.fileName
+		this.diagnostics.push(...kolintDiags)
+		return this.diagnostics
 	}
 }
