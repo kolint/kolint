@@ -1,4 +1,3 @@
-import * as path from 'path'
 import * as lint from '../../build'
 
 const parseTests = {
@@ -37,6 +36,13 @@ const parseTests = {
 		]
 	],
 
+	virtual: [
+		[
+			'Multi-line comment',
+			'<!-- whatever we would like to\nwrite -->'
+		]
+	],
+
 	bindings: [
 		[
 			'key: value',
@@ -48,129 +54,56 @@ const parseTests = {
 		]
 	],
 
-	viewModelImport: [
-		[
-			'Shorthand syntax for default',
-			'<!-- ko-viewmodel: \'./viewmodel\' -->'
-		],
+	import: [
 		[
 			'Default import',
-			'<!-- ko-viewmodel: import default from \'./viewmodel\' -->'
+			'<!-- ko-import vm from \'./viewmodel\' -->'
 		],
 		[
-			'Normal import',
-			'<!-- ko-viewmodel: import viewmodel from \'./viewmodel\' -->'
+			'Namespace import',
+			'<!-- ko-import * as viewmodel from \'./viewmodel\' -->'
 		],
 		[
-			'export=/star import',
-			'<!-- ko-viewmodel: import * from \'./viewmodel\' -->'
+			'Named import',
+			'<!-- ko-import { vm } from \'./viewmodel\' -->'
 		],
 		[
-			'Typeof default import',
-			'<!-- ko-viewmodel: import typeof default from \'./viewmodel\' -->'
+			'Named imports',
+			'<!-- ko-import { vm, vm2 } from \'./viewmodel\' -->'
 		],
 		[
-			'Typeof normal import',
-			'<!-- ko-viewmodel: import typeof viewmodel from \'./viewmodel\' -->'
+			'Default and named imports',
+			'<!-- ko-import vm, { vm1, vm2 } from \'./viewmodel\' -->'
 		],
 		[
-			'Typeof export=/star import',
-			'<!-- ko-viewmodel: import typeof * from \'./viewmodel\' -->'
-		],
+			'Aliased imports',
+			'<!-- ko-import { vm as vm1, vm2 } from \'./viewmodel\' -->'
+		]
 	],
 
-	bindingHandlerImport: [
+	contextModification: [
 		[
-			'Default import',
-			'<!-- ko-bindinghandler: import bindinghandler from \'./bindinghandler\' -->'
+			'Create child context from object reference',
+			'<!-- ko-viewmodel typeof vm -->'
 		],
 		[
-			'Normal import',
-			'<!-- ko-bindinghandler: import { bindinghandler } from \'./bindinghandler\' -->'
+			'Create child context from type reference',
+			'<!-- ko-viewmodel vm -->'
 		],
 		[
-			'Normal import with additional comma',
-			'<!-- ko-bindinghandler: import { bindinghandler, } from \'./bindinghandler\' -->'
+			'Change current context to parent context',
+			'<!-- ko-context current.$parentContext -->'
 		],
 		[
-			'As import',
-			'<!-- ko-bindinghandler: import { bindinghandler1 as bindinghandler } from \'./bindinghandler\' -->'
+			'Change current context to parent context',
+			'<!-- ko-context current.$parentContext.$parentContext -->'
 		],
 		[
-			'export=/star import',
-			'<!-- ko-bindinghandler: import * as bindinghandler from \'./bindinghandler\' -->'
+			'Change current context to named context',
+			'<!-- ko-context root -->'
 		],
-		[
-			'Typeof default import',
-			'<!-- ko-bindinghandler: import typeof bindinghandler from \'./bindinghandler\' -->'
-		],
-		[
-			'Typeof normal import',
-			'<!-- ko-bindinghandler: import { typeof bindinghandler } from \'./bindinghandler\' -->'
-		],
-		[
-			'Typeof normal import with additional comma',
-			'<!-- ko-bindinghandler: import { typeof bindinghandler, } from \'./bindinghandler\' -->'
-		],
-		[
-			'Typeof as import',
-			'<!-- ko-bindinghandler: import { typeof bindinghandler1 as bindinghandler } from \'./bindinghandler\' -->'
-		],
-		[
-			'Typeof export=/star import',
-			'<!-- ko-bindinghandler: import typeof * as bindinghandler from \'./bindinghandler\' -->'
-		]
 	]
 }
-
-let correctPositionEmitCache: readonly lint.Diagnostic[] = []
-// Do not change this unsless you know what you are doing!
-const emitTestString = '<!-- ko-viewmodel: import default from \'nothing2\' -->\n<img data-bind="test: undefined">\n<img data-bind="text: notdefined">'
-
-const compilerTests: ([string, (program: lint.Program) => Promise<string | true> | string | true, string] | [string, (program: lint.Program) => Promise<string | true> | string | true])[] = [
-	[
-		'Correct start and end positions (import)',
-
-		async (program: lint.Program) => {
-			const fileHost = new lint.MemoryFileHost()
-			const filename = path.join(__dirname, '../resources/nothing1')
-			fileHost.writeFile(filename, emitTestString)
-			await program.compile(filename, program.parse(emitTestString), fileHost, emitTestString)
-			const diags = correctPositionEmitCache = program.getDiagnostics()
-
-			return (diags.length === 4 &&
-			diags[0].location?.coords?.first_column === 40 && diags[0].location?.coords?.last_column === 48 &&
-			diags[0].location?.coords?.first_line === 2 && diags[0].location?.coords?.last_line === 2) ||
-			'Invalid start and end positions'
-		}
-	],
-	[
-		'Correct start and end positions (binding handler)',
-
-		() => {
-			const diags = correctPositionEmitCache
-
-			return (diags.length === 4 &&
-			diags[1].location?.coords?.first_column === 22 && diags[1].location?.coords?.last_column === 32 &&
-			diags[1].location?.coords?.first_line === 4 && diags[1].location?.coords?.last_line === 4) ||
-			'Invalid start and end positions'
-		}
-	],
-	[
-		'Correct start and end positions (expression)',
-
-		() => {
-			const diags = correctPositionEmitCache
-
-			return (diags.length === 4 &&
-			diags[2].location?.coords?.first_column === 16 && diags[2].location?.coords?.last_column === 20 &&
-			diags[2].location?.coords?.first_line === 3 && diags[2].location?.coords?.last_line === 3) ||
-			'Invalid start and end positions'
-		}
-	],
-]
-
-//#region Run tests
 
 let latestCategory: string | undefined
 
@@ -209,14 +142,6 @@ function error(category: string, name: string, error: string) {
 function test(category: string, name: string, issue: string | undefined, expression: () => true | string) {
 	try {
 		_test(category, name, issue, expression())
-	} catch (err) {
-		_fail(category, name, issue, err)
-	}
-}
-
-async function testAsync(category: string, name: string, issue: string | undefined, expression: () => Promise<true | string>) {
-	try {
-		_test(category, name, issue, await expression())
 	} catch (err) {
 		_fail(category, name, issue, err)
 	}
@@ -261,28 +186,21 @@ for (const [name, subject, issue] of parseTests.tag) {
 	test('Tag', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
+for (const [name, subject, issue] of parseTests.virtual) {
+	test('Virtual Elements', name, issue, () => program.parseNodes(subject)?.length === 0 || 'Unexpected number of nodes')
+}
+
 for (const [name, subject, issue] of parseTests.bindings) {
 	test('Bindings', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
-for (const [name, subject, issue] of parseTests.viewModelImport) {
-	test('View Model Import', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+for (const [name, subject, issue] of parseTests.import) {
+	test('Import', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
-for (const [name, subject, issue] of parseTests.bindingHandlerImport) {
-	test('Binding Handler Import', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+for (const [name, subject, issue] of parseTests.contextModification) {
+	test('Context modifications', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
-void (async () => {
-	for (const [name, compilerTest, issue] of compilerTests) {
-		const result = compilerTest(lint.createProgram())
-		await testAsync('TypeScript Compiler', name, issue, async () => result instanceof Promise ? await result : result)
-	}
-
-	console.log('')
-
-	if (hasErrors)
-		process.exit(1)
-})()
-
-//#endregion Run tests
+if (hasErrors)
+	process.exit(1)

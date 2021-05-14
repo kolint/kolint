@@ -33,9 +33,8 @@ export class Diagnostic {
 	public message: string
 	public name: string
 	public severity: Severity
-	public filepath: string | undefined
 
-	public constructor(diagnostic: DiagnosticDescription | ts.Diagnostic | keyof typeof diagnostics, public location?: Location, ...args: string[]) {
+	public constructor(public filePath: string, diagnostic: DiagnosticDescription | ts.Diagnostic | keyof typeof diagnostics, public location?: Location, ...args: string[]) {
 		if (typeof diagnostic === 'string') {
 			let diag: DiagnosticDescription
 
@@ -100,8 +99,7 @@ export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecificat
 	},
 	'no-viewmodel-reference': {
 		code: prefix(2),
-		message: 'Missing ViewModel reference in file $0',
-		arguments: [ '$0' ] as const
+		message: 'Missing Viewmodel reference'
 	},
 	'multiple-comment-bindings': {
 		code: prefix(3),
@@ -139,5 +137,13 @@ export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecificat
 	'can-not-find-knockout': {
 		code: prefix(11),
 		message: 'Can not find dependency knockout.'
+	},
+	'binding-context-unknown': {
+		code: prefix(12),
+		message: 'Unknown type of binding context'
+	},
+	'binding-context-any': {
+		code: prefix(13),
+		message: 'Binding context is of type \'any\''
 	}
 })

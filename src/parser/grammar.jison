@@ -1,14 +1,14 @@
 /* lexical grammar */
 %lex
-%x tag comment doctype bhimport vmimport xmlpi
+%x tag comment doctype import kodirective xmlpi
 
 QTEXT                             \"[^\"]+\"
 SQTEXT                            \'[^\']+\'
 TEXT                              [^\s>]+
-IDENT                             [_a-zA-Z][_\-0-9a-zA-Z]*
-CTEXT                             .+?/(\-\-\>)
+IDENT                             [_$a-zA-Z\xA0-\uFFFF][_$\-a-zA-Z0-9\xA0-\uFFFF]*
+CTEXT                             [\s\S]+?/(\-\-\>)
 XMLPITEXT                         .+?(?=\?>)
-ATTRNAME                          [^\s"'>/=]*
+KOEND                             \/ko/(\-\-\>)
 
 %%
 
@@ -21,25 +21,29 @@ ATTRNAME                          [^\s"'>/=]*
 <tag>">"                          this.popState(); return '>'
 <tag>"/"                          return '/'
 <tag>"="                          return 'EQ'
-<tag,bhimport,vmimport>{QTEXT}    yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
-<tag,bhimport,vmimport>{SQTEXT}   yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
-<tag>{ATTRNAME}                   return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
-<bhimport,vmimport>"{"            return 'LBRACE'
-<bhimport,vmimport>"}"            return 'RBRACE'
-<bhimport,vmimport>","            return 'COMMA'
-<bhimport,vmimport>"import"       return 'IMPORT'
-<bhimport,vmimport>"typeof"       return 'TYPEOF'
-<bhimport>"as"                    return 'AS'
-<vmimport>"default"               return 'DEFAULT'
-<bhimport,vmimport>"*"            return 'STAR'
-<bhimport,vmimport>"from"         return 'FROM'
-<bhimport,vmimport>"-->"          this.popState(); this.popState(); return 'CETag'
-<bhimport,vmimport>{IDENT}        return 'Ident'
-<tag,vmimport>{TEXT}              return 'TEXT'
-<comment>"ko-viewmodel:"          this.begin('vmimport'); return 'VIEW_REF'
-<comment>"ko-bindinghandler:"     this.begin('bhimport'); return 'BIND_REF'
-<comment>"ko"\s+                  return 'bindingText'
-<comment>"/ko"\s+                 return 'bindingTextEnd'
+<tag,import>{QTEXT}               yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
+<tag,import>{SQTEXT}              yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
+<tag>{IDENT}                   return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
+<import>"{"                       return 'LBRACE'
+<import>"}"                       return 'RBRACE'
+<import>","                       return 'COMMA'
+<tag,import>":"                       return 'COLON'
+<import>"import"                  return 'IMPORT'
+<kodirective>"typeof"             return 'TYPEOF'
+<kodirective>"."                  return 'DOT'
+<import>"as"                      return 'AS'
+<import>"*"                       return 'STAR'
+<import>"from"                    return 'FROM'
+<import,kodirective>"-->"         this.popState(); this.popState(); return 'CETag'
+<import,kodirective>{IDENT}       return 'Ident'
+<import,tag>{TEXT}                return 'TEXT'
+<comment>"ko-import"              this.begin('import'); return 'IMPORT'
+<comment>"ko-viewmodel"           this.begin('kodirective'); return 'VIEW_REF'
+<comment>"ko-context-name"        this.begin('kodirective'); return 'CONTEXT_NAME'
+<comment>"ko-context"             this.begin('kodirective'); return 'CONTEXT'
+<comment>"ko"\s                   return 'bindingText'
+<comment>"/ko"\s                  return 'bindingTextEnd'
+<comment>{KOEND}                  return 'bindingTextEnd'
 <comment>"kolint-enable"\s+       return 'KOLINT_ENABLE'
 <comment>"kolint-disable"\s+      return 'KOLINT_DISABLE'
 <comment>"-->"                    this.popState(); return 'CETag'
@@ -102,16 +106,21 @@ doctype
     { $$ = null }
   ;
 
-
 comment
-  : CSTag commentText CETag
+  : CSTag commentTexts CETag
     { $$=null }
   | CSTag CETag
     { $$=null }
-  | CSTag VIEW_REF vmImportRef CETag
-    { $$ = $vmImportRef }
-  | CSTag BIND_REF bhImportRef CETag
-    { $$ = $bhImportRef }
+  | CSTag IMPORT importStmnt CETag
+    { $$ = $importStmnt }
+  | CSTag VIEW_REF typeRef CETag
+    { $$ = yy.createChildContext(@$, $typeRef) }
+  | CSTag CONTEXT_NAME Ident CETag
+    { $$ = yy.createNamedContext(@$, yy.ident($Ident, @Ident)) }
+  | CSTag CONTEXT Ident DOT xValue CETag
+    { $$ = yy.createContextAssignment(@$, yy.ident($Ident, @Ident), $xValue) }
+  | CSTag CONTEXT Ident CETag
+    { $$ = yy.createContextAssignment(@$, yy.ident($Ident, @Ident)) }
   | CSTag KOLINT_ENABLE diagIds CETag
     { $$ = yy.createDiagNode(@$, $diagIds, true) }
   | CSTag KOLINT_DISABLE diagIds CETag
@@ -128,6 +137,10 @@ comment
     { $$ = yy.createEndNode(@$, 'comment-binding') }
   ;
 
+commentTexts
+  : commentTexts commentText
+  | commentText
+  ;
 
 diagIds
   : diagIds ',' DIAGKEY
@@ -137,14 +150,19 @@ diagIds
   ;
 
 element
-  : '<' Ident bindingAttribs possiblyClosed '>'
+  : '<' tagName bindingAttribs possiblyClosed '>'
     {
-      $$ = $possiblyClosed ? yy.createEmptyNode(@$, $Ident) : yy.createStartNode(@$, $Ident)
+      $$ = $possiblyClosed ? yy.createEmptyNode(@$, $tagName) : yy.createStartNode(@$, $tagName)
       if ($bindingAttribs.length)
         $$.bindings = $bindingAttribs
     }
-  | '<' Ident possiblyClosed '>'
-    { $$ = $possiblyClosed ? yy.createEmptyNode(@$, $Ident) : yy.createStartNode(@$, $Ident) }
+  | '<' tagName possiblyClosed '>'
+    { $$ = $possiblyClosed ? yy.createEmptyNode(@$, $tagName) : yy.createStartNode(@$, $tagName) }
+  ;
+
+tagName
+  : Ident COLON Ident
+  | Ident
   ;
 
 possiblyClosed
@@ -155,8 +173,8 @@ possiblyClosed
   ;
 
 elementEnd
-  : '<' '/' Ident '>'
-    { $$ = yy.createEndNode(@$, $3) }
+  : '<' '/' tagName '>'
+    { $$ = yy.createEndNode(@$, $tagName) }
   ;
 
 bindingAttribs
@@ -169,10 +187,14 @@ bindingAttribs
 attrib
   : bindAttr EQ attribValue
     { $$=yy.createBindingData(@attribValue, $attribValue) }
-  | Ident EQ attribValue
+  | attribName EQ attribValue
     { $$=[] }
+  | attribName
+    { $$=[] }
+  ;
+attribName
+  : Ident COLON Ident
   | Ident
-    { $$=[] }
   ;
 
 attribValue
@@ -182,75 +204,56 @@ attribValue
 
 // ---------------------------------------------------------------------------------------------
 
-//#regionstart vm_import
-
-vmImportRef
-  : IMPORT TYPEOF vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), true, yy.ident($vmImportSpec, @vmImportSpec)) }
-  | IMPORT vmImportSpec FROM TEXT
-    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false, yy.ident($vmImportSpec, @vmImportSpec)) }
-  | TEXT
-    { $$ = yy.createViewRefNode(@$, yy.ident($TEXT, @TEXT), false) }
-  // TODO:
-  // Check for `get from` import statements which can be used as a little trick for typescript
-  // files not exporting the ViewModel. e.g. "ko-viewmodel: get VM from 'path/to/file'"
+importStmnt
+  : importSymbols FROM TEXT
+    { $$ = yy.createImportNode(@$, $importSymbols, yy.ident($TEXT, @TEXT)) }
   ;
 
-vmImportSpec
-  : Ident // Normal export
-  | DEFAULT // Default export
-  | STAR // "export =" export
-  ;
-
-//#regionend vm_import
-
-// ---------------------------------------------------------------------------------------------
-
-//#regionstart bh_import
-
-bhImportRef
-  : IMPORT bhImportSpec FROM TEXT
-    { $$ = yy.createBindingHandlerRefNode(@$, yy.ident($TEXT, @TEXT), $bhImportSpec) }
-
-    // TODO:
-    // Check for `get from` import statements which can be used as a little trick for typescript
-    // files not exporting the ViewModel. e.g. "ko-viewmodel: get VM from 'path/to/file'"
-  ;
-
-bhImportSpec
-  : LBRACE bhImportBlockIdentifiers RBRACE
-  // Don't export as ident because we are unable to do it below. Do it in referneces instead.
-    { $$ = $bhImportBlockIdentifiers }
+importSymbols
+  : Ident
+    {
+      $$ = [{ name: yy.ident('default', @Ident), alias: yy.ident($Ident, @Ident) }]
+    }
+  | Ident COMMA LBRACE namedImports RBRACE
+    {
+      // import a, { b, c as d, ... } from ...
+      $$ = $namedImports.concat({ name: yy.ident('default', @Ident), alias: yy.ident($Ident, @Ident) })
+    }
+  | LBRACE namedImports RBRACE
+    {
+      // import {a, b, c as d, default as e, ... } from ...
+      $$ = $namedImports
+    }
   | STAR AS Ident
-    { $$ = [{ name: yy.ident('*', @STAR), alias: yy.ident($3, @3), isTypeof: false }] }
-  | Ident
-    { $$ = [{ name: yy.ident('default', @$), alias: yy.ident($1, @1), isTypeof: false }] }
-  | TYPEOF STAR AS Ident
-    { $$ = [{ name: yy.ident('*', @STAR), alias: yy.ident($4, @4), isTypeof: true }] }
-  | TYPEOF Ident
-    { $$ = [{ name: yy.ident('default', @$), alias: yy.ident($2, @2), isTypeof: true }] }
+    {
+      // Namespace import (import * as a from ...)
+      $$ = [{ name: yy.ident('*', @STAR), alias: yy.ident($3, @3) }]
+    }
   ;
 
-bhImportBlockIdentifiers
-  : bhImportBlockIdentifiers COMMA bhImportIdentifier
-    { $$ = $bhImportBlockIdentifiers.concat($3) }
-  | bhImportBlockIdentifiers COMMA
-    { $$ = [$1] }
-  | bhImportIdentifier
-    { $$ = [$1] }
+namedImports
+  : namedImports COMMA namedImport
+    { $$ = $namedImports.concat($namedImport) }
+  | namedImport
+    { $$ = [$namedImport] }
   ;
 
-bhImportIdentifier
+namedImport
   : Ident AS Ident
-    { $$ = { name: yy.ident($1, @1), alias: yy.ident($3, @3), isTypeof: false } }
-  |	Ident
-    { $$ = { name: yy.ident($1, @1), alias: yy.ident($1, @1), isTypeof: false } }
-  | TYPEOF Ident AS Ident
-    { $$ = { name: yy.ident($2, @2), alias: yy.ident($4, @4), isTypeof: true } }
-  | TYPEOF Ident
-    { $$ = { name: yy.ident($2, @2), alias: yy.ident($2, @2), isTypeof: true } }
+    { $$ = { name: yy.ident($1, @1), alias: yy.ident($3, @3) } }
+  | Ident
+    { $$ = { name: yy.ident($1, @1), alias: yy.ident($1, @1) } }
   ;
 
-//#regionend bh_import
+typeRef
+  : Ident
+    { $$ = yy.createTypeRef(@$, yy.ident($Ident, @Ident), true) }
+  | TYPEOF Ident
+    { $$ = yy.createTypeRef(@$, yy.ident($Ident, @Ident), false) }
+  ;
 
-// ---------------------------------------------------------------------------------------------
+xValue
+  : xValue DOT Ident
+  |	Ident
+  ; // TODO: add support for calling members and indexers
+

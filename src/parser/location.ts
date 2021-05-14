@@ -5,11 +5,11 @@ export interface Coordinates {
 	last_column: number
 }
 
-export class Location {
-	public constructor(public range: readonly [number, number], public coords?: Coordinates) {}
+export interface Location extends Coordinates {
+	range: [number, number]
 }
 
 export interface Position {
 	line: number
 	column: number
-} 
+}

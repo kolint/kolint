@@ -1,6 +1,6 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
-import { ViewModelNode, Node, NodeType, BindingData, DiagNode, BindingHandlerImportNode, IdentifierNode, BindingHandlerImport } from './bindingDOM'
+import { ImportNode, Node, NodeType, BindingData, DiagNode, IdentifierNode, ChildContextNode, TypeReferenceNode, NamedContextNode, ContextAssignmentNode } from './bindingDOM'
 import { Reporting } from '../program'
 
 const selfClosingNodeNames = [
@@ -29,12 +29,12 @@ const selfClosingNodeNames = [
 function transformSelfClosingNodes(ast: Node[]): void {
 	for (let pos = ast.length - 1; pos >= 0; --pos) {
 		const node = ast[pos]
-		if (node.type === NodeType.Empty)
+		if (node.nodeType === NodeType.Empty)
 			continue
 		if (selfClosingNodeNames.includes(node.key)) {
-			switch (node.type) {
+			switch (node.nodeType) {
 				case NodeType.Start:
-					node.type = NodeType.Empty
+					node.nodeType = NodeType.Empty
 					break
 				case NodeType.End:
 					// TODO: problem warning when manually closing self-closed tags (might not behave as intended if they use bindings inside self-closed tags)
@@ -49,14 +49,24 @@ function transformSelfClosingNodes(ast: Node[]): void {
  * The shared values between the jison lexer/parser and the viewParser.
  */
 export class YY {
-	public createViewRefNode = (location: Location, modulePath: IdentifierNode<string>, isTypeof: boolean, name?: IdentifierNode<string>): ViewModelNode => {
-		return new ViewModelNode(location, modulePath, isTypeof, name)
+	public createTypeRef = (location: Location, identifier: IdentifierNode<string>, isType: boolean): TypeReferenceNode => {
+		return new TypeReferenceNode(location, identifier, isType)
 	}
 
-	private bhIndex = 0
-	public createBindingHandlerRefNode = (location: Location, modulePath: IdentifierNode<string>, imports: BindingHandlerImport[]): BindingHandlerImportNode => {
-		imports.map(cimport => cimport.index = this.bhIndex++)
-		return new BindingHandlerImportNode(location, modulePath, imports)
+	public createChildContext = (location: Location, contextRef: TypeReferenceNode): ChildContextNode => {
+		return new ChildContextNode(location, contextRef)
+	}
+
+	public createNamedContext = (location: Location, ident: IdentifierNode<string>): NamedContextNode => {
+		return new NamedContextNode(location, ident)
+	}
+
+	public createContextAssignment = (location: Location, ident: IdentifierNode<string>, contextValue?: string): ContextAssignmentNode => {
+		return new ContextAssignmentNode(location, ident, contextValue)
+	}
+
+	public createImportNode = (location: Location, importSymbols: { name: IdentifierNode<string>, alias: IdentifierNode<string> }[], modulePath: IdentifierNode<string>): ImportNode => {
+		return new ImportNode(location, importSymbols, modulePath)
 	}
 
 	public createStartNode = (loc: Location, key: string): Node => {
