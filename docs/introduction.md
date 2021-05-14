@@ -1,30 +1,36 @@
 # Introduction
 
-KOLint is a lint tool for [Knockout.JS](https://knockoutjs.com). It can catch syntax errors, it also has a built-in [TypeScript](https://typescriptlang.org) type checker that can be used on views to get type and syntax errors. See [README.md](https://github.com/kolint/kolint/blob/master/README.md).
+KOLint is a type checker and lint tool for [Knockout.JS](https://knockoutjs.com) views. [TypeScript](https://typescriptlang.org) is used for type checking the Knockout view bindings when the viewmodel is defined in Typescript. The tool also checks for common mistakes in Knockout views.
 
-## Why?
+{% hint style='danger' %}
+KOLint is named [knockout-lint](https://) on npm. Not to be confused with the unrealted kolint package on npm.
+{% endhint %}
 
-Knockout has worked the same since 2010 and has never disappointed me. Due to it being a core library, it is compact, has cross-browser compatibility, and can be extended from parsing bindings differently and building view models with TypeScript decorators, to be used as a framework. The bindings works as simple as it gets using HTML attributes.
+## Example usage
 
-### Headline features
+This simple example showcases three TypeScript errors.
 
-**Elegant dependency tracking** - automatically updates the right parts of your UI whenever your data model changes.
+```typescript
+export default class {
+  // Should be a boolean
+  isVisible = 0
+  // Mispelled in view
+  myText = 'hello world'
+  // Should be a string (20px)
+  myWidth = 20
+}
+```
+```html
+<!-- ko-import vm from './viewmodel' -->
+<!-- ko-viewmodel vm -->
+<p data-bind="visible: isVisible, text: myTest, style: { width: myWidth }"></p>
+```
+```
+$ kolint ./view.html
 
-**Declarative bindings** - a simple and obvious way to connect parts of your UI to your data model. You can construct a complex dynamic UIs easily using arbitrarily nested binding contexts.
+./view.html(3:23) error TS2345 Argument of type 'number' is not assignable to parameter of type 'MaybeReadonlyObservable<boolean>'.
+./view.html(3:40) error TS2552 Cannot find name 'myText'. Did you mean 'myTest'?
+./view.html(3:55) error TS2345 Argument of type '{ width: number; }' is not assignable to parameter of type 'MaybeReadonlyObservable<Record<string, MaybeReadonlyObservable<string>>>'.
 
-**Trivially extensible** - implement custom behaviors as new declarative bindings for easy reuse in just a few lines of code.
-
-### Additional benefits
-
-**Pure JavaScript library** - works with any server or client-side technology.
-
-**Can be added on top of your existing web application** without requiring major architectural changes
-
-**Compact** - around 13kb after gzipping
-
-**Works on any mainstream browser** \(IE 6+, Firefox 2+, Chrome, Safari, Edge, others\)
-
-**Comprehensive suite of specifications** \(developed BDD-style\) means its correct functioning can easily be verified on new browsers and platforms
-
-Check out the demos at [Knockout.JS](https://knockoutjs.com) website.
-
+✖ 3 problems (3 errors, 0 warnings)
+```

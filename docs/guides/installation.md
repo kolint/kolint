@@ -18,10 +18,10 @@ npm i -g knockout-lint
 
 ### Running the CLI
 
-Use -c or --config to specify a path to a config file. Default is .kolintrc or .kolintrc.\*.
+Use -c or --config to specify a custom path to a config file. Default is .kolintrc or .kolintrc.\*.
 
 ```bash
-knockout-lint views/**/*.html
+kolint views/**/*.html
 ```
 
 ## Using the API

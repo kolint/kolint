@@ -1,30 +1,37 @@
-# View Models
+# Viewmodels
 
-## Defining View Models
+## Defining & exporting viewmodels
 
-Our recommended way to create view models is by exporting an ES6 class. This can also be done by making an interface for a JavaScript object, etc.
+All ES6 exports, exporting a class or a instance of a class are supported. The exports has to be done in a TypeScript file, if not `allowJs` is enabled in current tsconfig.
 
 ```typescript
-export default class ViewModel {
-  export myPropery1 = ko.observable('string')
-  export myPropery2 = ko.observable(123)
-}
+// ES6 class exports
+export class ViewModel { ... }
+export = class ViewModel { ... }
+export default class ViewModel { ... }
+
+// Singleton exports
+export = new ViewModel()
+export default new ViewModel()
 ```
 
-## Importing View Models
+## Using viewmodels
 
-**Import view models by using the syntax `<!-- ko-bindinghandler: ... -->` replacing `...` with any of the imports below.** KOLint's view model imports works similarly to ESLint. Use the typeof identfier in front of a key to import the 'type of' a variable.
+The `ko-import` directive uses the same syntax as ES6, but with a different prefix. The importing of the viewmodel is separate from the declaration of the viewmodel. The `ko-viewmodel` directive is used to set the current viewmodel. It can also be a globally defined type/interface/class.
 
-The syntax **will** change in the v1.0 release.
+{% hint style='tip' %}
+The `ko-viewmodel` directive can be used multiple times in the same view to re-define the viewmodel.
+{% endhint %}
 
-| View Syntax | View Model Export |
-| :--- | :--- |
-| `import default from './viewmodel'` | `export default ViewModel (interface/class)` |
-| `import * from './viewmodel` | `export = ViewModel (interface/class)` |
-| `import { ViewModel } from './viewmodel` | `export { ViewModel } (interface/class)` |
-| `import { vm as ViewModel } from './viewmodel` | `export { ViewModel as vm } (interface/class)` |
-| `import typeof default from './viewmodel'` | `export default viewModel (variable)` |
-| `import typeof * from './viewmodel'` | `export = viewModel (variable)` |
-| `import { typeof ViewModel } from './viewmodel'` | `export { viewModel } (variable)` |
-| `import { typeof vm as ViewModel } from './viewmodel'` | `export { viewModel as vm } (variable)` |
+```html
+Class default import
+<!-- ko-import ViewModel from './viewmodel' -->
+<!-- ko-viewmodel ViewModel -->
 
+Singleton typeof import
+<!-- ko-import * as ViewModel from './viewmodel' -->
+<!-- ko-viewmodel typeof ViewModel -->
+
+Globally defined viewmodel
+<!-- ko-viewmodel GobalViewModel -->
+```
