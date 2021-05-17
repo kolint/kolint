@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import * as path from 'path'
+import { SourceMapConsumer } from 'source-map'
 import * as ts from 'typescript'
-import { Document, Reporting } from '../parser'
+import { Diagnostic, Document, Reporting } from '../parser'
 import { AstNode, BindingContext, BindingNode, TypeNode } from '../parser/bindingDOM'
 import { isReserved } from '../utils'
 import { SourceBuilder } from './SourceBuilder'
@@ -80,7 +81,7 @@ export class Compiler {
 		return type
 	}
 
-	public compile(documents: Document[], reporting: Reporting): { diagnostics: readonly ts.Diagnostic[] } {
+	public async compile(documents: Document[], reporting: Reporting): Promise<void> {
 		const srcFiles = new Map<string, ts.SourceFile>()
 		const compilerOptions = Compiler.getStandardOptions()
 		const compilerHost = ts.createCompilerHost(compilerOptions)
@@ -95,7 +96,6 @@ export class Compiler {
 			srcFiles.set(fileName, src)
 			return src
 		}
-
 
 		// Start with root TypeNode
 		// NodeQueue = reachableBindingNodes(rootNode) // Direct child to a type Node or indirect via a type node (recursively)
@@ -201,7 +201,6 @@ export class Compiler {
 				}
 				const diff = builder.changes()
 				const newText = src.getText() + diff.toString()
-				ts.sys.writeFile(filename, newText)
 				srcFiles.set(filename, src.update(newText, ts.createTextChangeRange(ts.createTextSpan(0, src.end), newText.length)))
 				builder.commit()
 			}
@@ -242,7 +241,6 @@ export class Compiler {
 				})
 				const diff = builder.changes()
 				const newText = src.getText() + diff.toString()
-				ts.sys.writeFile(filename, newText)
 				srcFiles.set(filename, src.update(newText, ts.createTextChangeRange(ts.createTextSpan(0, src.end), newText.length)))
 				builder.commit()
 			}
@@ -250,15 +248,53 @@ export class Compiler {
 			program = ts.createProgram(filenames, compilerOptions, compilerHost, program)
 		}
 
-		for (const source of sources) {
-			const { builder, filename } = source
-			const content2 = builder.getContent()
-			ts.sys.writeFile(filename, content2.code)
-			ts.sys.writeFile(filename + '.map', content2.map.toString())
+		// Generate TS-diagnostics for all documents
+		for (const [filename, sourceFile] of srcFiles) {
+			const map = sources.find(source => source.filename === filename)?.builder.getContent().map
+			const consumer = map ? await SourceMapConsumer.fromSourceMap(map) : undefined
+			const diags = ts.getPreEmitDiagnostics(program, sourceFile)
+			for (const diag of diags) {
+				// TODO: send additional location information for the generated file etc.. the "reporting" (or whatever it's name should be) will have the information available for debug output etc.
+				if (consumer)
+					reporting.addDiagnostic(this.createMappedDiagnostic(diag, consumer))
+				else
+					reporting.addDiagnostic(this.createSimpleDiagnostic(diag))
+			}
 		}
 
-		const diags = [...srcFiles].map(src => ts.getPreEmitDiagnostics(program, src[1])).reduce<ts.Diagnostic[]>((acc, val) => acc.concat(val), [])
+		// Call sinks with file information for source maps, generated ts-files, etc. (send a file type hint in the call to reporting)
+		for (const source of sources) {
+			const { code, map } = source.builder.getContent()
+			reporting.registerOutput(source.filename, code, map)
+		}
+	}
 
-		return { diagnostics: diags }
+	public createSimpleDiagnostic(diag: ts.Diagnostic): Diagnostic {
+		const filename = diag.file?.fileName ?? 'unknown'
+		if (diag.file && diag.start) {
+			const start = ts.getLineAndCharacterOfPosition(diag.file, diag.start)
+			const end = ts.getLineAndCharacterOfPosition(diag.file, diag.start + (diag.length ?? 0) - 1)
+			const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
+			return new Diagnostic(filename, diag, { first_line: start.line + 1, first_column: start.character, last_line: end.line + 1, last_column: end.character, range: [range[0], range[1]] })
+		}
+		return new Diagnostic(filename, diag, { first_line: 0, first_column: 0, last_line: 0, last_column: 0, range: [-1, -1] })
+	}
+
+	public createMappedDiagnostic(diag: ts.Diagnostic, sm: SourceMapConsumer): Diagnostic {
+		const filename = diag.file?.fileName ?? 'unknown'
+		if (diag.file && diag.start) {
+			const generatedStart = ts.getLineAndCharacterOfPosition(diag.file, diag.start)
+			const generatedEnd = ts.getLineAndCharacterOfPosition(diag.file, diag.start + (diag.length ?? 0) - 1)
+			const start = sm.originalPositionFor({ line: generatedStart.line + 1, column: generatedStart.character })
+			const end = sm.originalPositionFor({ line: generatedEnd.line + 1, column: generatedEnd.character })
+			const sourceName = start.source ?? filename
+			if (start.line !== null && end.line !== null && start.column !== null && end.column !== null) {
+				const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
+				return new Diagnostic(sourceName, diag, { first_line: start.line, first_column: start.column + 1, last_line: end.line, last_column: end.column + 1, range: [range[0], range[1]] })
+			}
+			const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
+			return new Diagnostic(filename, diag, { first_line: generatedStart.line + 1, first_column: generatedStart.character, last_line: generatedEnd.line + 1, last_column: generatedEnd.character, range: [range[0], range[1]] })
+		}
+		return new Diagnostic(filename, diag, { first_line: 0, first_column: 0, last_line: 0, last_column: 0, range: [-1, -1] })
 	}
 }

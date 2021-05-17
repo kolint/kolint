@@ -1,21 +1,15 @@
 import { Document, Node, parse } from './parser'
 import { Diagnostic } from './diagnostic'
 import { Compiler } from './compiler'
-import * as ts from 'typescript'
-import { SourceMapConsumer } from 'source-map'
+import { SourceMapGenerator } from 'source-map'
 
 export interface Reporting {
+	registerOutput(filename: string, code: string, map: SourceMapGenerator): void
 	addDiagnostic(...diags: Diagnostic[]): void
 	disableAllDiagnostics(): void
 	disableDiagnostics(keys: string[]): void
 	enableAllDiagnostics(): void
 	enableDiagnostics(keys: string[]): void
-}
-
-export interface CompilerResult {
-	rawSource: string
-	sourceMap: string
-	getDiagnostics(): Diagnostic[]
 }
 
 export function createProgram(): Program {
@@ -33,6 +27,10 @@ export class Program implements Reporting {
 		for (const diag of diags)
 			if (this.disabledDiagnostics.includes(diag.code) || this.disabledDiagnostics.includes(diag.name)) return
 		this.diagnostics.push(...diags)
+	}
+
+	public registerOutput(filename: string, code: string, map: SourceMapGenerator): void {
+		/* TODO: Implement this */
 	}
 
 	// Disable all diags
@@ -67,33 +65,7 @@ export class Program implements Reporting {
 	 */
 	public async compile(documents: Document[]): Promise<Diagnostic[]> {
 		const compiler = new Compiler()
-		const { diagnostics: diags } = compiler.compile(documents, this)
-
-		// TODO: Group all diags on diag.file.fileName and do source map lookups first.
-		const kolintDiags = await Promise.all(diags.map(async diag => {
-			const filename = diag.file?.fileName ?? ''
-			if (diag.file && diag.start) {
-				const generatedStart = ts.getLineAndCharacterOfPosition(diag.file, diag.start)
-				const generatedEnd = ts.getLineAndCharacterOfPosition(diag.file, diag.start + (diag.length ?? 0) - 1)
-
-				const sourceMapFile = ts.sys.readFile(filename + '.map')
-				if (sourceMapFile) {
-					const sm = await new SourceMapConsumer(sourceMapFile)
-					const start = sm.originalPositionFor({ line: generatedStart.line + 1, column: generatedStart.character })
-					const end = sm.originalPositionFor({ line: generatedEnd.line + 1, column: generatedEnd.character })
-					const sourceName = start.source ?? filename
-					if (start.line !== null && end.line !== null && start.column !== null && end.column !== null) {
-						const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
-						return new Diagnostic(sourceName, diag, { first_line: start.line, first_column: start.column + 1, last_line: end.line, last_column: end.column + 1, range: [range[0], range[1]] })
-					}
-				}
-				const range = diag.start ? [diag.start, diag.start + (diag.length ?? 0)] as const : [-1, -1] as const
-				return new Diagnostic(filename, diag, { first_line: generatedStart.line + 1, first_column: generatedStart.character, last_line: generatedEnd.line + 1, last_column: generatedEnd.character, range: [range[0], range[1]] })
-			}
-			return new Diagnostic(filename, diag, { first_line: 0, first_column: 0, last_line: 0, last_column: 0, range: [-1, -1] })
-		}))
-
-		this.diagnostics.push(...kolintDiags)
+		await compiler.compile(documents, this)
 		return this.diagnostics
 	}
 }
