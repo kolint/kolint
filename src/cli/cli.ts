@@ -21,9 +21,11 @@ enum ExitCodes {
 
 interface Options {
 	/** Output directory, works similarly to tsconfig's outDir. */
-	out?: string
+	out?: string | boolean
 	/** TS output file extension, should start with dot. */
 	outExt?: string
+	/** Wether to output  */
+	sourceMap?: boolean
 }
 
 interface ArgsOptions extends Options {
@@ -88,6 +90,10 @@ function log(diagnostics: lint.Diagnostic[]) {
 	}
 }
 
+function isOptionTrue(option: string | boolean | undefined): option is true | '' {
+	return (['', true] as unknown[]).includes(option)
+}
+
 async function main() {
 	const inputs = yargs.argv._
 	if (inputs.length === 0) {
@@ -130,6 +136,33 @@ async function main() {
 			}
 		}
 	}).filter((doc): doc is lint.Document => Boolean(doc))
+
+	program.registerOutput = (filename, data, map) => {
+		const mapJSON = map?.toJSON()
+		const sources = mapJSON.sources ?? [filename]
+
+		for (const source of sources) {
+			const parsedSource = path.parse(source)
+
+			if (config.out !== undefined) {
+				let filepath: string | undefined
+
+				if (isOptionTrue(config.out)) {
+					filepath = path.join(parsedSource.dir, parsedSource.name) + (config.outExt ?? '.html.ts')
+				} else if (typeof config.out === 'string') {
+					filepath = path.join(config.out, parsedSource.name) + (config.outExt ?? '.html.ts')
+				}
+
+				if (filepath)
+					fs.writeFileSync(filepath, data)
+			}
+
+			if (isOptionTrue(config.sourceMap)) {
+				const filepath = path.join(typeof config.out === 'string' ? config.out : parsedSource.dir, parsedSource.name) + (config.outExt ?? '.html.ts.map')
+				fs.writeFileSync(filepath, JSON.stringify(mapJSON))
+			}
+		}
+	}
 
 	try {
 		const diagnostics = await program.compile(documents)
