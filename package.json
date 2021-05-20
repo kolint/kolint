@@ -34,13 +34,10 @@
 		"yargs": "^16.1.1"
 	},
 	"scripts": {
-		"install": "node tools/gen-config-schema.js --no-docs --no-override",
-		"build": "npx tsc --build . spec && npm run compile-parser",
+		"build": "npx tsc --build . spec && node build/parser/parser-compiler.js",
 		"watch": "npx tsc --build . spec --watch",
 		"test": "node ./spec/build/spec.js",
-		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts",
-		"compile-parser": "node build/parser/parser-compiler.js",
-		"gen-config-schema": "node tools/gen-config-schema.js"
+		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts"
 	},
 	"repository": {
 		"type": "git",

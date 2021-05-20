@@ -1,51 +1,43 @@
-# Binding Handlers
+# Bindinghandlers
 
-## Defining Binding Handlers
+## Defining & exporting bindinghandlers
 
-Our recommended way to create binding handler is by exporting an ES6 class. This can also be done by making an interface for a JavaScript object, etc.
-
-```typescript
-type T = string
-​
-// Using an ES6 class
-export default class BindingHandler extends ko.BindingHandler<T> {
-  init(element: Element, valueAccessor: () => T) {
-    ...
-  }
-}
-​
-// If defined the binding handler as JavaScript, using the ko.BindingHandler type
-export default ko.BindingHandler<T>
-```
-
-### Controls Descendant Bindings
-
-If the binding handler controls the descendant bindings, the binding should specify the method transformContext as shown.
+All ES6 exports, exporting a class or a instance of a class are supported. The exports has to be done in a TypeScript file, if not `allowJs` is enabled in current tsconfig. The binding handler should implement the Knockout `BindingHandler` interface.
 
 ```typescript
-export default class BindingHandler extends ko.BindingHandler<unknown> {
-  init(element: Element, valueAccessor: () => T) {
-    ...
+class MyBindingHandler implements ko.BindingHandler<...> { ... }
+ko.bindingHanders.myBindingHandler = new MyBindingHandler()
+
+// ES6 class exports
+export { MyBindingHandler }
+export = MyBindingHandler
+export default MyBindingHandler
+```
+
+### Transform Child Context
+
+In the rare event the binding handler creates a new child context, the binding should specify the method `transformContext`.
+
+```typescript
+class BindingHandler implements ko.BindingHandler<...> {
+  init(element, valueAccessor, allBindings, viewModel, bindingContext) {
+    // Make a modified binding context, with a extra properties, and apply it to descendant elements
+    const innerBindingContext = bindingContext.extend(valueAccessor);
+    ko.applyBindingsToDescendants(innerBindingContext, element);
+
+    // Also tell KO *not* to bind the descendants itself, otherwise they will be bound twice
+    return { controlsDescendantBindings: true };
   }
-​
-  transformContext(input: <input>, context: <parent context>): <child context>
+
+  transformContext!: (input: Input, context: ParentContext) => ChildContext
 }
 ```
 
-## Importing Binding Handlers
+## Using bindinghandlers
 
-**Import binding handlers by using the syntax `<!-- ko-bindinghandler: ... -->` replacing `...` with any of the imports below.** KOLint's binding handler imports work identically with ESLint, but with one exception; using the typeof identfier in front of a key to import the 'type of' a variable.
+If the bindinghandler is _not_ globally declared, the binding handler needs to be imported into the view using the same import syntax as for the viewmodels.
 
-The syntax **will** change in the v1.0 release.
-
-| View Syntax | Binding Handler Name | Binding Handler Export |
-| :--- | :--- | :--- |
-| `import bindinghandler from './bindinghandler'` | bindinghandler | `export default BindingHandler (interface/class)` |
-| `import * as bindinghandler from './bindinghandler'` | bindinghandler | `export = BindingHandler (interface/class)` |
-| `import { BindingHandler } from './bindinghandler'` | **B**inding**H**andler | `export { BindingHandler } (interface/class)` |
-| `import { bh as bindinghandler } from './bindinghandler'` | bindinghandler | `export { BindingHandler as bh } (interface/class)` |
-| `import typeof bindinghandler from './bindinghandler'` | bindinghandler | `export default bindingHandler (variable)` |
-| `import typeof * as bindinghandler from './bindinghandler'` | bindinghandler | `export = bindingHandler (variable)` |
-| `import { typeof bindinghandler } from './bindinghandler'` | bindinghandler | `export { bindinghandler } (variable)` |
-| `import { typeof bh as bindinghandler } from './bindinghandler'` | bindinghandler | `export { bindingHandler as bh } (variable)` |
-
+```html
+<!-- ko-import { myBindinghandler } from './myBindinghandler' -->
+<p data-bind="myBindinghandler: ...">
+```
