@@ -16,5 +16,8 @@ jobs:
       - name: Install
         run: npm ci
 
+      - name: Config Docs
+        run: node ./.github/scripts/config-docs.js
+
       - name: Push
         run: ./.github/scripts/config-docs.sh
