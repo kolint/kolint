@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import * as lint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
