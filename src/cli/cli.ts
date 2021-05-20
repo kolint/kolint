@@ -82,7 +82,7 @@ function log(diagnostics: lint.Diagnostic[]) {
 		const severity = diag.severity === lint.Severity.Error ? 'error' : 'warning'
 		const location = diag.location ? `${diag.location.first_line}:${diag.location.first_column}` : ''
 		const unformattedRelativePath = canonicalPath(path.relative(process.cwd(), diag.filePath))
-		const relativePath = /^\.\.?\//.test(unformattedRelativePath) ? unformattedRelativePath : './' + unformattedRelativePath
+		const relativePath = unformattedRelativePath.startsWith('./') ? unformattedRelativePath : './' + unformattedRelativePath
 		const link = `${relativePath}:${location}`
 		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`${link} ${color(31)}${severity} ${color(90)}${diag.code}${color(0)} ${color(0)}${diag.message}`)
 	}
