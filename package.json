@@ -4,7 +4,10 @@
 	"version": "0.0.4",
 	"main": "./build/index.js",
 	"types": "./build/index",
-	"bin": "./build/cli/cli.js",
+	"bin": {
+		"kolint": "./bin/kolint.js",
+		"knockout-lint": "./bin/knockout-lint.js"
+	},
 	"devDependencies": {
 		"@types/glob": "^7.1.3",
 		"@types/js-yaml": "^4.0.1",
@@ -21,12 +24,12 @@
 		"typescript-json-schema": "^0.48.0"
 	},
 	"dependencies": {
-		"glob": "^7.1.7",
 		"js-yaml": "^4.1.0",
 		"knockout": "^3.5.1",
 		"meriyah": "^3.1.6",
 		"source-map": "^0.7.3",
 		"strip-json-comments": "^3.1.1",
+		"tiny-glob": "^0.2.8",
 		"typescript": "^4.2.4",
 		"yargs": "^16.1.1"
 	},

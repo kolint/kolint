@@ -12,7 +12,8 @@
 		"declarationMap": true,
 		// This will exclude any other global types
 		"types": [ "node" ],
-		"moduleResolution": "node"
+		"moduleResolution": "node",
+		"esModuleInterop": true
 	},
 	"exclude": [
 		"./test",
