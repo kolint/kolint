@@ -5,8 +5,8 @@
 	"main": "./build/index.js",
 	"types": "./build/index",
 	"bin": {
-		"kolint": "./build/cli/index.js",
-		"knockout-lint": "./build/cli/index.js"
+		"kolint": "./bin/kolint.js",
+		"knockout-lint": "./bin/knockout-lint.js"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.3",
