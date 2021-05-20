@@ -156,7 +156,7 @@ async function main() {
 			}
 
 			if (isOptionTrue(config.sourceMap)) {
-				const filepath = path.join(typeof config.out === 'string' ? config.out : parsedSource.dir, parsedSource.name) + (config.outExt ?? '.html.ts.map')
+				const filepath = path.join(typeof config.out === 'string' ? config.out : parsedSource.dir, parsedSource.name) + ((config.outExt ?? '.html.ts') + '.map')
 				fs.writeFileSync(filepath, JSON.stringify(mapJSON))
 			}
 		}
