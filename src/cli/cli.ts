@@ -99,7 +99,7 @@ async function main() {
 		process.exit(ExitCodes.NoInputs)
 	}
 
-	const files = (await Promise.all(inputs.map(async pattern => glob(pattern.toString())))).flat()
+	const files = (await Promise.all(inputs.map(async pattern => glob(canonicalPath(pattern.toString()))))).flat()
 	if (files.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoMatchingFiles)
