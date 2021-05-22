@@ -1,4 +1,4 @@
 *.ts linguist-language=TypeScript
-*.jison linguist-language=ebnf
+*.jison linguist-language=EBNF
 *.js linguist-language=JavaScript
 .github linguist-vendored=false
