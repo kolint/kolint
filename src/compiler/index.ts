@@ -5,7 +5,7 @@ import * as ts from 'typescript'
 import { Diagnostic } from '../diagnostic'
 import { AstNode, BindingContext, BindingNode, Document, TypeNode } from '../parser/syntax-tree'
 import { Reporting } from '../program'
-import { isReserved } from '../utils'
+import { flat, isReserved } from '../utils'
 import { SourceBuilder } from './source-builder'
 
 export class Compiler {
@@ -53,7 +53,7 @@ export class Compiler {
 	private reachableBindingNodes(parentNodes: AstNode[], contextCreationCallback: (typeNode: TypeNode) => void): BindingNode[] {
 		if (!parentNodes.length)
 			return []
-		const childNodes = parentNodes.map(node => node.childNodes).flat()
+		const childNodes = flat(parentNodes.map(node => node.childNodes))
 		// Split child nodes into buckets
 		const bindingNodes = childNodes.filter((node: AstNode): node is BindingNode => node instanceof BindingNode)
 		const typeNodes = childNodes.filter((node: AstNode): node is TypeNode => node instanceof TypeNode)
@@ -127,7 +127,7 @@ export class Compiler {
 			// document.rootContext = this.processImmediateChildNodes(document.rootNode, rootContext)
 			const nodeQueue = this.reachableBindingNodes([document.rootNode], () => { /* empty */ })
 
-			const importedBindings = document.imports.map(imp => imp.importSymbols.map(symb => symb.alias.value).filter(alias => document.bindingNames.find(name => name === alias))).flat()
+			const importedBindings = flat(document.imports.map(imp => imp.importSymbols.map(symb => symb.alias.value).filter(alias => document.bindingNames.find(name => name === alias))))
 			builder.createBindinghandlerImports(importedBindings)
 			builder.createRootBindingContexts(document.rootContext)
 			const code = builder.changes().toString()

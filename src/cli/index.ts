@@ -5,7 +5,7 @@ import glob from 'tiny-glob'
 import * as _yargs from 'yargs'
 import { parse } from '../parser'
 import { createDocument } from '../parser/document-builder'
-import { canonicalPath } from '../utils'
+import { canonicalPath, flat } from '../utils'
 import { Diagnostic } from '../diagnostic'
 import { getConfigs, joinConfigs } from './config'
 
@@ -99,7 +99,7 @@ async function main() {
 		process.exit(ExitCodes.NoInputs)
 	}
 
-	const files = (await Promise.all(inputs.map(async pattern => glob(canonicalPath(pattern.toString()))))).flat()
+	const files = flat(await Promise.all(inputs.map(async pattern => glob(canonicalPath(pattern.toString())))))
 	if (files.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoMatchingFiles)

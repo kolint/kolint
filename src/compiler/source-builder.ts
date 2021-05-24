@@ -1,6 +1,7 @@
 import { CodeWithSourceMap, SourceNode } from 'source-map'
 import path = require('path')
 import { Binding, Document as DOMDocument, IdentifierNode, BindingExpression, BindingName, TypeNode, BindingContext, ChildContextNode } from '../parser/syntax-tree'
+import { flat } from '../utils'
 
 /**
  * Transforms an identifiers string representation, but retains the correct source map locations
@@ -71,20 +72,20 @@ export class SourceBuilder {
 	}
 
 	private join(elements: SourceNode[], delimiter: string) {
-		const arr = elements.map(e => [e, delimiter]).flat()
+		const arr = flat(elements.map(e => [e, delimiter]))
 		arr.pop()
 		return new SourceNode(null, null, null, arr)
 	}
 
 	private createImportStatements(markupFileName: string): (string | SourceNode)[] {
 		const document = this.document
-		const viewmodelImports = document.imports.map(importNode => {
+		const viewmodelImports = flat(document.imports.map(importNode => {
 			const names = importNode.importSymbols.map(symbol => symbol.name === symbol.alias ?
 				new SourceNode(null, null, null, [this.mapIdentifier(symbol.name)]) :
 				new SourceNode(null, null, null, [this.mapIdentifier(symbol.name), ' as ', this.mapIdentifier(symbol.alias)]))
 			const joinedNames = this.join(names, ', ')
 			return ['import { ', joinedNames, ' } from ', this.mapIdentifier(importNode.modulePath, (id) => `"${id}"`), '\n']
-		}).flat()
+		}))
 
 		return viewmodelImports
 	}
