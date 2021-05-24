@@ -3,7 +3,7 @@
 import { Parser } from 'jison'
 import * as fs from 'fs'
 import * as path from 'path'
-import { YY } from './parser'
+import { YY } from '.'
 import { Node } from './syntax-tree'
 
 const bnf = fs.readFileSync(path.join(__dirname, '../../src/parser/grammar.jison'), 'utf8')
