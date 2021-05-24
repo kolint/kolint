@@ -6,7 +6,7 @@ import { Diagnostic } from '../diagnostic'
 import { AstNode, BindingContext, BindingNode, Document, TypeNode } from '../parser/syntax-tree'
 import { Reporting } from '../program'
 import { isReserved } from '../utils'
-import { SourceBuilder } from './SourceBuilder'
+import { SourceBuilder } from './source-builder'
 
 export class Compiler {
 	private static getStandardOptions(): ts.CompilerOptions {
