@@ -1,6 +1,6 @@
 import { Document, Node } from './parser/syntax-tree'
 import { Diagnostic } from './diagnostic'
-import { Compiler } from './compiler/compiler'
+import { Compiler } from './compiler'
 import { SourceMapGenerator } from 'source-map'
 import { parse } from './parser/parser'
 
