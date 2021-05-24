@@ -2,8 +2,9 @@
 import * as path from 'path'
 import { SourceMapConsumer } from 'source-map'
 import * as ts from 'typescript'
-import { Diagnostic, Document, Reporting } from '../parser'
-import { AstNode, BindingContext, BindingNode, TypeNode } from '../parser/syntax-tree'
+import { Diagnostic } from '../diagnostic'
+import { AstNode, BindingContext, BindingNode, Document, TypeNode } from '../parser/syntax-tree'
+import { Reporting } from '../program'
 import { isReserved } from '../utils'
 import { SourceBuilder } from './SourceBuilder'
 

@@ -6,7 +6,7 @@ import * as _yargs from 'yargs'
 import { parse } from '../parser/parser'
 import { createDocument } from '../parser/document-builder'
 import { canonicalPath } from '../utils'
-import { Diagnostic } from '../parser'
+import { Diagnostic } from '../diagnostic'
 import { getConfigs, joinConfigs } from './config'
 
 enum ExitCodes {

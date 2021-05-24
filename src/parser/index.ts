@@ -1,6 +1,0 @@
-import './polyfill'
-export { parse } from './parser'
-export { Reporting } from '../program'
-export { Diagnostic, Severity } from '../diagnostic'
-export { Binding, BindingData, BindingExpression, BindingName, DiagNode, Document, Node, NodeType, ImportNode } from './syntax-tree'
-export { createDocument } from './document-builder'
