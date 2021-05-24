@@ -1,4 +1,4 @@
-import * as lint from '..'
+import * as kolint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
 import glob from 'tiny-glob'
@@ -74,16 +74,16 @@ function color(code: number): string {
 	return `\x1b[${code}m`
 }
 
-function log(diagnostics: lint.Diagnostic[]) {
+function log(diagnostics: kolint.Diagnostic[]) {
 	for (const diag of diagnostics) {
-		if (diag.severity === lint.Severity.Off) continue
+		if (diag.severity === kolint.Severity.Off) continue
 
-		const severity = diag.severity === lint.Severity.Error ? 'error' : 'warning'
+		const severity = diag.severity === kolint.Severity.Error ? 'error' : 'warning'
 		const location = diag.location ? `${diag.location.first_line}:${diag.location.first_column}` : ''
-		const unformattedRelativePath = lint.utils.canonicalPath(path.relative(process.cwd(), diag.filePath))
+		const unformattedRelativePath = kolint.utils.canonicalPath(path.relative(process.cwd(), diag.filePath))
 		const relativePath = unformattedRelativePath.startsWith('./') ? unformattedRelativePath : './' + unformattedRelativePath
 		const link = `${relativePath}:${location}`
-		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`${link} ${color(31)}${severity} ${color(90)}${diag.code}${color(0)} ${color(0)}${diag.message}`)
+		console[diag.severity === kolint.Severity.Error ? 'error' : 'log'](`${link} ${color(31)}${severity} ${color(90)}${diag.code}${color(0)} ${color(0)}${diag.message}`)
 	}
 }
 
@@ -98,7 +98,7 @@ async function main() {
 		process.exit(ExitCodes.NoInputs)
 	}
 
-	const files = lint.utils.flat(await Promise.all(inputs.map(async pattern => glob(lint.utils.canonicalPath(pattern.toString())))))
+	const files = kolint.utils.flat(await Promise.all(inputs.map(async pattern => glob(kolint.utils.canonicalPath(pattern.toString())))))
 	if (files.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoMatchingFiles)
@@ -108,7 +108,7 @@ async function main() {
 	let warnings = 0
 
 	const config = joinConfigs(await getConfigs(yargs.argv, process.cwd(), yargs.argv.config ? [yargs.argv.config] : ['.kolintrc', '.kolintrc.*']))
-	const program = lint.createProgram()
+	const program = kolint.createProgram()
 
 	const documents = files.map(file => {
 		const filepath = path.isAbsolute(file) ? file : path.join(process.cwd(), file)
@@ -132,7 +132,7 @@ async function main() {
 				console.error(err)
 			}
 		}
-	}).filter((doc): doc is lint.Document => Boolean(doc))
+	}).filter((doc): doc is kolint.Document => Boolean(doc))
 
 	program.registerOutput = (filename, data, map) => {
 		const mapJSON = map?.toJSON()
@@ -169,24 +169,24 @@ async function main() {
 				const severity = config.severity[diag.code] ?? config.severity[diag.name]
 
 				if (severity === 'error') {
-					diag.severity = lint.Severity.Error
+					diag.severity = kolint.Severity.Error
 				} else if (severity === 'warning') {
-					diag.severity = lint.Severity.Warning
+					diag.severity = kolint.Severity.Warning
 				} else if (severity === 'off') {
-					diag.severity = lint.Severity.Off
+					diag.severity = kolint.Severity.Off
 				}
 			}
 
-			if (diag.severity === lint.Severity.Error)
+			if (diag.severity === kolint.Severity.Error)
 				errors++
-			if (diag.severity === lint.Severity.Warning)
+			if (diag.severity === kolint.Severity.Warning)
 				warnings++
 		}
 
 		const sortedDiags = diagnostics.slice().sort((a, b) => (a.location?.first_line ?? -1) - (b.location?.first_line ?? -1))
 		log(sortedDiags)
 	} catch (err) {
-		if (err instanceof lint.Diagnostic)
+		if (err instanceof kolint.Diagnostic)
 			log([err])
 		else
 			throw err
