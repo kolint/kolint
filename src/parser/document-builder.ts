@@ -1,4 +1,4 @@
-import { Node, Document, ImportNode, NodeType, DiagNode, ChildContextNode, TypeNode, AstNode, BindingNode } from './bindingDOM'
+import { Node, Document, ImportNode, NodeType, DiagNode, ChildContextNode, TypeNode, AstNode, BindingNode } from './syntax-tree'
 import { parseBindingExpression } from './compile-bindings'
 import { Diagnostic, diagnostics } from '../diagnostic'
 import { Reporting } from '../program'

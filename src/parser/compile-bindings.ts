@@ -1,7 +1,7 @@
 /** This file is deprecated. It is here just for reference while implementing all rules for the new parser infrastructure. */
 import * as meriyah from 'meriyah'
 import { Location } from './location'
-import { Binding, BindingName, BindingExpression } from './bindingDOM'
+import { Binding, BindingName, BindingExpression } from './syntax-tree'
 import { Reporting } from '../program'
 import { Diagnostic } from '../diagnostic'
 

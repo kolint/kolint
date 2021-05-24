@@ -3,7 +3,7 @@ import * as path from 'path'
 import { SourceMapConsumer } from 'source-map'
 import * as ts from 'typescript'
 import { Diagnostic, Document, Reporting } from '../parser'
-import { AstNode, BindingContext, BindingNode, TypeNode } from '../parser/bindingDOM'
+import { AstNode, BindingContext, BindingNode, TypeNode } from '../parser/syntax-tree'
 import { isReserved } from '../utils'
 import { SourceBuilder } from './SourceBuilder'
 

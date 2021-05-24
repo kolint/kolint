@@ -1,6 +1,6 @@
 import { CodeWithSourceMap, SourceNode } from 'source-map'
 import path = require('path')
-import { Binding, Document as DOMDocument, IdentifierNode, BindingExpression, BindingName, TypeNode, BindingContext, ChildContextNode } from '../parser/bindingDOM'
+import { Binding, Document as DOMDocument, IdentifierNode, BindingExpression, BindingName, TypeNode, BindingContext, ChildContextNode } from '../parser/syntax-tree'
 
 /**
  * Transforms an identifiers string representation, but retains the correct source map locations

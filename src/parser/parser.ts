@@ -1,6 +1,6 @@
 import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
-import { ImportNode, Node, NodeType, BindingData, DiagNode, IdentifierNode, ChildContextNode, TypeReferenceNode, NamedContextNode, ContextAssignmentNode } from './bindingDOM'
+import { ImportNode, Node, NodeType, BindingData, DiagNode, IdentifierNode, ChildContextNode, TypeReferenceNode, NamedContextNode, ContextAssignmentNode } from './syntax-tree'
 import { Reporting } from '../program'
 
 const selfClosingNodeNames = [
