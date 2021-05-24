@@ -1,4 +1,5 @@
 /// <reference lib="dom" />
+import * as ko from 'knockout'
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type MaybeReactive<T> = ko.MaybeComputed<T> | ko.MaybeObservable<T>
