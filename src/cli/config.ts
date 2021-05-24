@@ -3,7 +3,7 @@ import glob from 'tiny-glob'
 import * as path from 'path'
 import stripJsonComments from 'strip-json-comments'
 import * as yaml from 'js-yaml'
-import { ConfigOptions } from './cli'
+import { ConfigOptions } from '.'
 import yargs from 'yargs'
 
 async function getConfigPath(dir: string, patterns: string[]): Promise<string | undefined> {
