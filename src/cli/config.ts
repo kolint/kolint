@@ -5,10 +5,10 @@ import stripJsonComments from 'strip-json-comments'
 import * as yaml from 'js-yaml'
 import { ConfigOptions } from '.'
 import yargs from 'yargs'
-import { flat } from '../utils'
+import utils from '../utils'
 
 async function getConfigPath(dir: string, patterns: string[]): Promise<string | undefined> {
-	const files = flat(await Promise.all(patterns.map(async pattern => {
+	const files = utils.flat(await Promise.all(patterns.map(async pattern => {
 		try {
 			return await glob(pattern, { absolute: true, cwd: dir, dot: true, filesOnly: true })
 		} catch {

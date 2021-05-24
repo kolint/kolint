@@ -5,7 +5,6 @@ import glob from 'tiny-glob'
 import * as _yargs from 'yargs'
 import { parse } from '../parser'
 import { createDocument } from '../parser/document-builder'
-import { canonicalPath, flat } from '../utils'
 import { Diagnostic } from '../diagnostic'
 import { getConfigs, joinConfigs } from './config'
 
@@ -81,7 +80,7 @@ function log(diagnostics: lint.Diagnostic[]) {
 
 		const severity = diag.severity === lint.Severity.Error ? 'error' : 'warning'
 		const location = diag.location ? `${diag.location.first_line}:${diag.location.first_column}` : ''
-		const unformattedRelativePath = canonicalPath(path.relative(process.cwd(), diag.filePath))
+		const unformattedRelativePath = lint.utils.canonicalPath(path.relative(process.cwd(), diag.filePath))
 		const relativePath = unformattedRelativePath.startsWith('./') ? unformattedRelativePath : './' + unformattedRelativePath
 		const link = `${relativePath}:${location}`
 		console[diag.severity === lint.Severity.Error ? 'error' : 'log'](`${link} ${color(31)}${severity} ${color(90)}${diag.code}${color(0)} ${color(0)}${diag.message}`)
@@ -99,7 +98,7 @@ async function main() {
 		process.exit(ExitCodes.NoInputs)
 	}
 
-	const files = flat(await Promise.all(inputs.map(async pattern => glob(canonicalPath(pattern.toString())))))
+	const files = lint.utils.flat(await Promise.all(inputs.map(async pattern => glob(lint.utils.canonicalPath(pattern.toString())))))
 	if (files.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoMatchingFiles)

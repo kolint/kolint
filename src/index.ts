@@ -1,6 +1,7 @@
 // src
 export { Diagnostic, Severity, diagnostics, DiagnosticDescription } from './diagnostic'
 export { createProgram, Program, Reporting } from './program'
+export { utils } from './utils'
 
 // src/cli
 export { ConfigOptions } from './cli'

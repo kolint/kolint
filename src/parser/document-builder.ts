@@ -2,7 +2,7 @@ import { Node, Document, ImportNode, NodeType, DiagNode, ChildContextNode, TypeN
 import { parseBindingExpression } from './compile-bindings'
 import { Diagnostic, diagnostics } from '../diagnostic'
 import { Reporting } from '../program'
-import { flat } from '../utils'
+import utils from '../utils'
 
 // Build binding tree
 export function createDocument(filePath: string, tokens: Node[], reporting: Reporting): Document {
@@ -60,7 +60,7 @@ export function createDocument(filePath: string, tokens: Node[], reporting: Repo
 				if (node.bindings?.length) {
 					// There could be multiple data-binds on one element. Parse them all.
 					// TODO: If there are multiple binding properties on one row, emit a warning if it controls descendants (unclear semantics of multiple bindings?)
-					const bindings = flat(node.bindings.map(bindingData => parseBindingExpression(filePath, reporting, bindingData.bindingText, bindingData.location)))
+					const bindings = utils.flat(node.bindings.map(bindingData => parseBindingExpression(filePath, reporting, bindingData.bindingText, bindingData.location)))
 					if (bindings.length) {
 						for(const b of bindings)
 							allBindings.add(b.bindingHandler.name)
@@ -83,7 +83,7 @@ export function createDocument(filePath: string, tokens: Node[], reporting: Repo
 			case NodeType.Empty: {
 				if (node.bindings?.length) {
 					// TODO: parse all binding strings
-					const bindings = flat(node.bindings.map(bindingData => parseBindingExpression(filePath, reporting, bindingData.bindingText, bindingData.location)))
+					const bindings = utils.flat(node.bindings.map(bindingData => parseBindingExpression(filePath, reporting, bindingData.bindingText, bindingData.location)))
 					if (bindings.length) {
 						for(const b of bindings)
 							allBindings.add(b.bindingHandler.name)
