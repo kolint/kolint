@@ -1,4 +1,4 @@
-import { canonicalPath } from '../utils'
+import utils from '../utils'
 import { Location } from './location'
 
 ///
@@ -95,7 +95,7 @@ export class Document {
 	 * @param bindingHandlerReferences All the view's used bindinghandlers except for the ones that are already globally available.
 	 */
 	public constructor(public viewFilePath: string, public rootNode: TypeNode, public imports: ImportNode[], public bindingNames: string[]) {
-		this.viewFilePath = canonicalPath(viewFilePath)
+		this.viewFilePath = utils.canonicalPath(viewFilePath)
 	}
 }
 
