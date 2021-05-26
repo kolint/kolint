@@ -55,8 +55,8 @@ export class Program implements Reporting {
 		this.disabledDiagnostics = this.disabledDiagnostics.filter(diag => !keys.includes(diag))
 	}
 
-	public parseNodes(document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Node[] {
-		return parse(document, this, bindingNames, forceToXML)
+	public parseNodes(filePath: string, document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Node[] {
+		return parse(filePath, document, this, bindingNames, forceToXML)
 	}
 
 	/**
