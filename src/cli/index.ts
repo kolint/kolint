@@ -21,7 +21,7 @@ interface Options {
 	out?: string | boolean
 	/** TS output file extension, should start with dot. */
 	outExt?: string
-	/** Wether to output  */
+	/** Wether to output sourceMaps */
 	sourceMap?: boolean
 }
 
@@ -41,7 +41,7 @@ export interface ConfigOptions extends Options {
 const yargs = (() => {
 	let yargs = _yargs as unknown as _yargs.Argv<ArgsOptions>
 
-	const options: { [key in keyof ArgsOptions]: _yargs.Options } = {
+	const options: { [key in Required<keyof ArgsOptions>]: _yargs.Options } = {
 		config: {
 			type: 'string',
 			alias: ['c'],
@@ -54,6 +54,10 @@ const yargs = (() => {
 		outExt: {
 			type: 'string',
 			description: 'TS output file extension, should start with dot'
+		},
+		sourceMap: {
+			type: 'string',
+			description: 'Wether to output sourceMaps'
 		}
 	}
 
