@@ -1,7 +1,8 @@
-import { Document, Node, parse } from './parser'
+import { Document, Node } from './parser/syntax-tree'
 import { Diagnostic } from './diagnostic'
 import { Compiler } from './compiler'
 import { SourceMapGenerator } from 'source-map'
+import { parse } from './parser'
 
 export interface Reporting {
 	registerOutput(filename: string, code: string, map: SourceMapGenerator): void
