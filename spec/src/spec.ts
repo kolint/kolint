@@ -183,23 +183,23 @@ function _fail(category: string, name: string, issue: string | undefined, err: u
 const program = lint.createProgram()
 
 for (const [name, subject, issue] of parseTests.tag) {
-	test('Tag', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+	test('Tag', name, issue, () => program.parseNodes('inline', subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
 for (const [name, subject, issue] of parseTests.virtual) {
-	test('Virtual Elements', name, issue, () => program.parseNodes(subject)?.length === 0 || 'Unexpected number of nodes')
+	test('Virtual Elements', name, issue, () => program.parseNodes('inline', subject)?.length === 0 || 'Unexpected number of nodes')
 }
 
 for (const [name, subject, issue] of parseTests.bindings) {
-	test('Bindings', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+	test('Bindings', name, issue, () => program.parseNodes('inline', subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
 for (const [name, subject, issue] of parseTests.import) {
-	test('Import', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+	test('Import', name, issue, () => program.parseNodes('inline', subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
 for (const [name, subject, issue] of parseTests.contextModification) {
-	test('Context modifications', name, issue, () => program.parseNodes(subject)?.length > 0 || 'Parsed nodes length were 0')
+	test('Context modifications', name, issue, () => program.parseNodes('inline', subject)?.length > 0 || 'Parsed nodes length were 0')
 }
 
 if (hasErrors)

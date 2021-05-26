@@ -122,7 +122,7 @@ async function main() {
 		const textDoc = fs.readFileSync(filepath).toString()
 
 		try {
-			const ast = parse(textDoc, program)
+			const ast = parse(filepath, textDoc, program)
 			return createDocument(filepath, ast, program)
 		} catch (err) {
 			if (err instanceof Diagnostic) {

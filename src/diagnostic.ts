@@ -145,5 +145,10 @@ export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecificat
 	'binding-context-any': {
 		code: prefix(13),
 		message: 'Binding context is of type \'any\''
+	},
+	'parser-error': {
+		code: prefix(14),
+		message: 'Expected $0, got "$1" ($2).',
+		arguments: [ '$0', '$1', '$2' ] as const
 	}
 })

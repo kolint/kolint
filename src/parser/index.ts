@@ -2,6 +2,7 @@ import * as documentParser from '../../lib/document-parser'
 import { Location } from './location'
 import { ImportNode, Node, NodeType, BindingData, DiagNode, IdentifierNode, ChildContextNode, TypeReferenceNode, NamedContextNode, ContextAssignmentNode } from './syntax-tree'
 import { Reporting } from '../program'
+import { Diagnostic } from '../diagnostic'
 
 const selfClosingNodeNames = [
 	'area',
@@ -98,6 +99,18 @@ export class YY {
 	public constructor(private _bindingNames: string[]) { }
 }
 
+interface ParserErrorHash {
+	expected: string[]
+	line: number
+	loc: Location
+	text: string
+	token: string
+}
+
+interface ParserError extends Error {
+	hash: ParserErrorHash
+}
+
 /**
  * Parse raw HTML or XML knockout view.
  *
@@ -107,7 +120,7 @@ export class YY {
  * @param bindingNames attribute names to interpret as bindings
  * @param forceToXML interpret document as XML
  */
-export function parse(document: string, reporting: Reporting, bindingNames?: string[], forceToXML = false): Node[] {
+export function parse(filePath: string, document: string, reporting: Reporting, bindingNames?: string[], forceToXML = false): Node[] {
 	// const _ = program['_']
 
 	const nodeParser = new documentParser.Parser<Node[]>()
@@ -119,7 +132,29 @@ export function parse(document: string, reporting: Reporting, bindingNames?: str
 	// Skip the byte order mark (BOM), if present.
 	if (document.charAt(0) === '\uFEFF')
 		document = document.slice(1)
-	const ast = nodeParser.parse(document)
+
+	let ast: Node[] = []
+
+	try {
+		ast = nodeParser.parse(document)
+	} catch (_err) {
+		if (typeof _err === 'object' && (_err as Record<string, unknown>).hash) {
+			const err = _err as ParserError
+
+			const loc: Location = {
+				first_column: err.hash.loc.first_column + 1,
+				first_line: err.hash.loc.first_line,
+				last_column: err.hash.loc.last_column + 1,
+				last_line: err.hash.loc.last_line,
+				range: [
+					err.hash.loc.range[0] + 1,
+					err.hash.loc.range[1]
+				]
+			}
+
+			throw new Diagnostic(filePath, 'parser-error', loc, err.hash.expected.join(', '), err.hash.text, err.hash.token)
+		}
+	}
 
 	if (!forceToXML)
 		transformSelfClosingNodes(ast)
