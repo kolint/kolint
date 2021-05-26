@@ -190,7 +190,9 @@ async function main() {
 		const sortedDiags = diagnostics.slice().sort((a, b) => {
 			if (a.filePath < b.filePath) return -1
 			if (a.filePath > b.filePath) return 1
-			return (a.location?.first_line ?? -1) - (b.location?.first_line ?? -1)
+			const byLine = (a.location?.first_line ?? -1) - (b.location?.first_line ?? -1)
+			const byCol = (a.location?.first_column ?? -1) - (b.location?.first_column ?? -1)
+			return byLine || byCol
 		})
 
 		log(sortedDiags)
