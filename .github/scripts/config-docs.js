@@ -3,7 +3,7 @@ const path = require('path')
 const tjs = require('typescript-json-schema')
 
 const program = tjs.getProgramFromFiles([
-	path.resolve('src/cli/cli.ts')
+	path.resolve('src/cli/index.ts')
 ])
 
 const schema = tjs.generateSchema(program, 'ConfigOptions', {
