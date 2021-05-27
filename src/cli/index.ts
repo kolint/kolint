@@ -116,6 +116,9 @@ async function main() {
 	const config = joinConfigs(await getConfigs(argv, process.cwd(), argv.config ? [argv.config] : ['.kolintrc', '.kolintrc.*']))
 	const program = kolint.createProgram()
 
+	// TODO: Remove this hard-coded disabling when it is possible to enable/disable rules in the configuration.
+	program.disableDiagnostics(['KO0002'])
+
 	const documents = files.map(file => {
 		const filepath = path.isAbsolute(file) ? file : path.join(process.cwd(), file)
 		const stat = fs.statSync(filepath)
