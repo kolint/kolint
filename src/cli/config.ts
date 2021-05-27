@@ -70,8 +70,8 @@ function readConfig(configFilePath: string) {
 	return config
 }
 
-export async function getConfigs(_argv: yargs.Argv['argv'] | undefined, dir: string, patterns: string[], _i = -1): Promise<Map<number, ConfigOptions>> {
-	const argv = { ..._argv }
+export async function getConfigs(args: yargs.Arguments | undefined, dir: string, patterns: string[], _i = -1): Promise<Map<number, ConfigOptions>> {
+	const argv = { ...args }
 	delete argv._
 	delete argv.$0
 

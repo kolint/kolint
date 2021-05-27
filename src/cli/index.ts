@@ -2,7 +2,7 @@ import * as kolint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
 import glob from 'tiny-glob'
-import * as _yargs from 'yargs'
+import * as yargs from 'yargs'
 import { parse } from '../parser'
 import { createDocument } from '../parser/document-builder'
 import { Diagnostic } from '../diagnostic'
@@ -38,40 +38,8 @@ export interface ConfigOptions extends Options {
 	root?: boolean
 }
 
-const yargs = (() => {
-	let yargs = _yargs as unknown as _yargs.Argv<ArgsOptions>
-
-	const options: { [key in Required<keyof ArgsOptions>]: _yargs.Options } = {
-		config: {
-			type: 'string',
-			alias: ['c'],
-			description: 'Glob pattern or path to config files'
-		},
-		out: {
-			type: 'string',
-			description: 'Output directory, works similarly to tsconfig\'s outDir'
-		},
-		outExt: {
-			type: 'string',
-			description: 'TS output file extension, should start with dot'
-		},
-		sourceMap: {
-			type: 'string',
-			description: 'Wether to output sourceMaps'
-		}
-	}
-
-	for (const [key, _options] of Object.entries(options)) {
-		if (!_options) continue
-		yargs = yargs.option(key, _options)
-	}
-
-	return yargs
-})()
-
-if (yargs.argv._.length < 1) {
-	yargs.showHelp()
-	process.exit(ExitCodes.Success)
+function argvOptions<T extends { [key in Required<keyof ArgsOptions>]: yargs.Options }>(c: T) {
+	return yargs.options(c).argv
 }
 
 function color(code: number): string {
@@ -95,8 +63,42 @@ function isOptionTrue(option: string | boolean | undefined): option is true | ''
 	return (['', true] as unknown[]).includes(option)
 }
 
+async function asyncify<T>(value: Promise<T> | T): Promise<T> {
+	if (typeof value === 'object' && typeof (value as typeof value & { then?: unknown }).then === 'function') {
+		return value as unknown as Promise<T>
+	} else {
+		return Promise.resolve(value as unknown as T)
+	}
+}
+
+// Async function wrapper
 async function main() {
-	const inputs = yargs.argv._
+	const argv = await asyncify(argvOptions({
+		config: {
+			type: 'string',
+			alias: ['c'],
+			description: 'Glob pattern or path to config files'
+		},
+		out: {
+			type: 'string',
+			description: 'Output directory, works similarly to tsconfig\'s outDir'
+		},
+		outExt: {
+			type: 'string',
+			description: 'TS output file extension, should start with dot'
+		},
+		sourceMap: {
+			type: 'string',
+			description: 'Wether to output sourceMaps'
+		}
+	}))
+
+	if (argv._.length < 1) {
+		yargs.showHelp()
+		process.exit(ExitCodes.Success)
+	}
+
+	const inputs = argv._
 	if (inputs.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoInputs)
@@ -111,7 +113,7 @@ async function main() {
 	let errors = 0
 	let warnings = 0
 
-	const config = joinConfigs(await getConfigs(yargs.argv, process.cwd(), yargs.argv.config ? [yargs.argv.config] : ['.kolintrc', '.kolintrc.*']))
+	const config = joinConfigs(await getConfigs(argv, process.cwd(), argv.config ? [argv.config] : ['.kolintrc', '.kolintrc.*']))
 	const program = kolint.createProgram()
 
 	const documents = files.map(file => {
