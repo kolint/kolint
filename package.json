@@ -26,7 +26,7 @@
 	"dependencies": {
 		"js-yaml": "^4.1.0",
 		"knockout": "^3.5.1",
-		"meriyah": "^3.1.6",
+		"meriyah": "^4.1.5",
 		"source-map": "^0.7.3",
 		"strip-json-comments": "^3.1.1",
 		"tiny-glob": "^0.2.9",
