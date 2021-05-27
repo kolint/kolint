@@ -8,12 +8,12 @@ KOLint is a type checker and lint tool for [Knockout.JS](https://knockoutjs.com)
 
 
 ## Try it out
-1. Add reference to your viewmodel:
+1. Add reference to your view:
     ```html
     <!-- ko-import ViewModel from './viewmodel' -->
     <!-- ko-viewmodel ViewModel -->
     ```
-2. Run KOLint without installing it
+2. Run KOLint without installing it:
     ```
     $ npx knockout-lint view.html
     ```
