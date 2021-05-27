@@ -1,8 +1,9 @@
+.github
 .vscode
-demo
+docs
 spec
 src
 .editorconfig
 .eslintrc.json
+.gitbook.yaml
 tsconfig.json
-.github
