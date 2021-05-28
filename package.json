@@ -35,8 +35,8 @@
 	"scripts": {
 		"build": "tsc && node scripts/parser-compiler.js",
 		"watch": "tsc -w",
-		"test": "node ./spec/build/spec.js",
-		"lint": "eslint src/**/*.ts spec/src/**/*.ts"
+		"test": "mocha build/__tests__/**/*.js",
+		"lint": "eslint src/**/*.ts"
 	},
 	"repository": {
 		"type": "git",
