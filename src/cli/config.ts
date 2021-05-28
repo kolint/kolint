@@ -4,7 +4,6 @@ import * as path from 'path'
 import stripJsonComments from 'strip-json-comments'
 import * as yaml from 'js-yaml'
 import { ConfigOptions } from '.'
-import yargs from 'yargs'
 import utils from '../utils'
 
 async function getConfigPath(dir: string, patterns: string[]): Promise<string | undefined> {
@@ -70,38 +69,41 @@ function readConfig(configFilePath: string) {
 	return config
 }
 
-export async function getConfigs(args: yargs.Arguments | undefined, dir: string, patterns: string[], _i = -1): Promise<Map<number, ConfigOptions>> {
-	const argv = { ...args }
-	delete argv._
-	delete argv.$0
-
+export async function getConfigs(args: Record<string, unknown> | undefined, dir: string, patterns: string[], _i = -1): Promise<Map<number, ConfigOptions>> {
 	const configs = new Map<number, ConfigOptions>()
 
-	if (argv)
-		configs.set(++_i, argv as ConfigOptions)
+	// Clone args and delete non-option values
+	if (args) {
+		args = { ...args }
+		delete args._
+		delete args.$0
+	}
+
+	if (args)
+		configs.set(++_i, args)
 
 	const configFilePath = await getConfigPath(dir, patterns)
 
 	if (configFilePath) {
-		const addConfig = async (configFilePath: string) => {
-			const config = readConfig(configFilePath)
+		const config = readConfig(configFilePath)
 
-			if (config) {
-				configs.set(++_i, config)
+		if (config) {
+			configs.set(++_i, config)
 
-				const newDir = path.join(configFilePath, '..')
-
-				if (config.root !== true && configFilePath !== newDir) {
-					const map = await getConfigs(undefined, newDir, patterns, _i)
-
-					for (const [key, value] of map.entries()) {
-						configs.set(key, value)
-					}
-				}
+			if (config.root === true) {
+				return configs
 			}
 		}
+	}
 
-		await addConfig(configFilePath)
+	const newDir = path.join(dir, '..')
+
+	if (dir !== newDir) {
+		const map = await getConfigs(undefined, newDir, patterns, _i)
+
+		for (const [key, value] of map.entries()) {
+			configs.set(key, value)
+		}
 	}
 
 	return configs
