@@ -110,12 +110,12 @@ export class Compiler {
 
 		// * read scaffold
 		// * inject imports for viewmodel and bindinghandlers
-		const sources = documents.map(document => {
+		for(const doc of documents.filter(doc => !(doc.rootNode instanceof TypeNode)))
+			reporting.addDiagnostic(new Diagnostic(doc.viewFilePath, 'no-viewmodel-reference', undefined, 'Document must have a defined type at the root node'))
+
+		const sources = documents.filter(doc => doc.rootNode instanceof TypeNode).map(document => {
 			const viewFilePath = document.viewFilePath
 			const builder = new SourceBuilder(viewFilePath, document)
-
-			if (!(document.rootNode instanceof TypeNode))
-				throw new Error('Document must have a defined type at the root node')
 
 			// * inject binding context (reference to viewmodel)
 			// * store the name of the injected binding context identifier into the bindingQueue's binding object (for reference in the next iteration)

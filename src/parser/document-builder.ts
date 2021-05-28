@@ -1,4 +1,4 @@
-import { Node, Document, ImportNode, NodeType, DiagNode, ChildContextNode, TypeNode, AstNode, BindingNode } from './syntax-tree'
+import { Node, Document, ImportNode, NodeType, DiagNode, ChildContextNode, TypeNode, BindingNode } from './syntax-tree'
 import { parseBindingExpression } from './compile-bindings'
 import { Diagnostic, diagnostics } from '../diagnostic'
 import { Reporting } from '../program'
@@ -8,22 +8,19 @@ import utils from '../utils'
 export function createDocument(filePath: string, tokens: Node[], reporting: Reporting): Document {
 	const domNodeStack: Node[] = [] // Keeps track of unbalanced documents
 	const imports: ImportNode[] = [] // Imported symbols
-	const astNodeStack: AstNode[] = []
-	//const contextStack: BindingContext[] = [rootBinding] // The current context for all bindings in the tree
+	const astContextStack: TypeNode[] = [] // The current context for all bindings in the tree
 	const allBindings = new Set<string>()
 
 	function overrideViewmodel(vmType: ChildContextNode): void {
-		const oldNode = astNodeStack.pop()
-		if (oldNode && !(oldNode instanceof TypeNode))
-			astNodeStack.push(oldNode)
-		const parent = astNodeStack.pop()
+		const _ = astContextStack.pop()
+		const parent = astContextStack.pop()
 		if (parent) {
-			astNodeStack.push(parent)
+			astContextStack.push(parent)
 			const newNode = new TypeNode(parent, vmType)
 			parent.childNodes.push(newNode)
-			astNodeStack.push(newNode)
+			astContextStack.push(newNode)
 		} else {
-			astNodeStack.push(new TypeNode(parent, vmType))
+			astContextStack.push(new TypeNode(parent, vmType))
 		}
 	}
 
@@ -54,8 +51,8 @@ export function createDocument(filePath: string, tokens: Node[], reporting: Repo
 		}
 		switch (node.nodeType) {
 			case NodeType.Start: {
-				let currentAstNode = astNodeStack[astNodeStack.length - 1]
-				if (!currentAstNode)
+				let currentContext = astContextStack[astContextStack.length - 1]
+				if (!currentContext)
 					throw new Diagnostic(filePath, 'no-viewmodel-reference', Object.assign({}, node.loc))
 				if (node.bindings?.length) {
 					// There could be multiple data-binds on one element. Parse them all.
@@ -64,17 +61,17 @@ export function createDocument(filePath: string, tokens: Node[], reporting: Repo
 					if (bindings.length) {
 						for(const b of bindings)
 							allBindings.add(b.bindingHandler.name)
-						const bindingNode = new BindingNode(currentAstNode, bindings)
-						currentAstNode.childNodes.push(bindingNode)
-						currentAstNode = bindingNode
+						const bindingNode = new BindingNode(currentContext, bindings)
+						currentContext.childNodes.push(bindingNode)
+						currentContext = bindingNode
 					}
 				}
-				astNodeStack.push(currentAstNode)
+				astContextStack.push(currentContext)
 				domNodeStack.push(node)
 				break
 			}
 			case NodeType.End: {
-				astNodeStack.pop()
+				astContextStack.pop()
 				const lastNode = domNodeStack.pop()
 				if (lastNode?.key !== node.key)
 					throw new Diagnostic(filePath, diagnostics['unbalanced-start-end-tags'], lastNode?.loc)
@@ -87,9 +84,11 @@ export function createDocument(filePath: string, tokens: Node[], reporting: Repo
 					if (bindings.length) {
 						for(const b of bindings)
 							allBindings.add(b.bindingHandler.name)
-						const currentAstNode = astNodeStack[astNodeStack.length - 1]
-						const bindingNode = new BindingNode(currentAstNode, bindings)
-						currentAstNode.childNodes.push(bindingNode)
+						const currentContext = astContextStack[astContextStack.length - 1]
+						if (!currentContext)
+							throw new Diagnostic(filePath, 'no-viewmodel-reference', Object.assign({}, node.loc))
+						const bindingNode = new BindingNode(currentContext, bindings)
+						currentContext.childNodes.push(bindingNode)
 					}
 				}
 				break
@@ -100,5 +99,5 @@ export function createDocument(filePath: string, tokens: Node[], reporting: Repo
 	if (domNodeStack.length)
 		reporting.addDiagnostic(new Diagnostic(filePath, diagnostics['unbalanced-start-end-tags'], domNodeStack.pop()?.loc))
 
-	return new Document(filePath, astNodeStack[0], imports, [...allBindings])
+	return new Document(filePath, astContextStack[0], imports, [...allBindings])
 }
