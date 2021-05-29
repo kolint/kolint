@@ -20,14 +20,24 @@ export function createProgram(): Program {
 export class Program implements Reporting {
 	private diagnostics: Diagnostic[] = []
 
-	private allDiagnosticsDisabled = false
+	private diagnosticsDisabled = false
 	private disabledDiagnostics: string[] = []
+	private enabledDiagnostics: string[] = []
 
-	public addDiagnostic(...diags: Diagnostic[]) : void {
-		if (this.allDiagnosticsDisabled) return
-		for (const diag of diags)
-			if (this.disabledDiagnostics.includes(diag.code) || this.disabledDiagnostics.includes(diag.name)) return
-		this.diagnostics.push(...diags)
+	private diagIsRule(rules: string[], diag: Diagnostic) {
+		return rules.includes(diag.code) || rules.includes(diag.name)
+	}
+
+	public addDiagnostic(...diags: Diagnostic[]): void {
+		if (this.diagnosticsDisabled) {
+			this.diagnostics = this.diagnostics.concat(
+				diags.filter(diag => this.diagIsRule(this.enabledDiagnostics, diag))
+			)
+		} else {
+			this.diagnostics = this.diagnostics.concat(
+				diags.filter(diag => !this.diagIsRule(this.disabledDiagnostics, diag))
+			)
+		}
 	}
 
 	public registerOutput(filename: string, code: string, map: SourceMapGenerator): void {
@@ -36,23 +46,32 @@ export class Program implements Reporting {
 
 	// Disable all diags
 	public disableAllDiagnostics(): void {
-		this.allDiagnosticsDisabled = true
+		this.diagnosticsDisabled = true
+		this.enabledDiagnostics = []
 	}
 
 	// Disable diags for keys
 	public disableDiagnostics(keys: string[]): void {
-		this.disabledDiagnostics = this.disabledDiagnostics.concat(keys)
+		if (this.diagnosticsDisabled) {
+			this.enabledDiagnostics = this.enabledDiagnostics.filter(diag => !keys.includes(diag))
+		} else {
+			this.disabledDiagnostics = this.disabledDiagnostics.concat(keys)
+		}
 	}
 
 	// Enable all diagnostics
 	public enableAllDiagnostics(): void {
-		this.allDiagnosticsDisabled = false
+		this.diagnosticsDisabled = false
 		this.disabledDiagnostics = []
 	}
 
 	// Enable diagnostics for specified keys
 	public enableDiagnostics(keys: string[]): void {
-		this.disabledDiagnostics = this.disabledDiagnostics.filter(diag => !keys.includes(diag))
+		if (this.diagnosticsDisabled) {
+			this.enabledDiagnostics = this.enabledDiagnostics.concat(keys)
+		} else {
+			this.disabledDiagnostics = this.disabledDiagnostics.filter(diag => !keys.includes(diag))
+		}
 	}
 
 	public parseNodes(filePath: string, document: string, bindingNames?: string[] | undefined, forceToXML?: boolean): Node[] {
