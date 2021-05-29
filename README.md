@@ -4,8 +4,9 @@
 
 # KOLint
 
-KOLint is a type checker and lint tool for [Knockout.JS](https://knockoutjs.com) views. [TypeScript](https://typescriptlang.org) is used for type checking the Knockout view bindings when the viewmodel is defined in Typescript. The tool also checks for common mistakes in Knockout views. See documentation at [docs.kolint.org](https://docs.kolint.org).
+**KOLint is named [knockout-lint](https://npmjs.com/package/knockout-lint) on npm. Not to be confused with the unrealted "kolint" package on npm.**
 
+KOLint is a type checker and lint tool for [Knockout.JS](https://knockoutjs.com) views. [TypeScript](https://typescriptlang.org) is used for type checking the Knockout view bindings when the viewmodel is defined in Typescript. The tool also checks for common mistakes in Knockout views. See documentation at [docs.kolint.org](https://docs.kolint.org).
 
 ## Try it out
 1. Add reference to your view:
