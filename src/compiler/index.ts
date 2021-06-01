@@ -260,10 +260,9 @@ export function createCompiler(compilerHost: CompilerHost): Compiler {
 						const translations = node.bindings.
 							map(binding => ({ binding, type: getTypeOfIdentifier(binding.identifierName, src, checker) })).
 							filter(translation => translation.type && translation.type !== parentContextType)
-						// TODO: add to diagnostics instead of throwing an error
 						// and separate into three buckets (context generating, ordinary, filtered out)
 						if (translations.length > 1)
-							throw new Error('Knockout does not support multiple context-generating bindings on the same DOM node.')
+							throw new Diagnostic(source.filename, 'multiple-context-generating-bindings')
 
 						// Create new binding contexts when new types are generated
 						if (translations.length === 1) {

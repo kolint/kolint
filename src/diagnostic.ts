@@ -150,5 +150,9 @@ export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecificat
 		code: prefix(14),
 		message: 'Expected $0, got "$1" ($2).',
 		arguments: [ '$0', '$1', '$2' ] as const
+	},
+	'multiple-context-generating-bindings': {
+		code: prefix(15),
+		message: 'Multiple context generating bindings in same node are not allowed.'
 	}
 })
