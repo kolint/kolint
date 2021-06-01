@@ -144,29 +144,29 @@ async function main() {
 	}).filter((doc): doc is kolint.Document => Boolean(doc))
 
 	program.registerOutput = (filename, data, map) => {
+		const defaultOutExt = '.html.ts'
+		const outExt = config.outExt ?? defaultOutExt
+		const mapOutExit = outExt + '.map'
+
 		const mapJSON = map?.toJSON()
-		const sources = mapJSON.sources ?? [filename]
+		const parsedFileName = path.parse(filename)
 
-		for (const source of sources) {
-			const parsedSource = path.parse(source)
+		if (config.out !== undefined) {
+			let filepath: string | undefined
 
-			if (config.out !== undefined) {
-				let filepath: string | undefined
-
-				if (isOptionTrue(config.out)) {
-					filepath = path.join(parsedSource.dir, parsedSource.name) + (config.outExt ?? '.html.ts')
-				} else if (typeof config.out === 'string') {
-					filepath = path.join(config.out, parsedSource.name) + (config.outExt ?? '.html.ts')
-				}
-
-				if (filepath)
-					fs.writeFileSync(filepath, data)
+			if (isOptionTrue(config.out)) {
+				filepath = path.join(parsedFileName.dir, parsedFileName.name) + outExt
+			} else if (typeof config.out === 'string') {
+				filepath = path.join(config.out, parsedFileName.name) + outExt
 			}
 
-			if (isOptionTrue(config.sourceMap)) {
-				const filepath = path.join(typeof config.out === 'string' ? config.out : parsedSource.dir, parsedSource.name) + ((config.outExt ?? '.html.ts') + '.map')
-				fs.writeFileSync(filepath, JSON.stringify(mapJSON))
-			}
+			if (filepath)
+				fs.writeFileSync(filepath, data)
+		}
+
+		if (isOptionTrue(config.sourceMap)) {
+			const filepath = path.join(typeof config.out === 'string' ? config.out : parsedFileName.dir, parsedFileName.name) + mapOutExit
+			fs.writeFileSync(filepath, JSON.stringify(mapJSON))
 		}
 	}
 

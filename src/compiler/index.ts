@@ -169,7 +169,7 @@ export function createCompiler(compilerHost: CompilerHost): Compiler {
 				const code = builder.changes().toString()
 				builder.commit()
 
-				const filename = document.viewFilePath + '.g.ts'
+				const filename = document.viewFilePath
 				// Create initial SourceFile to use in the CompilerHost (to avoid having to write the content to disk first)
 				sourceFiles.set(filename, ts.createSourceFile(filename, code, ts.ScriptTarget.ES2018, true, ts.ScriptKind.TS))
 
