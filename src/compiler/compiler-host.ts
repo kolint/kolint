@@ -1,4 +1,4 @@
-import ts from 'typescript'
+import * as ts from 'typescript'
 import * as path from 'path'
 
 export interface CompilerHost {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { SourceMapConsumer } from 'source-map'
-import ts from 'typescript'
+import * as ts from 'typescript'
 import { Diagnostic } from '../diagnostic'
 import { AstNode, BindingContext, BindingNode, Document, TypeNode } from '../parser/syntax-tree'
 import { Reporting } from '../program'
