@@ -1,0 +1,19 @@
+#!/bin/node
+
+const esbuild = require('esbuild')
+const fs = require('fs')
+const path = require('path')
+
+const entries = fs.readdirSync('spec')
+	.filter(dir => dir.endsWith('.spec.ts'))
+	.map(dir => path.join('spec', dir))
+
+esbuild.buildSync({
+	entryPoints: entries,
+	sourcemap: true,
+	bundle: true,
+	minify: true,
+	platform: 'node',
+	write: true,
+	outdir: 'spec/_build'
+})
