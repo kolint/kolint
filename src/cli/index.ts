@@ -33,7 +33,7 @@ interface ArgsOptions extends Options {
 /** Options exclusive to config file. See options. */
 export interface ConfigOptions extends Options {
 	/** Severity for rules. Map with the key with the diagnostic name or code and the value as 'off', 'warning' or 'error'. */
-	severity?: { [key: string]: 'off' | 'warning' | 'error' }
+	severity?: { [key: string]: 'off' | 'warn' | 'warning' | 'error' | kolint.Severity }
 	/** Is root config. */
 	root?: boolean
 }
@@ -177,12 +177,22 @@ async function main() {
 			if (config.severity) {
 				const severity = config.severity[diag.code] ?? config.severity[diag.name]
 
-				if (severity === 'error') {
-					diag.severity = kolint.Severity.Error
-				} else if (severity === 'warning') {
-					diag.severity = kolint.Severity.Warning
-				} else if (severity === 'off') {
-					diag.severity = kolint.Severity.Off
+				switch (severity) {
+					case 'error':
+						diag.severity = kolint.Severity.Error
+						break
+
+					case 'warning':
+					case 'warn':
+						diag.severity = kolint.Severity.Warning
+						break
+
+					case 'off':
+						diag.severity = kolint.Severity.Off
+						break
+
+					default:
+						diag.severity = severity
 				}
 			}
 
