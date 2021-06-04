@@ -34,10 +34,10 @@
 		"yargs": "^17.0.1"
 	},
 	"scripts": {
-		"build": "npx tsc . && node scripts/parser-compiler.js",
-		"watch": "npx tsc . -w",
+		"build": "tsc && node scripts/parser-compiler.js",
+		"watch": "tsc -w",
 		"test": "node ./spec/_build && mocha spec/_build/*.spec.js",
-		"lint": "npx eslint src/**/*.ts"
+		"lint": "eslint src/**/*.ts"
 	},
 	"repository": {
 		"type": "git",
