@@ -37,7 +37,7 @@
 		"build": "npx tsc --build . spec && node scripts/parser-compiler.js",
 		"watch": "npx tsc --build . spec --watch",
 		"test": "node ./spec/_build && mocha spec/_build/*.spec.js",
-		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts"
+		"lint": "npx eslint src/**/*.ts"
 	},
 	"repository": {
 		"type": "git",
