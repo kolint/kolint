@@ -1,7 +1,7 @@
 import * as kolint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
-import glob from 'tiny-glob'
+import glob from 'globby'
 import * as yargs from 'yargs'
 import { parse } from '../parser'
 import { createDocument } from '../parser/document-builder'
@@ -98,13 +98,18 @@ async function main() {
 		process.exit(ExitCodes.Success)
 	}
 
-	const inputs = argv._
+	const inputs = argv._.map(_ => _.toString())
 	if (inputs.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoInputs)
 	}
 
-	const files = kolint.utils.flat(await Promise.all(inputs.map(async pattern => glob(kolint.utils.canonicalPath(pattern.toString())))))
+	const files = await glob(inputs, {
+		absolute: true,
+		dot: true,
+		onlyFiles: true
+	})
+
 	if (files.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoMatchingFiles)
