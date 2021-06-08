@@ -19,7 +19,7 @@
 		"@typescript-eslint/parser": "^4.24.0",
 		"eslint": "^7.26.0",
 		"jison": "^0.4.18",
-		"mocha": "^8.4.0",
+		"mocha": "^9.0.0",
 		"typescript-json-schema": "^0.50.0"
 	},
 	"dependencies": {
