@@ -94,7 +94,7 @@ interface DiagnosticSpecification {
 export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecification>) => a)({
 	'multiple-context-bindings': {
 		code: prefix(1),
-		message: 'Only one of [$0], can modify binding contexts. Separate into distinct elements.',
+		message: 'Only one of [$0], can modify binding context. Separate into distinct elements.',
 		arguments: [ '$0' ] as const
 	},
 	'no-viewmodel-reference': {
