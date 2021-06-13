@@ -99,16 +99,6 @@
 			}
 		]
 	},
-	"overrides": [
-		{
-			"files": "spec/src/**/*.ts",
-			"parserOptions": {
-				"ecmaVersion": 2015,
-				"sourceType": "module",
-				"project": "./spec/tsconfig.json"
-			}
-		}
-	],
 	"ignorePatterns": [
 		"*",
 		"!**/*.ts",
@@ -116,6 +106,7 @@
 		"lib",
 		"build",
 		"demo",
-		"node_modules"
+		"node_modules",
+		"spec"
 	]
 }

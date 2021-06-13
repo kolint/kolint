@@ -17,9 +17,10 @@
 		"@types/yargs": "^17.0.0",
 		"@typescript-eslint/eslint-plugin": "^4.24.0",
 		"@typescript-eslint/parser": "^4.24.0",
+		"cross-env": "*",
 		"eslint": "^7.26.0",
 		"jison": "^0.4.18",
-		"mocha": "^9.0.0",
+		"mocha": "^8.4.0",
 		"typescript-json-schema": "^0.50.0"
 	},
 	"dependencies": {
@@ -33,10 +34,10 @@
 		"yargs": "^17.0.1"
 	},
 	"scripts": {
-		"build": "npx tsc --build . spec && node scripts/parser-compiler.js",
-		"watch": "npx tsc --build . spec --watch",
-		"test": "node ./spec/build/spec.js",
-		"lint": "npx eslint src/**/*.ts spec/src/**/*.ts"
+		"build": "tsc && node scripts/parser-compiler.js",
+		"watch": "tsc -w",
+		"test": "cross-env TS_NODE_PROJECT=spec/tsconfig.json mocha --require ts-node/register spec/src/*.spec.ts",
+		"lint": "eslint src/**/*.ts"
 	},
 	"repository": {
 		"type": "git",
