@@ -1,4 +1,4 @@
-import * as utils from './_utils'
+import * as utils from './utils'
 
 describe('Document Builder', () => {
 	// https://github.com/kolint/kolint/pull/281

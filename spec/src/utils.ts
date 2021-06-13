@@ -1,5 +1,5 @@
 import * as assert from 'assert'
-import * as kolint from '..'
+import * as kolint from '../../build'
 
 function parse(content: string) {
 	const program = kolint.createProgram()
