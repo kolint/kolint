@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import glob from 'tiny-glob'
+import glob from 'globby'
 import * as path from 'path'
 import stripJsonComments from 'strip-json-comments'
 import * as yaml from 'js-yaml'
@@ -9,7 +9,12 @@ import utils from '../utils'
 async function getConfigPath(dir: string, patterns: string[]): Promise<string | undefined> {
 	const files = utils.flat(await Promise.all(patterns.map(async pattern => {
 		try {
-			return await glob(pattern, { absolute: true, cwd: dir, dot: true, filesOnly: true })
+			return await glob(pattern, {
+				absolute: true,
+				cwd: dir,
+				dot: true,
+				onlyFiles: true
+			})
 		} catch {
 			return []
 		}

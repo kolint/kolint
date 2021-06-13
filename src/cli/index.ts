@@ -1,7 +1,7 @@
 import * as kolint from '..'
 import * as fs from 'fs'
 import * as path from 'path'
-import glob from 'tiny-glob'
+import glob from 'globby'
 import * as yargs from 'yargs'
 import { parse } from '../parser'
 import { createDocument } from '../parser/document-builder'
@@ -33,7 +33,7 @@ interface ArgsOptions extends Options {
 /** Options exclusive to config file. See options. */
 export interface ConfigOptions extends Options {
 	/** Severity for rules. Map with the key with the diagnostic name or code and the value as 'off', 'warning' or 'error'. */
-	severity?: { [key: string]: 'off' | 'warning' | 'error' }
+	severity?: { [key: string]: 'off' | 'warn' | 'warning' | 'error' | kolint.Severity }
 	/** Is root config. */
 	root?: boolean
 }
@@ -98,13 +98,18 @@ async function main() {
 		process.exit(ExitCodes.Success)
 	}
 
-	const inputs = argv._
+	const inputs = argv._.map(_ => _.toString())
 	if (inputs.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoInputs)
 	}
 
-	const files = kolint.utils.flat(await Promise.all(inputs.map(async pattern => glob(kolint.utils.canonicalPath(pattern.toString())))))
+	const files = await glob(inputs, {
+		absolute: true,
+		dot: true,
+		onlyFiles: true
+	})
+
 	if (files.length === 0) {
 		console.error('No matching file(s)')
 		process.exit(ExitCodes.NoMatchingFiles)
@@ -177,12 +182,22 @@ async function main() {
 			if (config.severity) {
 				const severity = config.severity[diag.code] ?? config.severity[diag.name]
 
-				if (severity === 'error') {
-					diag.severity = kolint.Severity.Error
-				} else if (severity === 'warning') {
-					diag.severity = kolint.Severity.Warning
-				} else if (severity === 'off') {
-					diag.severity = kolint.Severity.Off
+				switch (severity) {
+					case 'error':
+						diag.severity = kolint.Severity.Error
+						break
+
+					case 'warning':
+					case 'warn':
+						diag.severity = kolint.Severity.Warning
+						break
+
+					case 'off':
+						diag.severity = kolint.Severity.Off
+						break
+
+					default:
+						diag.severity = severity
 				}
 			}
 
