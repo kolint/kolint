@@ -1,60 +1,60 @@
 /* lexical grammar */
 %lex
-%x tag comment doctype import kodirective xmlpi
+%x tag comment doctype import kodirective xmlpi lintSwitch
 
-QTEXT                             \"[^\"]+\"
-SQTEXT                            \'[^\']+\'
-TEXT                              [^\s>]+
-IDENT                             [_$a-zA-Z\xA0-\uFFFF][_$\-a-zA-Z0-9\xA0-\uFFFF]*
-CTEXT                             [\s\S]+?/(\-\-\>)
-XMLPITEXT                         .+?(?=\?>)
-KOEND                             \/ko/(\-\-\>)
+QTEXT                                      \"[^\"]+\"
+SQTEXT                                     \'[^\']+\'
+TEXT                                       [^\s>]+
+IDENT                                      [_$a-zA-Z\xA0-\uFFFF][_$\-a-zA-Z0-9\xA0-\uFFFF]*
+CTEXT                                      [\s\S]+?/(\-\-\>)
+XMLPITEXT                                  .+?(?=\?>)
+KOEND                                      \/ko/(\-\-\>)
 
 %%
 
-<*>\s+                            /* skip whitespace */
-"<?xml"                           this.begin('xmlpi'); return 'XMLPISTART'
-"<!DOCTYPE"                       this.begin('doctype'); return 'DOCSTART'
-"<!--"                            this.begin('comment'); return 'CSTag'
-"<"                               this.begin('tag'); return '<'
-[^<]+                             return 'TEXT'
-<tag>">"                          this.popState(); return '>'
-<tag>"/"                          return '/'
-<tag>"="                          return 'EQ'
-<tag,import>{QTEXT}               yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
-<tag,import>{SQTEXT}              yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
-<tag>{IDENT}                   return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
-<import>"{"                       return 'LBRACE'
-<import>"}"                       return 'RBRACE'
-<import>","                       return 'COMMA'
-<tag,import>":"                       return 'COLON'
-<import>"import"                  return 'IMPORT'
-<kodirective>"typeof"             return 'TYPEOF'
-<kodirective>"."                  return 'DOT'
-<import>"as"                      return 'AS'
-<import>"*"                       return 'STAR'
-<import>"from"                    return 'FROM'
-<import,kodirective>"-->"         this.popState(); this.popState(); return 'CETag'
-<import,kodirective>{IDENT}       return 'Ident'
-<import,tag>{TEXT}                return 'TEXT'
-<comment>"ko-import"              this.begin('import'); return 'IMPORT'
-<comment>"ko-viewmodel"           this.begin('kodirective'); return 'VIEW_REF'
-<comment>"ko-context-name"        this.begin('kodirective'); return 'CONTEXT_NAME'
-<comment>"ko-context"             this.begin('kodirective'); return 'CONTEXT'
-<comment>"ko"\s                   return 'bindingText'
-<comment>"/ko"\s                  return 'bindingTextEnd'
-<comment>{KOEND}                  return 'bindingTextEnd'
-<comment>"kolint-enable"\s+       return 'KOLINT_ENABLE'
-<comment>"kolint-disable"\s+      return 'KOLINT_DISABLE'
-<comment>"-->"                    this.popState(); return 'CETag'
-<comment>{CTEXT}                  return 'commentText'
-<comment>{IDENT}                  return 'DIAGKEY'
-<xmlpi>{XMLPITEXT}                return 'XMLPITEXT'
-<xmlpi>"?>"                       this.popState(); return 'XMLPIEND'
-<doctype>">"                      this.popState(); return 'DOCEND'
-<doctype>{TEXT}                   return 'TEXT'
-<<EOF>>                           return 'EOF'
-.                                 return 'INVALID'
+<*>\s+                                     /* skip whitespace */
+"<?xml"                                    this.begin('xmlpi'); return 'XMLPISTART'
+"<!DOCTYPE"                                this.begin('doctype'); return 'DOCSTART'
+"<!--"                                     this.begin('comment'); return 'CSTag'
+"<"                                        this.begin('tag'); return '<'
+[^<]+                                      return 'TEXT'
+<tag>">"                                   this.popState(); return '>'
+<tag>"/"                                   return '/'
+<tag>"="                                   return 'EQ'
+<tag,import>{QTEXT}                        yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
+<tag,import>{SQTEXT}                       yytext = yytext.slice(1,-1); ++yylloc.range[0]; --yylloc.range[1]; return 'TEXT'
+<tag>{IDENT}                               return yy.bindingNames.includes(yytext) ? 'bindAttr' : 'Ident'
+<import>"{"                                return 'LBRACE'
+<import>"}"                                return 'RBRACE'
+<import,lintSwitch>","                     return 'COMMA'
+<tag,import>":"                            return 'COLON'
+<import>"import"                           return 'IMPORT'
+<kodirective>"typeof"                      return 'TYPEOF'
+<kodirective>"."                           return 'DOT'
+<import>"as"                               return 'AS'
+<import>"*"                                return 'STAR'
+<import>"from"                             return 'FROM'
+<import,kodirective,lintSwitch>"-->"       this.popState(); this.popState(); return 'CETag'
+<import,kodirective>{IDENT}                return 'Ident'
+<import,tag>{TEXT}                         return 'TEXT'
+<comment>"ko-import"                       this.begin('import'); return 'IMPORT'
+<comment>"ko-viewmodel"                    this.begin('kodirective'); return 'VIEW_REF'
+<comment>"ko-context-name"                 this.begin('kodirective'); return 'CONTEXT_NAME'
+<comment>"ko-context"                      this.begin('kodirective'); return 'CONTEXT'
+<comment>"ko"\s                            return 'bindingText'
+<comment>"/ko"\s                           return 'bindingTextEnd'
+<comment>{KOEND}                           return 'bindingTextEnd'
+<comment>"kolint-enable"                   this.begin('lintSwitch'); return 'KOLINT_ENABLE'
+<comment>"kolint-disable"                  this.begin('lintSwitch'); return 'KOLINT_DISABLE'
+<comment>"-->"                             this.popState(); return 'CETag'
+<comment>{CTEXT}                           return 'commentText'
+<lintSwitch>{IDENT}                        return 'DIAGKEY'
+<xmlpi>{XMLPITEXT}                         return 'XMLPITEXT'
+<xmlpi>"?>"                                this.popState(); return 'XMLPIEND'
+<doctype>">"                               this.popState(); return 'DOCEND'
+<doctype>{TEXT}                            return 'TEXT'
+<<EOF>>                                    return 'EOF'
+.                                          return 'INVALID'
 /lex
 
 /* operator associations and precedence */
@@ -143,7 +143,7 @@ commentTexts
   ;
 
 diagIds
-  : diagIds ',' DIAGKEY
+  : diagIds COMMA DIAGKEY
     { $$ = $diagIds.concat($DIAGKEY) }
   | DIAGKEY
     { $$ = $1 ? [$1] : [] }
