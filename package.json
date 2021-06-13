@@ -18,7 +18,6 @@
 		"@typescript-eslint/eslint-plugin": "^4.24.0",
 		"@typescript-eslint/parser": "^4.24.0",
 		"cross-env": "*",
-		"esbuild": "^0.12.5",
 		"eslint": "^7.26.0",
 		"jison": "^0.4.18",
 		"mocha": "^8.4.0",
@@ -37,8 +36,7 @@
 	"scripts": {
 		"build": "tsc && node scripts/parser-compiler.js",
 		"watch": "tsc -w",
-		"test": "node scripts/build_spec.js && mocha spec/build/*.spec.js",
-		"test-debug": "cross-env TS_NODE_PROJECT=spec/tsconfig.json mocha --require ts-node/register spec/src/*.spec.ts",
+		"test": "cross-env TS_NODE_PROJECT=spec/tsconfig.json mocha --require ts-node/register spec/src/*.spec.ts",
 		"lint": "eslint src/**/*.ts"
 	},
 	"repository": {
