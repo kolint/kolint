@@ -1,8 +1,9 @@
 import { Document, Node } from './parser/syntax-tree'
 import { Diagnostic } from './diagnostic'
-import { Compiler } from './compiler'
+import { createCompiler } from './compiler'
 import { SourceMapGenerator } from 'source-map'
 import { parse } from './parser'
+import { createCompilerHost } from './compiler/compiler-host'
 
 export interface Reporting {
 	registerOutput(filename: string, code: string, map: SourceMapGenerator): void
@@ -84,7 +85,7 @@ export class Program implements Reporting {
 	 * @returns the file path to the generated compiled view
 	 */
 	public async compile(documents: Document[]): Promise<Diagnostic[]> {
-		const compiler = new Compiler()
+		const compiler = createCompiler(createCompilerHost())
 		await compiler.compile(documents, this)
 		return this.diagnostics
 	}

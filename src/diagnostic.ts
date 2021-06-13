@@ -94,7 +94,7 @@ interface DiagnosticSpecification {
 export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecification>) => a)({
 	'multiple-context-bindings': {
 		code: prefix(1),
-		message: 'Only one of [$0], can control descendant bindings. Separate into distinct elements.',
+		message: 'Only one of [$0], can modify binding context. Separate into distinct elements.',
 		arguments: [ '$0' ] as const
 	},
 	'no-viewmodel-reference': {
@@ -150,5 +150,9 @@ export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecificat
 		code: prefix(14),
 		message: 'Expected $0, got "$1" ($2).',
 		arguments: [ '$0', '$1', '$2' ] as const
+	},
+	'multiple-context-generating-bindings': {
+		code: prefix(15),
+		message: 'Multiple context generating bindings in same node are not allowed.'
 	}
 })
