@@ -1,8 +1,10 @@
 .github
 .vscode
+.assets
 docs
+scripts/dev
 spec
-src
+scripts
 .editorconfig
 .eslintrc.json
 .gitbook.yaml
