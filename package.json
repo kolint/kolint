@@ -34,7 +34,7 @@
 		"yargs": "^17.0.1"
 	},
 	"scripts": {
-		"build": "tsc && node scripts/parser-compiler.js",
+		"build": "tsc && node scripts/dev/parser-compiler.js",
 		"watch": "tsc -w",
 		"test": "cross-env TS_NODE_PROJECT=spec/tsconfig.json mocha --require ts-node/register spec/src/*.spec.ts",
 		"lint": "eslint src/**/*.ts"
