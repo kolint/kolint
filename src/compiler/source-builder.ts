@@ -1,5 +1,5 @@
 import { CodeWithSourceMap, SourceNode } from 'source-map'
-import path = require('path')
+import * as path from 'path'
 import { Binding, Document as DOMDocument, IdentifierNode, BindingExpression, BindingName, TypeNode, BindingContext, ChildContextNode } from '../parser/syntax-tree'
 import utils from '../utils'
 
@@ -21,7 +21,7 @@ export class SourceBuilder {
 	private currentNode: SourceNode
 	private rootNode: SourceNode
 
-	public constructor(private markupFileName: string, private document: DOMDocument) {
+	public constructor(public markupFileName: string, private document: DOMDocument) {
 		// this.source = ts.createSourceFile(this.originalFileName + '.g.ts', this.CreateScaffold(), ts.ScriptTarget.ES2018)
 		// Generate Source Map based on the Html View (Precompiled View -> Html View)
 		this.rootNode = this.currentNode = new SourceNode(null, null, null, [
