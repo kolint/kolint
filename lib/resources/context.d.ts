@@ -126,7 +126,7 @@ export interface StandardBindingContextTransforms {
 	template: BindingContextIdentityTransform<any>
 	component: BindingContextIdentityTransform<string | { name: any, params: any }>
 	if: BindingContextIdentityTransform<unknown>
-	ifnot: BindingContextIdentityTransform<boolean>
+	ifnot: BindingContextIdentityTransform<unknown>
 
 	// Since we do not have support for const string types in Typescript yet (see https://github.com/microsoft/TypeScript/issues/30680), we resort to a complex type 'Narrow' to make sure
 	// it is not widened to a string. Inspiration from ts-toolbelt.
@@ -137,8 +137,8 @@ export interface StandardBindingContextTransforms {
 			ChildBindingContext<VM, Context> & { $index: Observable<number> }
 
 	using: StandardBindingContextTransforms['with']
-	with: <V extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<V>, parentContext: Context) => ChildBindingContext<V, Context>
-	let: <T extends object, Context extends BindingContext>(value: MaybeReadonlyObservable<T>, parentContext: Context) => Context & T
+	with: <V extends object, Context extends BindingContext>(value: MaybeObservable<V>, parentContext: Context) => ChildBindingContext<V, Context>
+	let: <T extends object, Context extends BindingContext>(value: MaybeObservable<T>, parentContext: Context) => Context & T
 }
 
 type Cast<A, B> = A extends B ? A : B;
