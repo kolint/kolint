@@ -80,11 +80,19 @@ export class SourceBuilder {
 	private createImportStatements(markupFileName: string): (string | SourceNode)[] {
 		const document = this.document
 		const viewmodelImports = utils.flat(document.imports.map(importNode => {
-			const names = importNode.importSymbols.map(symbol => symbol.name === symbol.alias ?
+			const isNamespaceImport = importNode.importSymbols.length === 1 && importNode.importSymbols[0].name.value === '*'
+			const createMappedImportSymbol = (symbol: typeof importNode.importSymbols[0]) => symbol.name === symbol.alias ?
 				new SourceNode(null, null, null, [this.mapIdentifier(symbol.name)]) :
-				new SourceNode(null, null, null, [this.mapIdentifier(symbol.name), ' as ', this.mapIdentifier(symbol.alias)]))
-			const joinedNames = this.join(names, ', ')
-			return ['import { ', joinedNames, ' } from ', this.mapIdentifier(importNode.modulePath, (id) => `"${id}"`), '\n']
+				new SourceNode(null, null, null, [this.mapIdentifier(symbol.name), ' as ', this.mapIdentifier(symbol.alias)])
+			if (isNamespaceImport) {
+				const symbol = importNode.importSymbols[0]
+				const name = createMappedImportSymbol(symbol)
+				return ['import ', name, ' from ', this.mapIdentifier(importNode.modulePath, (id) => `"${id}"`), '\n']
+			} else {
+				const names = importNode.importSymbols.map(symbol => createMappedImportSymbol(symbol))
+				const imports = this.join(names, ', ')
+				return ['import { ', imports, ' } from ', this.mapIdentifier(importNode.modulePath, (id) => `"${id}"`), '\n']
+			}
 		}))
 
 		return viewmodelImports
