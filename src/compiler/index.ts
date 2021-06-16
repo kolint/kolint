@@ -169,7 +169,9 @@ export function createCompiler(compilerHost: CompilerHost): Compiler {
 				const code = builder.changes().toString()
 				builder.commit()
 
-				const filename = document.viewFilePath
+				// The source file filename is required by the TypeScript compiler to end with .ts,
+				// or and other valid TypeScript(/JavaScript) extension
+				const filename = document.viewFilePath + '.ts'
 				// Create initial SourceFile to use in the CompilerHost (to avoid having to write the content to disk first)
 				sourceFiles.set(filename, ts.createSourceFile(filename, code, ts.ScriptTarget.ES2018, true, ts.ScriptKind.TS))
 
@@ -302,7 +304,8 @@ export function createCompiler(compilerHost: CompilerHost): Compiler {
 			// Call sinks with file information for source maps, generated ts-files, etc. (send a file type hint in the call to reporting)
 			for (const source of sources) {
 				const { code, map } = source.builder.getContent()
-				reporting.registerOutput(source.filename, code, map)
+				// The source file always contains .ts in the end of the filename.
+				reporting.registerOutput(source.filename.slice(0, -3), code, map)
 			}
 		}
 	}
