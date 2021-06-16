@@ -262,9 +262,12 @@ export function createCompiler(compilerHost: CompilerHost): Compiler {
 						const translations = node.bindings.
 							map(binding => ({ binding, type: getTypeOfIdentifier(binding.identifierName, src, checker) })).
 							filter(translation => translation.type && translation.type !== parentContextType)
-						// and separate into three buckets (context generating, ordinary, filtered out)
-						if (translations.length > 1)
-							throw new Diagnostic(source.filename, 'multiple-context-generating-bindings')
+						const unknownBindings = translations.filter(t => t.type?.flags === ts.TypeFlags.Unknown)
+						for(const b of unknownBindings)
+							reporting.addDiagnostic(new Diagnostic(source.builder.markupFileName, 'binding-unknown', b.binding.bindingHandler.loc, b.binding.bindingHandler.name))
+
+						if (translations.filter(t => t.type?.flags !== ts.TypeFlags.Unknown).length > 1)
+							throw new Diagnostic(source.builder.markupFileName, 'multiple-context-bindings', translations[0].binding.expression.loc, translations.map(t => t.binding.bindingHandler.name).join(', '))
 
 						// Create new binding contexts when new types are generated
 						if (translations.length === 1) {

@@ -94,7 +94,7 @@ interface DiagnosticSpecification {
 export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecification>) => a)({
 	'multiple-context-bindings': {
 		code: prefix(1),
-		message: 'Only one of [$0], can modify binding context. Separate into distinct elements.',
+		message: 'Only one binding-handler per element can create child contexts. Move [$0] into separate elements.',
 		arguments: [ '$0' ] as const
 	},
 	'no-viewmodel-reference': {
@@ -154,5 +154,10 @@ export const diagnostics = (<K extends string>(a: Record<K, DiagnosticSpecificat
 	'multiple-context-generating-bindings': {
 		code: prefix(15),
 		message: 'Multiple context generating bindings in same node are not allowed.'
+	},
+	'binding-unknown': {
+		code: prefix(16),
+		message: 'Type unknown for binding handler \'$0\'.',
+		arguments: [ '$0' ] as const
 	}
 })
