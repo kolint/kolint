@@ -1,12 +1,12 @@
 .github
-.vscode
-.assets
 docs
+examples
 scripts/dev
 spec
-scripts
+src
 .editorconfig
 .eslintrc.json
+.gitattributes
 .gitbook.yaml
+.gitignore
 tsconfig.json
-examples
