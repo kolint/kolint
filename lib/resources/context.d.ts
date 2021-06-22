@@ -102,7 +102,7 @@ export interface StandardBindingContextTransforms {
 	css: BindingContextIdentityTransform<string | Record<string, MaybeReadonlyObservable<boolean>>>
 	style: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<string>>>
 	attr: BindingContextIdentityTransform<Record<string, MaybeReadonlyObservable<unknown>>> // TODO: Create types for the standard attributes
-	text: BindingContextIdentityTransform<string>
+	text: BindingContextIdentityTransform<string | number> // Relaxed a bit to also accept numbers as valid "text" bindings.
 	event: BindingContextIdentityTransform<WindowEventCallbacks>
 	click: BindingContextIdentityTransform<(data: any, event: MouseEvent) => void>
 	submit: BindingContextIdentityTransform<(form: HTMLFormElement) => void>
