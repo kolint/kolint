@@ -21,7 +21,8 @@ export interface ChildBindingContextImpl<ViewModel, ParentContext extends Bindin
 	$rawData: MaybeReactive<ViewModel>
 }
 
-export type ChildBindingContext<Child, Parent extends BindingContext> = ChildBindingContextImpl<Child, Parent, Parent['$data'], Parent['$root'], [Parent['$data'], ...Parent['$parents']]>
+// Use parent context and override with child context parameters
+export type ChildBindingContext<ViewModel, Parent extends BindingContext> = Parent & ChildBindingContextImpl<ViewModel, Parent, Parent['$data'], Parent['$root'], [...Parent['$parents']]>
 
 export interface BindingHandler<T> {
 	init?: (element: any, valueAccessor: () => T, allBindings?: any, viewModel?: any, bindingContext?: any) => any;

@@ -1,0 +1,12 @@
+<!-- ko-import VM from './viewmodel' -->
+<!-- ko-viewmodel VM -->
+<div>
+	<!-- ko foreach: { data: things, as: 'thing' } -->
+		<span data-bind="text: thing.Label"></span>
+		<span data-bind="text: thing.Age"></span>
+		<!-- ko foreach: { data: thing.Children, as: 'thingy' } -->
+			<span data-bind="text: thingy.Legs"></span>
+			<span data-bind="text: 'Parents age is ' + thing.Age"></span>
+		<!-- /ko -->
+	<!-- /ko -->
+</div>
