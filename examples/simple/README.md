@@ -1,2 +1,5 @@
-change current directory to this directory
-run "node ../../bin/kolint.js view.html"
+# Simple
+Simple example without any errors.
+
+- Change current working directory to `./examples/simple`.
+- Run `node ../../bin/kolint.js view.html`
