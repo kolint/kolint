@@ -17,13 +17,3 @@ KOLint is a type checker and lint tool for [Knockout.JS](https://knockoutjs.com)
     ```
     $ npx knockout-lint view.html
     ```
-
-## Roadmap
-
-**Production compilation**
-
-KOLint has some amazing features not used with its full potential. KOLint will always be focused on linting and type checking, but a feature project to be made is to compile the knockout bindings into bundled JavaScript files. This has the advantages of:
-
-1. Security — hackers will have a harder time getting any useful information from the bindings. Also, if using knockout 3.x or below, the code will not have to be evaluated.
-
-2. Performance — knockout will not have to parse the JavaScript and bindings or evaluate them.
