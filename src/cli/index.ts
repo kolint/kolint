@@ -220,8 +220,7 @@ async function main() {
 			throw err
 	}
 
-	if (errors > 0 || warnings > 0)
-		console.log(`\n${color(errors > 0 ? 31 : 33)}✖ ${errors + warnings} problems (${errors} errors, ${warnings} warnings)${color(0)}\n`)
+	console.log(`\n${color(errors > 0 ? 31 : 33)}✖ ${errors + warnings} problems (${errors} errors, ${warnings} warnings)${color(0)}\n`)
 
 	if (errors > 0)
 		process.exit(ExitCodes.HasErrors)
