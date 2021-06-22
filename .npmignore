@@ -9,3 +9,4 @@ scripts
 .eslintrc.json
 .gitbook.yaml
 tsconfig.json
+examples
