@@ -1,7 +1,7 @@
 {
 	"name": "knockout-lint",
 	"description": "Lint and type check knockout.js bindings in the view with view model types.",
-	"version": "0.3.3",
+	"version": "0.3.4",
 	"main": "./build/index.js",
 	"types": "./build/index",
 	"bin": {
