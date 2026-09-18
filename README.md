@@ -1,3 +1,13 @@
+---
+
+# SUPERSEDED BY KNUCKLES
+
+This project has ben moved to knuckles — the development toolkit for Knockout.js.
+
+👉 https://github.com/tscpp/knuckles
+
+---
+
 [![npm version](https://img.shields.io/npm/v/knockout-lint.svg)](https://www.npmjs.com/package/knockout-lint)
 [![Downloads](https://img.shields.io/npm/dm/knockout-lint.svg)](https://www.npmjs.com/package/knockout-lint)
 [![License](https://img.shields.io/github/license/kolint/kolint.svg)](https://github.com/kolint/kolint/blob/master/LICENSE)
